@@ -62,4 +62,10 @@ mpileup = {
    }
 }
 
-Bpipe.run { random_ref + index_ref + mutate_ref + random_read + bwa_align + bwa_index + mpileup }
+consensus = {
+   from(glob("*.bcf")){
+      exec "bcftools call -c -o $output.bcf -O b $input.bcf"
+   }
+}
+
+Bpipe.run { random_ref + index_ref + mutate_ref + random_read + bwa_align + bwa_index + mpileup + consensus }
