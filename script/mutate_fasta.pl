@@ -13,6 +13,7 @@ my $seed = shift or die $usage;
 #set seed for reproducibility
 srand($seed);
 
+#original sequence
 my $seq = read_fasta($infile);
 my $header = get_fasta_header($infile);
 my $mutated = mutate_seq(\$seq, \$mutation);
@@ -46,24 +47,38 @@ sub mutate_seq {
    my ($seq,$pc) = @_;
    my $outfile = $infile;
    $outfile =~ s/\.fa$/_mutated.txt/;
-   open(OUT,'>',$outfile) || die "Could not open $outfile for writing: $!\n";
    my $s = $$seq;
    my @nuc = qw/ A C G T /;
-   my %mutated = ();
+   my @mutation = qw/insert delete point/;
    for (1 .. $$pc * length($s)){
+      #pick a random base
       my $rand_ind = int(rand(length($s)));
-      my $base = substr($s, $rand_ind, 1);
-      my $rand_nuc = $base;
-      while($rand_nuc eq $base){
-         $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
+      #what type of mutation should we introduce
+      my $type = int(rand(scalar(@mutation)));
+      $type = $mutation[$type];
+
+      if ($type eq 'point'){
+         my $base = substr($s, $rand_ind, 1);
+         my $rand_nuc = $base;
+         while($rand_nuc eq $base){
+            $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
+         }
+         substr($s, $rand_ind, 1, $rand_nuc);
       }
-      substr($s, $rand_ind, 1, $rand_nuc);
-      $mutated{$rand_ind}->{'FROM'} = $base;
-      $mutated{$rand_ind}->{'TO'} = $rand_nuc;
-   }
-   my @pos = sort {$a <=> $b} keys %mutated;
-   foreach my $pos (@pos){
-      print OUT join("\t", $pos+1, $mutated{$pos}->{'FROM'}, $mutated{$pos}->{'TO'}), "\n";
+
+      elsif ($type eq 'delete'){
+         my $a = substr($s, 0, $rand_ind-1);
+         my $b = substr($s, $rand_ind, length($s));
+         $s = $a . $b;
+      }
+
+      elsif ($type eq 'insert'){
+         my $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
+         my $a = substr($s, 0, $rand_ind);
+         my $b = substr($s, $rand_ind, length($s));
+         $s = $a . $rand_nuc . $b;
+      }
+
    }
    return($s);
 }
