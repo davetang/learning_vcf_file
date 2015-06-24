@@ -3,3 +3,10 @@ commandlog.txt
 .bpipe
 l[0-9]*
 *.swp
+GenomeAnalysisTK-3.4-0.tar.bz2
+GenomeAnalysisTK.jar
+resources
+picard
+htsjdk
+vcftools*
+compare*

@@ -3,7 +3,7 @@ Learning about VCF files
 
 To learn about VCF files, I created a pipeline that generates a random reference, which becomes mutated (SNVs are introduced), from which random reads are derived from, and subsequently mapped back to the original non-mutated random reference. The ```pipeline.groovy``` file contains the pipeline, which is processed by Bpipe. For more information take a look at my [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/).
 
-Simply type make in the root directory of this repository to run the pipeline, assuming that bpipe is installed.
+Simply type ```make``` in the root directory of this repository to run the pipeline. You will need to install bwa, samtools, bcftools, and Bpipe.
 
 Adjusting parameters
 --------------------
@@ -76,4 +76,90 @@ bcftools view -v indels l100_n1000000_d400_31_1.consensus.bcf | grep -v "^#" | h
 1000000 1328    .       AT      A       128.457 .       INDEL;IDV=163;IMF=0.953216;DP=171;VDB=8.3785e-26;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,38,21;MQ=29;FQ=-212.527    GT:PL    1/1:169,178,0
 1000000 1380    .       TA      TAA     214.458 .       INDEL;IDV=167;IMF=0.976608;DP=171;VDB=9.35461e-09;SGB=-0.693147;MQSB=0.999867;MQ0F=0;AF1=1;AC1=2;DP4=0,0,74,68;MQ=30;FQ=-289.528     GT:PL   1/1:255,255,0
 1000000 1449    .       GT      G       214.458 .       INDEL;IDV=191;IMF=0.927184;DP=206;VDB=0.137289;SGB=-0.693147;MQSB=0.408104;MQ0F=0;AF1=1;AC1=2;DP4=0,0,92,100;MQ=48;FQ=-289.528       GT:PL   1/1:255,255,0
+```
+
+Using GATK for calling variants
+-------------------------------
+
+The [HaplotypeCaller](https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php) is capable of calling SNPs and indels simultaneously via local de-novo assembly of haplotypes in an active region. Firstly, [download GATK](https://www.broadinstitute.org/gatk/download/) and then unzip the file:
+
+
+```
+tar -xjf GenomeAnalysisTK-3.4-0.tar.bz2
+```
+
+Firstly we need to setup Picard to prepare our reference fasta file:
+
+```
+git clone https://github.com/broadinstitute/picard.git
+cd picard
+git clone https://github.com/samtools/htsjdk.git
+cd htsjdk
+ant htsjdk-jar
+cd ..
+ant -lib lib/ant package-commands
+```
+
+Some necessary steps before running HaplotypeCaller:
+
+```
+java -jar picard/dist/picard.jar CreateSequenceDictionary R= test_31.fa O= test_31.dict
+samtools faidx test_31.fa
+java -jar picard/dist/picard.jar AddOrReplaceReadGroups \
+INPUT=l100_n1000000_d400_31_1.bam \
+OUTPUT=l100_n1000000_d400_31_1_rg.bam \
+RGLB=test \
+RGPL=illumina \
+RGPU=test \
+RGSM=test
+#index
+samtools index l100_n1000000_d400_31_1_rg.bam
+```
+
+Now to call variants:
+
+```
+java -Xmx4G -jar GenomeAnalysisTK.jar -R test_31.fa -T HaplotypeCaller -I l100_n1000000_d400_31_1_rg.bam -o l100_n1000000_d400_31_1_hc.vcf
+```
+
+Comparing VCF files
+-------------------
+
+Firstly download [VCFtools](http://sourceforge.net/projects/vcftools/files/)
+
+```
+tar -xzf vcftools_0.1.12b.tar.gz 
+cd vcftools_0.1.12b
+make
+```
+
+Compare VCF files using VCFtools:
+
+```
+bcftools convert -O v -o l100_n1000000_d400_31_1.consensus.vcf l100_n1000000_d400_31_1.consensus.bcf
+a=l100_n1000000_d400_31_1.consensus.vcf
+b=l100_n1000000_d400_31_1_hc.vcf
+vcftools_0.1.12b/bin/vcftools --vcf $a --diff $b --out compare
+
+VCFtools - v0.1.12b
+(C) Adam Auton and Anthony Marcketta 2009
+
+Parameters as interpreted:
+	--vcf l100_n1000000_d400_31_1.consensus.vcf
+	--out compare
+	--diff l100_n1000000_d400_31_1_hc.vcf
+
+After filtering, kept 1 out of 1 Individuals
+Comparing individuals in VCF files...
+N_combined_individuals:	2
+N_individuals_common_to_both_files:	0
+N_individuals_unique_to_file1:	1
+N_individuals_unique_to_file2:	1
+Comparing sites in VCF files...
+Found 6572 sites common to both files.
+Found 996385 sites only in main file.
+Found 0 sites only in second file.
+Found 3303 non-matching overlapping sites.
+After filtering, kept 1006260 out of a possible 1006260 Sites
+Run Time = 3.00 seconds
 ```
