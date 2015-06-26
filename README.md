@@ -15,6 +15,7 @@ SEED=31
 REF_SIZE=1000000
 REF="test_" + "$SEED" + ".fa"
 REF_MUT="test_mutated.fa"
+REF_MUT_LOG="test_mutated.log"
 MUT_PC=0.01
 //READ_NO=300000
 READ_NO=1000000
@@ -131,6 +132,20 @@ Firstly download [VCFtools](http://sourceforge.net/projects/vcftools/files/)
 tar -xzf vcftools_0.1.12b.tar.gz 
 cd vcftools_0.1.12b
 make
+```
+
+How many variants using SAMtools?
+
+```
+cat l100_n1000000_d400_31_1.consensus.vcf | grep -v "^#" | awk '$5!="." {print}' | wc -l
+    9892
+```
+
+How many variants using HaplotypeCaller?
+
+```
+cat l100_n1000000_d400_31_1_hc.vcf | grep -v "^#" | awk '$5!="." {print}' | wc -l
+    9875
 ```
 
 Compare VCF files using VCFtools:

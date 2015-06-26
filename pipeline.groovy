@@ -2,6 +2,7 @@ SEED=31
 REF_SIZE=1000000
 REF="test_" + "$SEED" + ".fa"
 REF_MUT="test_mutated.fa"
+REF_MUT_LOG="test_mutated.log"
 MUT_PC=0.01
 //READ_NO=300000
 READ_NO=1000000
@@ -19,7 +20,7 @@ index_ref = {
 
 mutate_ref = {
    // Usage: ./mutate_fasta.pl <infile.fa> <mutation percent> <seed>
-   exec "script/mutate_fasta.pl $REF $MUT_PC $SEED > $REF_MUT"
+   exec "script/mutate_fasta.pl $REF $MUT_PC $SEED > $REF_MUT 2> $REF_MUT_LOG"
 }
 
 random_read = {
