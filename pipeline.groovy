@@ -9,13 +9,18 @@ READ_NO=1000000
 READ_LEN=100
 INNER_DIST=400
 
+// produce() will create the file, which can be referred to as $output
+// and this output file will serve as the input file, which can be
+// referred to as $input, in the next step of the pipeline
 random_ref = {
-   // Usage: generate_random_seq.pl <bp> <seed>
-   exec "script/generate_random_seq.pl $REF_SIZE $SEED > $REF"
+   produce("$REF"){
+      // Usage: generate_random_seq.pl <bp> <seed>
+      exec "script/generate_random_seq.pl $REF_SIZE $SEED > $output"
+   }
 }
 
 index_ref = {
-   exec "bwa index $REF"
+   exec "bwa index $input"
 }
 
 mutate_ref = {
