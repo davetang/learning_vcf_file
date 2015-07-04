@@ -1,6 +1,5 @@
-SEED=31
 REF_SIZE=1000000
-REF="test_" + "$SEED" + ".fa"
+REF="test_31.fa"
 REF_MUT="test_mutated.fa"
 REF_MUT_LOG="test_mutated.log"
 MUT_PC=0.01
@@ -15,22 +14,31 @@ INNER_DIST=400
 random_ref = {
    produce("$REF"){
       // Usage: generate_random_seq.pl <bp> <seed>
-      exec "script/generate_random_seq.pl $REF_SIZE $SEED > $output"
+      exec "script/generate_random_seq.pl $REF_SIZE 31 > $output"
    }
 }
 
 index_ref = {
    exec "bwa index $input"
+   forward input
 }
 
 mutate_ref = {
-   // Usage: ./mutate_fasta.pl <infile.fa> <mutation percent> <seed>
-   exec "script/mutate_fasta.pl $REF $MUT_PC $SEED > $REF_MUT 2> $REF_MUT_LOG"
+   def my_output = input;
+   produce(my_output){
+      for(int i=1; i<3; i++){
+         // Usage: ./mutate_fasta.pl <infile.fa> <mutation percent> <seed>
+         // exec "script/mutate_fasta.pl $input $MUT_PC $i > $my_output.$i 2> $my_output.$i.log"
+         exec "echo $my_output"
+      }
+   }
 }
+
+Bpipe.run { random_ref + index_ref + mutate_ref }
 
 random_read = {
    // Usage: random_paired_end.pl <infile.fa> <read length> <number of pairs> <inner mate distance> <seed>
-   exec "script/random_paired_end.pl $REF_MUT $READ_LEN $READ_NO $INNER_DIST $SEED"
+   exec "script/random_paired_end.pl $REF_MUT $READ_LEN $READ_NO $INNER_DIST 31"
 }
 
 bwa_align = {
@@ -74,4 +82,4 @@ consensus = {
    }
 }
 
-Bpipe.run { random_ref + index_ref + mutate_ref + random_read + bwa_align + bwa_index + mpileup + consensus }
+// Bpipe.run { random_ref + index_ref + mutate_ref + random_read + bwa_align + bwa_index + mpileup + consensus }
