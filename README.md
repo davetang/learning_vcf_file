@@ -178,3 +178,7 @@ Found 3303 non-matching overlapping sites.
 After filtering, kept 1006260 out of a possible 1006260 Sites
 Run Time = 3.00 seconds
 ```
+Useful links
+------------
+
+A very useful thread on SEQanswers on learning about the VCF format: <http://seqanswers.com/forums/showthread.php?t=9345>
