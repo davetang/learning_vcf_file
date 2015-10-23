@@ -1,7 +1,10 @@
 #!/usr/bin/env Rscript
+#
+# Usage: plot_vcf.R <infile.vcf>
+#
 
 if("VariantAnnotation" %in% rownames(installed.packages()) == FALSE){
-  stop('Please install the VariantAnnotation package from Biocondcutor')
+  stop('Please install the VariantAnnotation package from Bioconductor')
 }
 
 args <- commandArgs(TRUE)
@@ -28,17 +31,13 @@ for (i in rownames(info_df)){
   my_command <- paste('info(vcf)$', i, sep = '')
   x <- 'x'
   assign(x, eval(parse(text=my_command)))
+  x <- x[!is.na(x)]
+  if (length(x) == 0){
+    next
+  }
   if (info_df[i, 2] == 'Integer'){
-    x <- x[!is.na(x)]
-    if (length(x)==0){
-      next
-    }
     barplot(table(unlist(x)), main=i, las=2, xlab='Count')
   } else if (info_df[i, 2] == 'Float'){
-    x <- x[!is.na(x)]
-    if (length(x)==0){
-      next
-    }
     hist(unlist(x), main=i, breaks=50, xlab='Breaks')
   }
 }
