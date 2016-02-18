@@ -178,6 +178,26 @@ Found 3303 non-matching overlapping sites.
 After filtering, kept 1006260 out of a possible 1006260 Sites
 Run Time = 3.00 seconds
 ```
+
+Extracting INFO field
+---------------------
+
+Use BCFtools and the `query` subcommand:
+
+```
+bcftools query -f 'AN=%AN\tAC=%AC\tAF=%AF\tVQSLOD=%VQSLOD\n' UK10K_COHORT.20140722.sites.vcf.gz | head
+AN=7562 AC=7226 AF=0.955567     VQSLOD=0.7589
+AN=7562 AC=198  AF=0.026184     VQSLOD=7.6642
+AN=7562 AC=753  AF=0.099577     VQSLOD=7.6642
+AN=7562 AC=9    AF=0.00119      VQSLOD=5.6082
+AN=7562 AC=1    AF=0.000132     VQSLOD=2.2368
+AN=7562 AC=2    AF=0.000264     VQSLOD=1.9834
+AN=7562 AC=3221 AF=0.425946     VQSLOD=0.9475
+AN=7562 AC=605  AF=0.080005     VQSLOD=0.9475
+AN=7562 AC=484  AF=0.064004     VQSLOD=7.477
+AN=7562 AC=113  AF=0.014943     VQSLOD=7.477
+```
+
 Useful links
 ------------
 
