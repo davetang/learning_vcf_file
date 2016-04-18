@@ -7,7 +7,7 @@ Natural selection relies on three conditions:
 2. The genetic variation must be heritable
 3. The genetic variation results in differing fitness
 
-The _de facto_ file format for representing genetic variation is the Variant Call Format (VCF). A good starting point for learning about the VCF is this [poster](http://vcftools.sourceforge.net/VCF-poster.pdf). The binary equivalent of a VCF file is a BCF file, akin to the SAM and BAM format. BCFtools is used to view and manipulate VCF/BCF files. I have included an example BCF file (aln_consensus.bcf) in this repository to demonstrate the various utilities of BCFtools. If you are interested in how this file was generated refer to [Creating a test file](#Creating a test file).
+The _de facto_ file format for representing genetic variation is the Variant Call Format (VCF). A good starting point for learning about the VCF is this [poster](http://vcftools.sourceforge.net/VCF-poster.pdf). The binary equivalent of a VCF file is a BCF file, akin to the SAM and BAM format. BCFtools is used to view and manipulate VCF/BCF files. I have included an example BCF file (aln_consensus.bcf) in this repository to demonstrate the various utilities of BCFtools. If you are interested in how this file was generated refer to [Creating a test file](#Creating-a-test-file).
 
 # Usage
 
@@ -60,16 +60,16 @@ Use the appropriately named subcommand ```view```.
 
 ~~~~{.bash}
 bcftools view aln_consensus.bcf | grep -v "^#" | head
-1000000 2       .       G       .       32.995  .       DP=1;MQ0F=0;AF1=0;AC1=0;DP4=1,0,0,0;MQ=60;FQ=-29.9912   GT:PL   0/0:0
-1000000 3       .       T       .       35.995  .       DP=2;MQ0F=0;AF1=0;AC1=0;DP4=2,0,0,0;MQ=60;FQ=-32.988    GT:PL   0/0:0
-1000000 4       .       C       .       35.995  .       DP=2;MQ0F=0;AF1=0;AC1=0;DP4=2,0,0,0;MQ=60;FQ=-32.988    GT:PL   0/0:0
-1000000 5       .       A       .       47.9942 .       DP=6;MQ0F=0;AF1=0;AC1=0;DP4=6,0,0,0;MQ=60;FQ=-44.9861   GT:PL   0/0:0
-1000000 6       .       C       .       50.9942 .       DP=7;MQ0F=0;AF1=0;AC1=0;DP4=7,0,0,0;MQ=60;FQ=-47.986    GT:PL   0/0:0
-1000000 7       .       A       .       50.9942 .       DP=7;MQ0F=0;AF1=0;AC1=0;DP4=7,0,0,0;MQ=60;FQ=-47.986    GT:PL   0/0:0
-1000000 8       .       G       .       59.9942 .       DP=10;MQ0F=0;AF1=0;AC1=0;DP4=10,0,0,0;MQ=60;FQ=-56.9861 GT:PL   0/0:0
-1000000 9       .       A       .       62.9943 .       DP=11;MQ0F=0;AF1=0;AC1=0;DP4=11,0,0,0;MQ=60;FQ=-59.9861 GT:PL   0/0:0
-1000000 10      .       A       .       65.9943 .       DP=12;MQ0F=0;AF1=0;AC1=0;DP4=12,0,0,0;MQ=60;FQ=-62.9862 GT:PL   0/0:0
-1000000 11      .       G       .       65.9943 .       DP=12;MQ0F=0;AF1=0;AC1=0;DP4=12,0,0,0;MQ=60;FQ=-62.9862 GT:PL   0/0:0
+1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
+1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
+1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
+1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
+1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
+1000000 451     .       AGG     AGGG    214.458 .       INDEL;IDV=127;IMF=0.969466;DP=131;VDB=0.0478427;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,87,42;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
+1000000 915     .       G       GC      214.458 .       INDEL;IDV=179;IMF=0.913265;DP=196;VDB=0.929034;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,89,101;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
+1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
+1000000 1062    .       ATT     AT      214.458 .       INDEL;IDV=187;IMF=0.958974;DP=195;VDB=0.244824;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,92;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
+1000000 1207    .       T       G       221.999 .       DP=177;VDB=0.628515;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,79;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
 ~~~~
 
 # BCF to VCF
@@ -81,16 +81,16 @@ bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # we can use cat to view the file
 cat aln_consensus.vcf | grep -v "^#" | head
-1000000 2       .       G       .       32.995  .       DP=1;MQ0F=0;AF1=0;AC1=0;DP4=1,0,0,0;MQ=60;FQ=-29.9912   GT:PL   0/0:0
-1000000 3       .       T       .       35.995  .       DP=2;MQ0F=0;AF1=0;AC1=0;DP4=2,0,0,0;MQ=60;FQ=-32.988    GT:PL   0/0:0
-1000000 4       .       C       .       35.995  .       DP=2;MQ0F=0;AF1=0;AC1=0;DP4=2,0,0,0;MQ=60;FQ=-32.988    GT:PL   0/0:0
-1000000 5       .       A       .       47.9942 .       DP=6;MQ0F=0;AF1=0;AC1=0;DP4=6,0,0,0;MQ=60;FQ=-44.9861   GT:PL   0/0:0
-1000000 6       .       C       .       50.9942 .       DP=7;MQ0F=0;AF1=0;AC1=0;DP4=7,0,0,0;MQ=60;FQ=-47.986    GT:PL   0/0:0
-1000000 7       .       A       .       50.9942 .       DP=7;MQ0F=0;AF1=0;AC1=0;DP4=7,0,0,0;MQ=60;FQ=-47.986    GT:PL   0/0:0
-1000000 8       .       G       .       59.9942 .       DP=10;MQ0F=0;AF1=0;AC1=0;DP4=10,0,0,0;MQ=60;FQ=-56.9861 GT:PL   0/0:0
-1000000 9       .       A       .       62.9943 .       DP=11;MQ0F=0;AF1=0;AC1=0;DP4=11,0,0,0;MQ=60;FQ=-59.9861 GT:PL   0/0:0
-1000000 10      .       A       .       65.9943 .       DP=12;MQ0F=0;AF1=0;AC1=0;DP4=12,0,0,0;MQ=60;FQ=-62.9862 GT:PL   0/0:0
-1000000 11      .       G       .       65.9943 .       DP=12;MQ0F=0;AF1=0;AC1=0;DP4=12,0,0,0;MQ=60;FQ=-62.9862 GT:PL   0/0:0
+1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
+1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
+1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
+1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
+1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
+1000000 451     .       AGG     AGGG    214.458 .       INDEL;IDV=127;IMF=0.969466;DP=131;VDB=0.0478427;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,87,42;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
+1000000 915     .       G       GC      214.458 .       INDEL;IDV=179;IMF=0.913265;DP=196;VDB=0.929034;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,89,101;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
+1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
+1000000 1062    .       ATT     AT      214.458 .       INDEL;IDV=187;IMF=0.958974;DP=195;VDB=0.244824;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,92;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
+1000000 1207    .       T       G       221.999 .       DP=177;VDB=0.628515;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,79;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
 ~~~~
 
 # Filtering for different types of mutations
@@ -135,16 +135,16 @@ The VCF has various information fields; use the ```query``` subcommand to extrac
 
 ~~~~{.bash}
 bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
-DP=1    AF1=0   AC1=0   MQ=60
-DP=2    AF1=0   AC1=0   MQ=60
-DP=2    AF1=0   AC1=0   MQ=60
-DP=6    AF1=0   AC1=0   MQ=60
-DP=7    AF1=0   AC1=0   MQ=60
-DP=7    AF1=0   AC1=0   MQ=60
-DP=10   AF1=0   AC1=0   MQ=60
-DP=11   AF1=0   AC1=0   MQ=60
-DP=12   AF1=0   AC1=0   MQ=60
-DP=12   AF1=0   AC1=0   MQ=60
+DP=57   AF1=1   AC1=2   MQ=60
+DP=68   AF1=1   AC1=2   MQ=60
+DP=84   AF1=1   AC1=2   MQ=60
+DP=112  AF1=1   AC1=2   MQ=60
+DP=101  AF1=1   AC1=2   MQ=60
+DP=131  AF1=1   AC1=2   MQ=60
+DP=196  AF1=1   AC1=2   MQ=60
+DP=203  AF1=1   AC1=2   MQ=60
+DP=195  AF1=1   AC1=2   MQ=60
+DP=177  AF1=1   AC1=2   MQ=60
 ~~~~
 
 Combining with the ```view``` subcommand:
@@ -201,105 +201,116 @@ bcftools call -c -o aln_consensus.bcf -O b aln.bcf
 
 # Using GATK for calling variants
 
-This section needs to be updated.
+We'll use another variant caller to call variants and compare them to the variants called by BCFtools. The [HaplotypeCaller](https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php) is capable of calling SNPs and indels simultaneously via local de-novo assembly of haplotypes in an active region. Firstly, [download](https://www.broadinstitute.org/gatk/download/) and extract GATK; you'll need to register an account and to agree to the terms and conditions.
 
-The [HaplotypeCaller](https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php) is capable of calling SNPs and indels simultaneously via local de-novo assembly of haplotypes in an active region. Firstly, [download GATK](https://www.broadinstitute.org/gatk/download/) and then unzip the file:
+~~~~{.bash}
+tar -xjf GenomeAnalysisTK-3.5.tar.bz2 
+~~~~
 
+Then we need to setup Picard to prepare our reference fasta file:
 
-```
-tar -xjf GenomeAnalysisTK-3.4-0.tar.bz2
-```
-
-Firstly we need to setup Picard to prepare our reference fasta file:
-
-```
+~~~~{.bash}
 git clone https://github.com/broadinstitute/picard.git
 cd picard
 git clone https://github.com/samtools/htsjdk.git
 cd htsjdk
+# install ant on Debian/Ubuntu
+# sudo apt-get install ant
 ant htsjdk-jar
 cd ..
 ant -lib lib/ant package-commands
-```
+cd ..
+~~~~
 
 Some necessary steps before running HaplotypeCaller:
 
-```
-java -jar picard/dist/picard.jar CreateSequenceDictionary R= test_31.fa O= test_31.dict
+~~~~{.bash}
+java -jar picard/dist/picard.jar CreateSequenceDictionary R=test_31.fa O=test_31.dict
 samtools faidx test_31.fa
+
+# add read groups to the BAM file
 java -jar picard/dist/picard.jar AddOrReplaceReadGroups \
-INPUT=l100_n1000000_d400_31_1.bam \
-OUTPUT=l100_n1000000_d400_31_1_rg.bam \
+INPUT=aln.bam \
+OUTPUT=aln_rg.bam \
 RGLB=test \
 RGPL=illumina \
 RGPU=test \
 RGSM=test
-#index
-samtools index l100_n1000000_d400_31_1_rg.bam
-```
+
+# check out the header
+# to see the read groups we added
+samtools view -H aln_rg.bam 
+@HD     VN:1.5  SO:coordinate
+@SQ     SN:1000000      LN:1000000
+@RG     ID:1    LB:test PL:illumina     SM:test PU:test
+@PG     ID:bwa  PN:bwa  VN:0.7.13-r1126 CL:bwa/bwa mem test_31.fa l100_n1000000_d400_31_1.fq l100_n1000000_d400_31_2.fq
+
+# index
+samtools index aln_rg.bam
+~~~~
 
 Now to call variants:
 
-```
-java -Xmx4G -jar GenomeAnalysisTK.jar -R test_31.fa -T HaplotypeCaller -I l100_n1000000_d400_31_1_rg.bam -o l100_n1000000_d400_31_1_hc.vcf
-```
+~~~~{.bash}
+java -Xmx4G -jar GenomeAnalysisTK.jar -R test_31.fa -T HaplotypeCaller -I aln_rg.bam -o aln_rg.vcf
+~~~~
 
 # Comparing VCF files
 
-This section needs to be udpated.
+How many variants were called using BCFtools?
 
-Firstly download [VCFtools](http://sourceforge.net/projects/vcftools/files/)
+~~~~{.bash}
+# convert BCF to VCF
+bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
-```
-tar -xzf vcftools_0.1.12b.tar.gz 
-cd vcftools_0.1.12b
-make
-```
-
-How many variants using SAMtools?
-
-```
-cat l100_n1000000_d400_31_1.consensus.vcf | grep -v "^#" | awk '$5!="." {print}' | wc -l
-    9892
-```
+# count
+cat aln_consensus.vcf | grep -v "^#" | wc -l
+9704
+~~~~
 
 How many variants using HaplotypeCaller?
 
-```
-cat l100_n1000000_d400_31_1_hc.vcf | grep -v "^#" | awk '$5!="." {print}' | wc -l
-    9875
-```
+~~~~{.bash}
+cat aln_rg.vcf | grep -v "^#" | wc -l
+9875
+~~~~
 
-Compare VCF files using VCFtools:
+## Decompose and normalise
 
-```
-bcftools convert -O v -o l100_n1000000_d400_31_1.consensus.vcf l100_n1000000_d400_31_1.consensus.bcf
-a=l100_n1000000_d400_31_1.consensus.vcf
-b=l100_n1000000_d400_31_1_hc.vcf
-vcftools_0.1.12b/bin/vcftools --vcf $a --diff $b --out compare
+Despite the VCF being a standard, there are still differences between VCF files. To ensure the VCF files are unified, we'll use the ```vt``` program to decompose and normalise the variants. For more information, refer to this [blog post](http://davetang.org/muse/2015/12/16/getting-acquainted-analysing-dna-sequencing-data/).
 
-VCFtools - v0.1.12b
-(C) Adam Auton and Anthony Marcketta 2009
+~~~~{.bash}
+# download and compile
+git clone https://github.com/atks/vt.git
+cd vt
+make
+make test
 
-Parameters as interpreted:
-	--vcf l100_n1000000_d400_31_1.consensus.vcf
-	--out compare
-	--diff l100_n1000000_d400_31_1_hc.vcf
+# decompose and normalise
+vt/vt decompose -s aln_consensus.vcf | vt normalize -r test_31.fa - > aln_consensus.vt.vcf
 
-After filtering, kept 1 out of 1 Individuals
-Comparing individuals in VCF files...
-N_combined_individuals:	2
-N_individuals_common_to_both_files:	0
-N_individuals_unique_to_file1:	1
-N_individuals_unique_to_file2:	1
-Comparing sites in VCF files...
-Found 6572 sites common to both files.
-Found 996385 sites only in main file.
-Found 0 sites only in second file.
-Found 3303 non-matching overlapping sites.
-After filtering, kept 1006260 out of a possible 1006260 Sites
-Run Time = 3.00 seconds
-```
+# this step doesn't do anything because
+# the GATK variant file is already decomposed and normalised
+vt/vt decompose -s aln_rg.vcf | vt normalize -r test_31.fa - > aln_rg.vt.vcf
+~~~~
+
+## SnpSift
+
+We can use [SnpSift](http://snpeff.sourceforge.net/SnpSift.html) to compare VCF files; I have a [blog post](http://davetang.org/muse/2015/08/26/vcf-concordance/) with more information.
+
+~~~~{.bash}
+# download
+wget http://downloads.sourceforge.net/project/snpeff/snpEff_latest_core.zip
+unzip snpEff_latest_core.zip
+~~~~
+
+~~~~{.bash}
+# run SnpSift
+java -Xmx1g -jar \
+snpEff/SnpSift.jar concordance \
+-v aln_consensus.vt.vcf aln_rg.vt.vcf \
+> concordance_by_variant.txt
+~~~~
 
 # Useful links
 

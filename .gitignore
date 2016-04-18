@@ -1,10 +1,15 @@
 test*
-commandlog.txt
 .bpipe
 l[0-9]*
 *.swp
 *.tar.bz2
 *.vcf
+*.bam
+*.bai
+*.idx
+*.txt
+vt*
+snpEff*
 GenomeAnalysisTK.jar
 resources
 picard

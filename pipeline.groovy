@@ -80,7 +80,7 @@ mpileup = {
 
 consensus = {
    produce("aln_consensus.bcf"){
-      exec "$BCFTOOLS call -c -o $output -O b $input"
+      exec "$BCFTOOLS call -v -c -o $output -O b $input"
    }
 }
 
