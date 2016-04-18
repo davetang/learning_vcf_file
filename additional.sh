@@ -30,7 +30,7 @@ unzip snpEff_latest_core.zip
 java -jar picard/dist/picard.jar CreateSequenceDictionary R=test_31.fa O=test_31.dict
 
 # faidx
-samtools faidx test_31.fa
+samtools-1.3/samtools faidx test_31.fa
 
 # add read groups to the BAM file
 java -jar picard/dist/picard.jar AddOrReplaceReadGroups \
@@ -42,13 +42,13 @@ RGPU=test \
 RGSM=test
 
 # index
-samtools index aln_rg.bam
+samtools-1.3/samtools index aln_rg.bam
 
 # call variants
 java -Xmx4G -jar GenomeAnalysisTK.jar -R test_31.fa -T HaplotypeCaller -I aln_rg.bam -o aln_rg.vcf
 
 # convert BCF to VCF
-bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+bcftools-1.3/bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # decompose and normalise
 vt/vt decompose -s aln_consensus.vcf | vt normalize -r test_31.fa - > aln_consensus.vt.vcf
