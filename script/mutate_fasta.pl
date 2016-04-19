@@ -77,10 +77,13 @@ sub mutate_seq {
 
       elsif ($type eq 'delete'){
          ++$delete;
+         # breakpoint and join with loss of a base
          my $a = substr($s, 0, $rand_ind-1);
          my $b = substr($s, $rand_ind, length($s));
+         my $rand_nuc = substr($s, $rand_ind-1, 1);
          $s = $a . $b;
          splice @track, $rand_ind, 1;
+         $track[$rand_ind] = "$type: $rand_nuc";
       }
 
       elsif ($type eq 'insert'){
@@ -97,6 +100,8 @@ sub mutate_seq {
    for (my $i=0; $i<scalar(@track); ++$i){
       warn $i+1,"\t$track[$i]\n" if $track[$i] !~ /^\d/;
    }
+   my $total = $point + $delete + $insert;
    warn "Point: $point\nDelete: $delete\nInsert: $insert\n";
+   warn "Total: $total\n";
    return($s);
 }

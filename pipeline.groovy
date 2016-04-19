@@ -1,12 +1,20 @@
 // Variables
+//
+// size of reference sequence
 REF_SIZE=1000000
+// name of reference sequence
 REF="test_31.fa"
+// name of mutated reference
 REF_MUT="test_mutated.fa"
+// name of log file containing mutations
 REF_MUT_LOG="test_mutated.log"
+// ~1% mutation
 MUT_PC=0.01
-//READ_NO=300000
+// 1 million reads
 READ_NO=1000000
+// 100 bp reads
 READ_LEN=100
+// inner mate distance
 INNER_DIST=400
 
 // Programs
@@ -35,15 +43,15 @@ index_ref = {
 
 mutate_ref = {
    // def my_output = input;
-   produce("$REF_MUT"){
-      exec "script/mutate_fasta.pl $input $MUT_PC 31 > $output 2> $REF_MUT_LOG"
+   produce("$REF_MUT", "$REF_MUT_LOG"){
+      exec "script/mutate_fasta.pl $input $MUT_PC 31 > $output1 2> $output2"
    }
 }
 
 random_read = {
    produce("*_1.fq", "*_2.fq"){
       // Usage: random_paired_end.pl <infile.fa> <read length> <number of pairs> <inner mate distance> <seed>
-      exec "script/random_paired_end.pl $input $READ_LEN $READ_NO $INNER_DIST 31"
+      exec "script/random_paired_end.pl $input1 $READ_LEN $READ_NO $INNER_DIST 31"
    }
 }
 
