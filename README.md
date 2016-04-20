@@ -163,6 +163,61 @@ DP=193  AF1=1   AC1=2   MQ=60
 DP=211  AF1=1   AC1=2   MQ=60
 ~~~~
 
+# Filtering VCF file using the INFO field/s
+
+Use vcffilter from [vcflib](https://github.com/vcflib/vcflib), which is a C++ library for parsing and manipulating VCF files.
+
+~~~~{.bash}
+git clone --recursive https://github.com/vcflib/vcflib.git
+cd vcflib
+make
+cd ..
+
+# create VCF from BCF using
+# bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+# filter variants based on depth (DP)
+vcflib/bin/vcffilter -f "DP > 200" aln_consensus.vcf | grep -v "^#" | head
+1000000 1009    .       G       C       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,94,101;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.259231    GT:PL   1/1:255,255,0
+1000000 1405    .       A       T       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,104,89;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.0898873   GT:PL   1/1:255,255,0
+1000000 1449    .       GT      G       214.458 .       AC1=2;AF1=1;DP=216;DP4=0,0,101,109;FQ=-289.528;IDV=210;IMF=0.972222;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.783773;INDEL        GT:PL   1/1:255,255,0
+1000000 1775    .       C       A       221.999 .       AC1=2;AF1=1;DP=225;DP4=0,0,101,115;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.413906   GT:PL   1/1:255,255,0
+1000000 2180    .       G       C       221.999 .       AC1=2;AF1=1;DP=211;DP4=0,0,97,105;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.123382    GT:PL   1/1:255,255,0
+1000000 2340    .       TGGGGG  TGGGG   214.458 .       AC1=2;AF1=1;DP=201;DP4=0,0,100,98;FQ=-289.528;IDV=195;IMF=0.970149;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.064618;INDEL GT:PL   1/1:255,255,0
+1000000 2717    .       CAAAA   CAAA    214.458 .       AC1=2;AF1=1;DP=211;DP4=0,0,99,105;FQ=-289.528;IDV=202;IMF=0.957346;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.251202;INDEL GT:PL   1/1:255,255,0
+1000000 3059    .       T       C       221.999 .       AC1=2;AF1=1;DP=206;DP4=0,0,97,100;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.697352    GT:PL   1/1:255,255,0
+1000000 3114    .       TC      T       214.458 .       AC1=2;AF1=1;DP=209;DP4=0,0,76,77;FQ=-289.528;IDV=203;IMF=0.971292;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=2.55116e-09;INDEL       GT:PL   1/1:255,255,0
+1000000 3148    .       CGGG    CGG     94.4565 .       AC1=2;AF1=1;DP=211;DP4=0,0,19,18;FQ=-145.526;IDV=196;IMF=0.92891;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693141;VDB=0.603852;INDEL   GT:PL   1/1:135,111,0
+
+# filter on two INFO fields
+vcflib/bin/vcffilter -f "DP > 200 & VDB > 0.5" aln_consensus.vcf | grep -v "^#" | head
+1000000 1449    .       GT      G       214.458 .       AC1=2;AF1=1;DP=216;DP4=0,0,101,109;FQ=-289.528;IDV=210;IMF=0.972222;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.783773;INDEL        GT:PL   1/1:255,255,0
+1000000 3059    .       T       C       221.999 .       AC1=2;AF1=1;DP=206;DP4=0,0,97,100;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.697352    GT:PL   1/1:255,255,0
+1000000 3148    .       CGGG    CGG     94.4565 .       AC1=2;AF1=1;DP=211;DP4=0,0,19,18;FQ=-145.526;IDV=196;IMF=0.92891;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693141;VDB=0.603852;INDEL   GT:PL   1/1:135,111,0
+1000000 3876    .       C       T       221.999 .       AC1=2;AF1=1;DP=223;DP4=0,0,98,112;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.839919    GT:PL   1/1:255,255,0
+1000000 4079    .       C       T       221.999 .       AC1=2;AF1=1;DP=212;DP4=0,0,92,109;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.579433    GT:PL   1/1:255,255,0
+1000000 4173    .       CT      C       214.458 .       AC1=2;AF1=1;DP=207;DP4=0,0,106,91;FQ=-289.528;IDV=197;IMF=0.951691;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.874655;INDEL GT:PL   1/1:255,255,0
+1000000 4642    .       C       T       221.999 .       AC1=2;AF1=1;DP=205;DP4=0,0,94,105;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.523597    GT:PL   1/1:255,255,0
+1000000 4676    .       T       C       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,96,102;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.611013    GT:PL   1/1:255,255,0
+1000000 4689    .       T       C       221.999 .       AC1=2;AF1=1;DP=216;DP4=0,0,98,109;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.879521    GT:PL   1/1:255,255,0
+1000000 5121    .       A       T       221.999 .       AC1=2;AF1=1;DP=213;DP4=0,0,105,104;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.743159   GT:PL   1/1:255,255,0
+~~~~
+
+# Check whether the REF sequence is correct
+
+Use vcfcheck from [vcflib](https://github.com/vcflib/vcflib).
+
+~~~~{.bash}
+# make another copy of the VCF file
+cp aln_consensus.vcf blah.vcf
+
+# manually change REF sequence at pos 336
+# vcfcheck identifies the mismatch and reports it
+vcflib/bin/vcfcheck -f test_31.fa blah.vcf
+mismatched reference T should be A at 1000000:336
+
+rm blah.vcf
+~~~~
+
 # Creating a test file
 
 The ```aln_consensus.bcf``` file was created from a simple pipeline. Firstly a random reference sequence was generated; genetic variants are created by modifying the reference sequence, i.e. introducing mutations, into a mutated copy and sequence reads were derived from the mutated reference sequence. Lastly, the reads were mapped back to the original non-mutated reference sequence. The ```pipeline.groovy``` file contains the pipeline, which is written in [Groovy](http://www.groovy-lang.org/) and processed by Bpipe. I have a [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/) that provides more information.
@@ -274,6 +329,24 @@ How many variants using HaplotypeCaller?
 cat aln_rg.vcf | grep -v "^#" | wc -l
 9875
 ~~~~
+
+My `mutate_fasta.pl` script outputs a log of the insertions, deletions, and substitutions made to a reference sequence. The pipeline stores this in the file `test_mutated.log`. In total there were 10,000 variants, since the mutation percent was set to 1% for a reference sequence of 1,000,000 bp.
+
+~~~~{.bash}
+tail test_mutated.log
+999272  point: G -> C
+999502  point: G -> A
+999579  point: G -> T
+999704  insert: G
+999907  point: T -> A
+999981  delete: C
+Point: 3319
+Delete: 3341
+Insert: 3340
+Total: 10000
+~~~~
+
+HaplotypeCaller was able to call 98.8% of the variants.
 
 ## Decompose and normalise
 
