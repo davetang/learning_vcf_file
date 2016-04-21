@@ -378,13 +378,139 @@ wget http://downloads.sourceforge.net/project/snpeff/snpEff_latest_core.zip
 unzip snpEff_latest_core.zip
 ~~~~
 
+SnpSift will only compare samples with the same name, so we need to rename the sample name in one of the files to match the other. The GATK sample name was based on the read group information we added with Picard, which was `test`. We can use `sed` to change the sample name to test in the VCF file created using BCFtools.
+
 ~~~~{.bash}
+# rename sample name to test
+cat aln_consensus.vt.vcf | sed 's/\taln.bam/\ttest/' > aln_consensus.vt.renamed.vcf
+
 # run SnpSift
 java -Xmx1g -jar \
 snpEff/SnpSift.jar concordance \
--v aln_consensus.vt.vcf aln_rg.vt.vcf \
+-v aln_consensus.vt.renamed vcf aln_rg.vt.vcf \
 > concordance_by_variant.txt
 ~~~~
+
+SnpSift will create three summary files; the `concordance_aln_consensus_aln_rg.by_sample.txt` file will give a sample level summary of the concordance between the two VCF files. The file is more easily viewed with the columns transposed to rows.
+
+~~~~{.bash}
+cat concordance_aln_consensus_aln_rg.by_sample.txt | script/transpose.pl | column -t
+sample                                            test
+MISSING_ENTRY_aln_consensus/MISSING_ENTRY_aln_rg  0
+MISSING_ENTRY_aln_consensus/MISSING_GT_aln_rg     0
+MISSING_ENTRY_aln_consensus/REF                   0
+MISSING_ENTRY_aln_consensus/ALT_1                 0
+MISSING_ENTRY_aln_consensus/ALT_2                 302
+MISSING_GT_aln_consensus/MISSING_ENTRY_aln_rg     2
+MISSING_GT_aln_consensus/MISSING_GT_aln_rg        0
+MISSING_GT_aln_consensus/REF                      0
+MISSING_GT_aln_consensus/ALT_1                    0
+MISSING_GT_aln_consensus/ALT_2                    0
+REF/MISSING_ENTRY_aln_rg                          0
+REF/MISSING_GT_aln_rg                             0
+REF/REF                                           0
+REF/ALT_1                                         0
+REF/ALT_2                                         0
+ALT_1/MISSING_ENTRY_aln_rg                        13
+ALT_1/MISSING_GT_aln_rg                           0
+ALT_1/REF                                         0
+ALT_1/ALT_1                                       0
+ALT_1/ALT_2                                       7
+ALT_2/MISSING_ENTRY_aln_rg                        118
+ALT_2/MISSING_GT_aln_rg                           0
+ALT_2/REF                                         0
+ALT_2/ALT_1                                       0
+ALT_2/ALT_2                                       9518
+ERROR                                             48
+~~~~
+
+There are five categories: MISSING_ENTRY, MISSING_GT, REF, ALT_1, and ALT_2. For each variant in each file, the genotypes are compared. (ERROR refers to incompatible variants; the REF and ALT are different) If a variant was homozygous ALT in both files, ALT_2/ALT_2 will be incremented by 1. In the table above, we see that 9,518 variants were called homozygous ALT by both variant callers. 118 variants were called homozygous ALT by BCFtools but were missing, i.e. not called by GATK. 7 variants were (mistakenly) called heterozygous by BCFtools and homozygous ALT by GATK.  13 variants were (mistakenly) called heterozygous by BCFtools and missing in the GATK VCF file. 302 variants were not called by BCFtools but were called homozygous ALT by GATK.
+
+The `concordance_by_variant.txt` file will give a variant level summary. To get the column numbers of this file we can use a combination of command line tools.
+
+~~~~{.bash}
+cat concordance_by_variant.txt | head -1 | script/transpose.pl | nl
+     1  chr
+     2  pos
+     3  ref
+     4  alt
+     5  MISSING_ENTRY_aln_consensus/MISSING_ENTRY_aln_rg
+     6  MISSING_ENTRY_aln_consensus/MISSING_GT_aln_rg
+     7  MISSING_ENTRY_aln_consensus/REF
+     8  MISSING_ENTRY_aln_consensus/ALT_1
+     9  MISSING_ENTRY_aln_consensus/ALT_2
+    10  MISSING_GT_aln_consensus/MISSING_ENTRY_aln_rg
+    11  MISSING_GT_aln_consensus/MISSING_GT_aln_rg
+    12  MISSING_GT_aln_consensus/REF
+    13  MISSING_GT_aln_consensus/ALT_1
+    14  MISSING_GT_aln_consensus/ALT_2
+    15  REF/MISSING_ENTRY_aln_rg
+    16  REF/MISSING_GT_aln_rg
+    17  REF/REF
+    18  REF/ALT_1
+    19  REF/ALT_2
+    20  ALT_1/MISSING_ENTRY_aln_rg
+    21  ALT_1/MISSING_GT_aln_rg
+    22  ALT_1/REF
+    23  ALT_1/ALT_1
+    24  ALT_1/ALT_2
+    25  ALT_2/MISSING_ENTRY_aln_rg
+    26  ALT_2/MISSING_GT_aln_rg
+    27  ALT_2/REF
+    28  ALT_2/ALT_1
+    29  ALT_2/ALT_2
+    30  ERROR
+~~~~
+
+First 10 variants missing by GATK but called by BCFtools (column 25).
+
+~~~~{.bash}
+cat concordance_by_variant.txt | awk '$25 == 1 {print}' | column -t | head
+1000000  13250   A    AT    0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  36565   T    TTA   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  37667   A    C     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  37668   T    A     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  37670   C    T     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  46727   A    C     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  46729   C    T     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  46730   T    TC    0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  48289   C    G     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+1000000  48291   A    G     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
+~~~~
+
+First 10 variants missing by BCFtools but called by GATK (column 9).
+
+~~~~{.bash}
+cat concordance_by_variant.txt | awk '$9 == 1 {print}' | column -t | head
+1000000  1356    TG    T     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  1379    A     G     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  10452   T     G     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  35454   G     GT    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  36563   A     AT    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  37669   TC    T     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  48288   A     AG    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  48876   C     CA    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  52138   AT    A     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+1000000  52141   CTA   C     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+~~~~
+
+Check my mutation log.
+
+~~~~{.bash}
+cat test_mutated.log | awk '$1>37500 {print}' | head
+37535   insert: A
+37585   delete: T
+37670   insert: C
+37675   delete: C
+37850   point: A -> C
+37851   point: G -> T
+37940   point: A -> G
+37996   insert: T
+38094   insert: A
+38474   insert: T
+~~~~
+
+Both tools have difficulty calling the variants (INDELs) that occur in close proximity to each other. The positions in the mutation log are slightly off because insertions and deletions were added sequentially and the positions of variants will be affected by INDEL variants added afterwards.
 
 # Useful links
 
