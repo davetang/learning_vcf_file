@@ -165,7 +165,7 @@ DP=211  AF1=1   AC1=2   MQ=60
 
 # Filtering VCF file using the INFO field/s
 
-Use vcffilter from [vcflib](https://github.com/vcflib/vcflib), which is a C++ library for parsing and manipulating VCF files.
+Use `vcffilter` from [vcflib](https://github.com/vcflib/vcflib), which is a C++ library for parsing and manipulating VCF files.
 
 ~~~~{.bash}
 git clone --recursive https://github.com/vcflib/vcflib.git
@@ -204,7 +204,7 @@ vcflib/bin/vcffilter -f "DP > 200 & VDB > 0.5" aln_consensus.vcf | grep -v "^#" 
 
 # Check whether the REF sequence is correct
 
-Use vcfcheck from [vcflib](https://github.com/vcflib/vcflib).
+Use `vcfcheck` from [vcflib](https://github.com/vcflib/vcflib).
 
 ~~~~{.bash}
 # make another copy of the VCF file
@@ -216,6 +216,53 @@ vcflib/bin/vcfcheck -f test_31.fa blah.vcf
 mismatched reference T should be A at 1000000:336
 
 rm blah.vcf
+~~~~
+
+# Random subset of variants
+
+Use `vcfrandomsample` from [vcflib](https://github.com/vcflib/vcflib).
+
+~~~~{.bash}
+vcfrandomsample 
+usage: vcfrandomsample [options] [<vcf file>]
+
+options:
+    -r, --rate RATE          base sampling probability per locus
+    -s, --scale-by KEY       scale sampling likelihood by this Float info field
+    -p, --random-seed N      use this random seed (by default read from /dev/random)
+    -q, --pseudorandom-seed  use a pseudorandom seed (by default read from /dev/random)
+
+Randomly sample sites from an input VCF file, which may be provided as stdin.
+Scale the sampling probability by the field specified in KEY.  This may be
+used to provide uniform sampling across allele frequencies, for instance.
+~~~~
+
+# Subset a single sample from a multi-sample VCF file
+
+Use [GATK SelectVariants](https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_variantutils_SelectVariants.php); check link out for more subsetting recipes. The `-fraction` also creates a random subset of variants.
+
+~~~~{.bash}
+# include this if you want to exclude homozygous reference
+# --excludeNonVariants \
+
+java -Xmx2g -jar GenomeAnalysisTK.jar \
+-R ucsc.hg19.fasta \
+-T SelectVariants \
+--variant multi_sample.vcf \
+-o output.vcf \
+--keepOriginalAC \
+-sn SAMPLE1 \
+-sn SAMPLE2
+
+# Select a sample and restrict the output VCF to a set of intervals:
+java -Xmx2g -jar GenomeAnalysisTK.jar \
+-R ucsc.hg19.fasta \
+-T SelectVariants \
+-V input.vcf \
+-o output.vcf \
+-L /path/to/my.interval_list \
+-sn SAMPLE1 \
+-sn SAMPLE2
 ~~~~
 
 # Creating a test file
