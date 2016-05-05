@@ -14,7 +14,7 @@ The _de facto_ file format for representing genetic variation is the Variant Cal
 Typing ```bcftools``` without any parameters will output the usage and the subcommands.
 
 ~~~~{.bash}
-bcftools 
+./bcftools 
 
 Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
 Version: 1.3 (using htslib 1.3)
@@ -59,7 +59,7 @@ Commands:
 Use the appropriately named subcommand ```view```.
 
 ~~~~{.bash}
-bcftools view aln_consensus.bcf | grep -v "^#" | head
+./bcftools view aln_consensus.bcf | grep -v "^#" | head
 1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
 1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
 1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
@@ -77,7 +77,7 @@ bcftools view aln_consensus.bcf | grep -v "^#" | head
 Use the ```convert``` subcommand.
 
 ~~~~{.bash}
-bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+./bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # we can use cat to view the file
 cat aln_consensus.vcf | grep -v "^#" | head
@@ -100,7 +100,7 @@ The ```view``` subcommand lets you select specific types of variants.
 ## SNPs
 
 ~~~~{.bash}
-bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
+./bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
 1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
 1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
 1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
@@ -116,7 +116,7 @@ bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
 ## INDELs
 
 ~~~~{.bash}
-bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
+./bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
 1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
 1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
 1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
@@ -134,7 +134,7 @@ bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
 The VCF has various information fields; use the ```query``` subcommand to extract specific field/s.
 
 ~~~~{.bash}
-bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
+./bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
 DP=57   AF1=1   AC1=2   MQ=60
 DP=68   AF1=1   AC1=2   MQ=60
 DP=84   AF1=1   AC1=2   MQ=60
@@ -150,7 +150,7 @@ DP=177  AF1=1   AC1=2   MQ=60
 Combining with the ```view``` subcommand:
 
 ~~~~{.bash}
-bcftools view -v snps aln_consensus.bcf | bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' - | head
+./bcftools view -v snps aln_consensus.bcf | bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' - | head
 DP=112  AF1=1   AC1=2   MQ=60
 DP=101  AF1=1   AC1=2   MQ=60
 DP=203  AF1=1   AC1=2   MQ=60
@@ -220,10 +220,10 @@ rm blah.vcf
 
 # Random subset of variants
 
-Use `vcfrandomsample` from [vcflib](https://github.com/vcflib/vcflib).
+Use `vcfrandomsample` from [vcflib](https://github.com/vcflib/vcflib). Below is the usage:
 
 ~~~~{.bash}
-vcfrandomsample 
+vcflib/bin/vcfrandomsample 
 usage: vcfrandomsample [options] [<vcf file>]
 
 options:
@@ -235,6 +235,21 @@ options:
 Randomly sample sites from an input VCF file, which may be provided as stdin.
 Scale the sampling probability by the field specified in KEY.  This may be
 used to provide uniform sampling across allele frequencies, for instance.
+~~~~
+
+`vcfrandomsample` can read from STDOUT.
+
+~~~~{.bash}
+bcftools view aln_consensus.bcf | grep -v "^#" | wc -l
+9704
+
+# ~1%
+bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.01 | grep -v "^#" | wc -l
+90
+
+# ~10%
+bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.1 | grep -v "^#" | wc -l
+948
 ~~~~
 
 # Subset a single sample from a multi-sample VCF file
@@ -298,7 +313,7 @@ INNER_DIST=400
 ## Consensus caller
 
 ~~~~{.bash}
-bcftools call -c -o aln_consensus.bcf -O b aln.bcf
+./bcftools call -c -o aln_consensus.bcf -O b aln.bcf
 ~~~~
 
 # Using GATK for calling variants
@@ -341,14 +356,14 @@ RGSM=test
 
 # check out the header
 # to see the read groups we added
-samtools view -H aln_rg.bam 
+./samtools view -H aln_rg.bam 
 @HD     VN:1.5  SO:coordinate
 @SQ     SN:1000000      LN:1000000
 @RG     ID:1    LB:test PL:illumina     SM:test PU:test
 @PG     ID:bwa  PN:bwa  VN:0.7.13-r1126 CL:bwa/bwa mem test_31.fa l100_n1000000_d400_31_1.fq l100_n1000000_d400_31_2.fq
 
 # index
-samtools index aln_rg.bam
+./samtools index aln_rg.bam
 ~~~~
 
 Now to call variants:
@@ -363,7 +378,7 @@ How many variants were called using BCFtools?
 
 ~~~~{.bash}
 # convert BCF to VCF
-bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+./bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # count
 cat aln_consensus.vcf | grep -v "^#" | wc -l

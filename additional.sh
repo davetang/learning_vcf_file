@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# install vcflib
+git clone --recursive https://github.com/vcflib/vcflib.git
+cd vcflib
+make
+cd ..
+
 # manually download GATK
 # I have a copy in my src folder
 cp ~/src/GenomeAnalysisTK-3.5.tar.bz2 .

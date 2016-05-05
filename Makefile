@@ -1,6 +1,6 @@
 all:
 	./install.sh
-	bpipe run pipeline.groovy
+	./bpipe run pipeline.groovy
 
 clean_tmp:
 	rm -rf commandlog.txt .bpipe *.fq *.fa* *.sai
