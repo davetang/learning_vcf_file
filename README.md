@@ -280,6 +280,66 @@ java -Xmx2g -jar GenomeAnalysisTK.jar \
 -sn SAMPLE2
 ~~~~
 
+# Merging VCF files
+
+The [NHLBI Exome Sequencing Project](http://evs.gs.washington.edu/EVS/) (ESP) provides their variants in the VCF but per chromsome.
+
+~~~~{.bash}
+wget -c http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
+tar -xzf ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
+
+ls -1
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr10.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr11.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr12.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr13.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr14.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr15.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr16.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr17.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr18.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr19.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr1.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr20.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr21.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr22.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr2.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr3.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr4.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr5.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr6.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr7.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr8.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chr9.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chrX.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.chrY.snps_indels.vcf
+ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
+~~~~
+
+We can use `bcftools merge` to merge the VCF files together. The VCF files need to be compressed with `bgzip` and `tabix` indexed in order for `bcftools merge` to work.
+
+~~~~{.bash}
+# I make use of GNU parallel to speed things up
+# assuming that only the ESP VCF files are in the directory
+parallel bgzip ::: *.vcf
+parallel tabix -p vcf ::: *.vcf.gz
+
+# -O z for compressed VCF
+bcftools merge -o ESP6500SI-V2-SSA137.all.vcf.gz -O z *.vcf.gz
+
+# sanity check
+# number of variants from the separate VCF files
+gunzip -c *indels.vcf.gz | grep -v "^#" | wc -l
+1986331
+
+# number of variants in the merged VCF file
+gunzip -c ESP6500SI-V2-SSA137.all.vcf.gz | grep -v "^#" | wc -l
+1986331
+
+# finally tabix index
+tabix -p vcf ESP6500SI-V2-SSA137.all.vcf.gz
+~~~~
+
 # Creating a test file
 
 The ```aln_consensus.bcf``` file was created from a simple pipeline. Firstly a random reference sequence was generated; genetic variants are created by modifying the reference sequence, i.e. introducing mutations, into a mutated copy and sequence reads were derived from the mutated reference sequence. Lastly, the reads were mapped back to the original non-mutated reference sequence. The ```pipeline.groovy``` file contains the pipeline, which is written in [Groovy](http://www.groovy-lang.org/) and processed by Bpipe. I have a [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/) that provides more information.
