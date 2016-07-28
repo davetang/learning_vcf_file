@@ -129,6 +129,10 @@ The ```view``` subcommand lets you select specific types of variants.
 1000000 1449    .       GT      G       214.458 .       INDEL;IDV=210;IMF=0.972222;DP=216;VDB=0.783773;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,101,109;MQ=60;FQ=-289.528        GT:PL   1/1:255,255,0
 ~~~~
 
+# VCF to PED
+
+See my [blog post](http://davetang.org/muse/2016/07/28/vcf-to-ped/).
+
 # Extracting INFO field/s
 
 The VCF has various information fields; use the ```query``` subcommand to extract specific field/s.
@@ -161,6 +165,15 @@ DP=191  AF1=1   AC1=2   MQ=60
 DP=225  AF1=1   AC1=2   MQ=60
 DP=193  AF1=1   AC1=2   MQ=60
 DP=211  AF1=1   AC1=2   MQ=60
+~~~~
+
+# Filtering VCF on the FILTER column
+
+Use `bcftools view` to keep variants that have a "PASS" in the FILTER column.
+
+~~~~{.bash}
+# -f,   --apply-filters <list> require at least one of the listed FILTER strings (e.g. "PASS,.")
+bcftools view -f PASS my.vcf > my_passed.vcf
 ~~~~
 
 # Filtering VCF file using the INFO field/s
