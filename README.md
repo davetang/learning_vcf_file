@@ -231,6 +231,13 @@ mismatched reference T should be A at 1000000:336
 rm blah.vcf
 ~~~~
 
+Otherwise you can use the simple Perl script that I wrote in the `script` directory. The script obtains the sequence from a fasta file based on the position reported in the VCF file and compares it to the reported reference base.
+
+~~~~{.bash}
+script/check_ref.pl 
+Usage: script/check_ref.pl <genome.fa> <infile.vcf>
+~~~~
+
 # Random subset of variants
 
 Use `vcfrandomsample` from [vcflib](https://github.com/vcflib/vcflib). Below is the usage:
