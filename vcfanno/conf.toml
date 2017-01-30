@@ -1,0 +1,5 @@
+[[annotation]]
+file="ExAC.r0.3.1.sites.vep.vcf.gz"
+fields = ["AF", "AC_Het", "AC_Hom", "VQSLOD"]
+ops=["first", "first", "first", "first"]
+
