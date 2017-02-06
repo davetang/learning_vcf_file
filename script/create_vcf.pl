@@ -49,24 +49,23 @@ my @position = ();
 my %position = ();
 
 open(IN,'<',$infile) || die "Could not open $infile: $!\n";
-while(<IN>){
+VARIANT: while(<IN>){
    chomp;
    my ($chr, $start, $end, $ref, $alt) = split(/\t/);
    next if /^#/;
    next if /^$/;
 
-   my $base = '';
    if (exists $genome{$chr}){
       my $id = "$chr:$start-$end";
-      push(@position, $id);
-
-      $base = substr($genome{$chr}, $end-1, 1);
+      my $base = substr($genome{$chr}, $end-1, 1);
       $base = uc($base);
 
       if ($base ne $ref){
-         die "Mismatch at position $start: $infile has $ref but $genome has $base\n";
+         warn "Mismatch at $id: $infile has $ref but $genome has $base\n";
+         next VARIANT;
       }
 
+      push(@position, $id);
       $position{$id}->{'REF'} = $ref;
       $position{$id}->{'ALT'} = $alt;
 
