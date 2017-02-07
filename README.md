@@ -215,6 +215,19 @@ vcflib/bin/vcffilter -f "DP > 200 & VDB > 0.5" aln_consensus.vcf | grep -v "^#" 
 1000000 5121    .       A       T       221.999 .       AC1=2;AF1=1;DP=213;DP4=0,0,105,104;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.743159   GT:PL   1/1:255,255,0
 ~~~~
 
+# Summarise genotypes in a VCF file
+
+Use the `vcffixup` tool from [vcflib](https://github.com/vcflib/vcflib), which can count the allele frequencies across alleles present in each sample.
+
+~~~~{.bash}
+cat output.vcf | grep -v "^#" | head -1
+chr21   9889293 rs28676788 G    A       .       .       .       GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0     1/0     0/0     0/0    ./.      0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
+
+chr21   9889293 rs28676788 G    A       0       .       AC=16;AF=0.101266;AN=158;NS=83  GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0    1/0      0/0     0/0     ./.     0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
+~~~~
+
+NS refers to the number of calls, i.e. the number of samples. 4 samples had no genotype, i.e. ./., therefore AN is 79*2 = 158. AC is the alternate allele count and AF is the alternate allele frequency. I asked the question of [how I can summarise genotypes in a VCF file](https://www.biostars.org/p/157407/) on Biostars in 2015 and ended up answering my own question 17 months later.
+
 # Check whether the REF sequence is correct
 
 Use `vcfcheck` from [vcflib](https://github.com/vcflib/vcflib).
