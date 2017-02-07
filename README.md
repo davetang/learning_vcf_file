@@ -223,10 +223,45 @@ Use the `vcffixup` tool from [vcflib](https://github.com/vcflib/vcflib), which c
 cat output.vcf | grep -v "^#" | head -1
 chr21   9889293 rs28676788 G    A       .       .       .       GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0     1/0     0/0     0/0    ./.      0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
 
+vcffixup output.vcf | grep -v "^#" | head -1
 chr21   9889293 rs28676788 G    A       0       .       AC=16;AF=0.101266;AN=158;NS=83  GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0    1/0      0/0     0/0     ./.     0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
 ~~~~
 
 NS refers to the number of calls, i.e. the number of samples. 4 samples had no genotype, i.e. ./., therefore AN is 79*2 = 158. AC is the alternate allele count and AF is the alternate allele frequency. I asked the question of [how I can summarise genotypes in a VCF file](https://www.biostars.org/p/157407/) on Biostars in 2015 and ended up answering my own question 17 months later.
+
+Using the example bgzipped VCF file I have in the `plink` folder.
+
+~~~~{.bash}
+gunzip -c plink/ex2.vcf.gz 
+##fileformat=VCFv4.0
+#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  NA00001 NA00002 NA00003 NA00004 NA00005 NA00006 NA00007 NA00008 NA00009 NA00010
+1       10000   .       C  T    99      PASS    DP=14   GT      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0
+2       20000   .       G  A    99      PASS    DP=14   GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
+2       25000   .       G  A    99      PASS    DP=14   GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
+3       30000   .       T  A    99      PASS    DP=11   GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
+4       40000   .       A  G    99      PASS    DP=10   GT      1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0
+5       50000   .       T  G    99      PASS    DP=13   GT      0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1
+6       60000   .       T  C    99      PASS    DP=13   GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
+7       70000   .       C  G    99      PASS    DP=9    GT      1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1
+8       80000   .       C  G    99      PASS    DP=9    GT      1/1     1/1     1/1     1/1     1/1     0/0     0/0     0/0     0/0     0/0
+
+../vcflib/bin/vcffixup plink/ex2.vcf.gz
+##fileformat=VCFv4.0
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1]">
+##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  NA00001 NA00002 NA00003 NA00004 NA00005 NA00006 NA00007 NA00008 NA00009 NA00010
+1       10000   .       C  T    99      PASS    AC=0;AF=0;AN=20;DP=14;NS=10     GT      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0
+2       20000   .       G  A    99      PASS    AC=5;AF=0.25;AN=20;DP=14;NS=10  GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
+2       25000   .       G  A    99      PASS    AC=5;AF=0.25;AN=20;DP=14;NS=10  GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
+3       30000   .       T  A    99      PASS    AC=5;AF=0.25;AN=20;DP=11;NS=10  GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
+4       40000   .       A  G    99      PASS    AC=10;AF=0.5;AN=20;DP=10;NS=10  GT      1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0
+5       50000   .       T  G    99      PASS    AC=10;AF=0.5;AN=20;DP=13;NS=10  GT      0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1
+6       60000   .       T  C    99      PASS    AC=5;AF=0.25;AN=20;DP=13;NS=10  GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
+7       70000   .       C  G    99      PASS    AC=20;AF=1;AN=20;DP=9;NS=10     GT      1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1
+8       80000   .       C  G    99      PASS    AC=10;AF=0.5;AN=20;DP=9;NS=10   GT      1/1     1/1     1/1     1/1     1/1     0/0     0/0     0/0     0/0     0/0
+~~~~
 
 # Check whether the REF sequence is correct
 
