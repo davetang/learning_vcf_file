@@ -348,6 +348,8 @@ java -Xmx2g -jar GenomeAnalysisTK.jar \
 -sn SAMPLE2
 ~~~~
 
+The `my.interval_list` file can be in [several formats](https://software.broadinstitute.org/gatk/guide/article?id=1319) including the popular BED format. The GATK engine recognises the .bed extension and interprets the coordinate system accordingly.
+
 # Merging VCF files
 
 The [NHLBI Exome Sequencing Project](http://evs.gs.washington.edu/EVS/) (ESP) provides their variants in the VCF but per chromsome.
