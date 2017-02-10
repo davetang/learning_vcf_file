@@ -1,5 +1,33 @@
-VCF files
----------
+Table of Contents
+=================
+
+   * [Usage](#usage)
+   * [Viewing a BCF file](#viewing-a-bcf-file)
+   * [BCF to VCF](#bcf-to-vcf)
+   * [Filtering for different types of mutations](#filtering-for-different-types-of-mutations)
+      * [SNPs](#snps)
+      * [INDELs](#indels)
+   * [VCF to PED](#vcf-to-ped)
+   * [Extracting INFO field/s](#extracting-info-fields)
+   * [Filtering VCF on the FILTER column](#filtering-vcf-on-the-filter-column)
+   * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
+   * [Summarise genotypes in a VCF file](#summarise-genotypes-in-a-vcf-file)
+   * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
+   * [Random subset of variants](#random-subset-of-variants)
+   * [Subset a single sample from a multi-sample VCF file](#subset-a-single-sample-from-a-multi-sample-vcf-file)
+   * [Merging VCF files](#merging-vcf-files)
+   * [Creating a test file](#creating-a-test-file)
+      * [Adjusting parameters](#adjusting-parameters)
+      * [Consensus caller](#consensus-caller)
+   * [Using GATK for calling variants](#using-gatk-for-calling-variants)
+   * [Comparing VCF files](#comparing-vcf-files)
+      * [Decompose and normalise](#decompose-and-normalise)
+      * [SnpSift](#snpsift)
+   * [Useful links](#useful-links)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+# VCF files
 
 Natural selection relies on three conditions:
 
