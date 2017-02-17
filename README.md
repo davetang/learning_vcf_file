@@ -3,6 +3,7 @@ Table of Contents
 
    * [Usage](#usage)
    * [Viewing a BCF file](#viewing-a-bcf-file)
+   * [Comparing output types](#comparing-output-types)
    * [BCF to VCF](#bcf-to-vcf)
    * [Filtering for different types of mutations](#filtering-for-different-types-of-mutations)
       * [SNPs](#snps)
@@ -99,6 +100,109 @@ Use the appropriately named subcommand ```view```.
 1000000 1062    .       ATT     AT      214.458 .       INDEL;IDV=187;IMF=0.958974;DP=195;VDB=0.244824;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,92;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
 1000000 1207    .       T       G       221.999 .       DP=177;VDB=0.628515;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,79;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
 ~~~~
+
+# Comparing output types
+
+I'll use the 1000 Genomes Project WGS VCF file. There are four output types: compressed BCF (b), uncompressed BCF (u), compressed VCF (z), and uncompressed VCF (v).
+
+```bash
+# download VCF file
+wget -c ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+
+# size of file
+ls -lah ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+-rw-r--r-- 1 dtang dtang 1.9G Oct 12  2015 ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+
+# extract file
+time gunzip -c ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz > uncompressed.vcf
+
+real    1m22.484s
+user    0m56.220s
+sys     0m25.808s
+```
+
+How long does it take to create the different output types?
+
+```bash
+# how long for compressed VCF?
+time bcftools convert -o compressed.vcf.gz -O z uncompressed.vcf
+
+real    11m30.628s
+user    11m8.632s
+sys     0m19.724s
+
+# how long for uncompressed BCF?
+time bcftools convert -o uncompressed.bcf -O u uncompressed.vcf
+
+real    3m3.253s
+user    2m41.240s
+sys     0m20.040s
+
+# how long for compressed BCF?
+time bcftools convert -o compressed.bcf -O b uncompressed.vcf
+
+real    6m50.487s
+user    6m37.076s
+sys     0m12.764s
+```
+
+What are the file sizes?
+
+```bash
+ls -lah uncompressed.vcf
+-rw-r--r-- 1 dtang dtang 12G Feb 17 16:55 uncompressed.vcf
+
+ls -lah uncompressed.bcf
+-rw-r--r-- 1 dtang dtang 9.9G Feb 17 17:14 uncompressed.bcf
+
+ls -lah compressed.bcf
+-rw-r--r-- 1 dtang dtang 2.0G Feb 17 17:22 compressed.bcf
+
+ls -lah compressed.vcf.gz
+-rw-r--r-- 1 dtang dtang 1.9G Feb 17 17:09 compressed.vcf.gz
+```
+
+How long to read each file?
+
+```bash
+time cat uncompressed.vcf | grep -v "^#" | wc -l
+84801880
+
+real    0m26.856s
+user    0m7.696s
+sys     0m41.996s
+
+time bcftools view uncompressed.bcf | grep -v "^#" | wc -l
+84801880
+
+real    3m32.467s
+user    3m31.268s
+sys     0m30.992s
+
+time bcftools view compressed.vcf.gz | grep -v "^#" | wc -l
+84801880
+
+real    6m58.366s
+user    6m49.544s
+sys     0m32.448s
+
+
+time gunzip -c compressed.vcf.gz | grep -v "^#" | wc -l
+84801880
+
+real    1m3.143s
+user    1m3.488s
+sys     0m15.816s
+
+time bcftools view compressed.bcf | grep -v "^#" | wc -l
+84801880
+
+real    4m1.538s
+user    4m4.188s
+sys     0m27.620s
+```
+
+Seems like using compressed VCF is the best choice (smallest size and gunzip is much faster).
 
 # BCF to VCF
 
