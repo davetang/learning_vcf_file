@@ -26,8 +26,14 @@ genome <- 'hg19'
 vcf <- readVcf(infile, genome)
 pdf(outfile)
 
+my_qual <- qual(vcf)
+hist(my_qual, main = 'QUAL')
+my_filt <- filt(vcf)
+barplot(table(my_filt), main = "FILTER", las = 2)
+
 info_df <- as.data.frame(info(header(vcf)))
 for (i in rownames(info_df)){
+  print(i)
   my_command <- paste('info(vcf)$', i, sep = '')
   x <- 'x'
   assign(x, eval(parse(text=my_command)))
