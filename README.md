@@ -1,6 +1,8 @@
 Table of Contents
 =================
 
+   * [Table of Contents](#table-of-contents)
+   * [VCF files](#vcf-files)
    * [Usage](#usage)
    * [Viewing a BCF file](#viewing-a-bcf-file)
    * [Comparing output types](#comparing-output-types)
@@ -15,6 +17,7 @@ Table of Contents
    * [Summarise genotypes in a VCF file](#summarise-genotypes-in-a-vcf-file)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
    * [Random subset of variants](#random-subset-of-variants)
+   * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
    * [Subset a single sample from a multi-sample VCF file](#subset-a-single-sample-from-a-multi-sample-vcf-file)
    * [Merging VCF files](#merging-vcf-files)
    * [Creating a test file](#creating-a-test-file)
@@ -439,7 +442,7 @@ used to provide uniform sampling across allele frequencies, for instance.
 
 `vcfrandomsample` can read from STDOUT.
 
-~~~~{.bash}
+```bash
 bcftools view aln_consensus.bcf | grep -v "^#" | wc -l
 9704
 
@@ -450,13 +453,21 @@ bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.01 | gre
 # ~10%
 bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.1 | grep -v "^#" | wc -l
 948
-~~~~
+```
+
+# Subset variants within a specific genomic region
+
+Use `vcfintersect` from [vcflib](https://github.com/vcflib/vcflib) by creating a BED file with your region of interest, for example where your gene is located.
+
+```bash
+vcfintersect -b my_file.bed my_file.vcf > my_subsetted_file.vcf
+```
 
 # Subset a single sample from a multi-sample VCF file
 
 Use [GATK SelectVariants](https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_variantutils_SelectVariants.php); check link out for more subsetting recipes. The `-fraction` also creates a random subset of variants.
 
-~~~~{.bash}
+```bash
 # include this if you want to exclude homozygous reference
 # --excludeNonVariants \
 
@@ -478,7 +489,7 @@ java -Xmx2g -jar GenomeAnalysisTK.jar \
 -L /path/to/my.interval_list \
 -sn SAMPLE1 \
 -sn SAMPLE2
-~~~~
+```
 
 The `my.interval_list` file can be in [several formats](https://software.broadinstitute.org/gatk/guide/article?id=1319) including the popular BED format. The GATK engine recognises the .bed extension and interprets the coordinate system accordingly.
 
