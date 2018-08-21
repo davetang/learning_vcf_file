@@ -40,7 +40,9 @@ Natural selection relies on three conditions:
 2. The genetic variation must be heritable
 3. The genetic variation results in differing fitness
 
-The _de facto_ file format for representing genetic variation is the Variant Call Format (VCF). A good starting point for learning about the VCF is this [poster](http://vcftools.sourceforge.net/VCF-poster.pdf). The binary equivalent of a VCF file is a BCF file, akin to the SAM and BAM format. BCFtools is used to view and manipulate VCF/BCF files. I have included an example BCF file (aln_consensus.bcf) in this repository to demonstrate the various utilities of BCFtools. If you are interested in how this file was generated refer to [Creating a test file](#creating-a-test-file).
+The _de facto_ file format for representing genetic variation is the Variant Call Format (VCF). A good starting point for learning about the VCF is this [poster](http://vcftools.sourceforge.net/VCF-poster.pdf); the image below was taken from the poster. The binary equivalent of a VCF file is a BCF file, akin to the SAM and BAM formats. BCFtools is used to view and manipulate VCF/BCF files. I have included an example BCF file (aln_consensus.bcf) in this repository to demonstrate the various utilities of BCFtools. If you are interested in how this file was generated refer to [Creating a test file](#creating-a-test-file).
+
+![VCF format](img/vcf_format.png)
 
 # Installation
 
@@ -54,6 +56,17 @@ tar xjf bcftools-1.6.tar.bz2
 cd bcftools-1.6
 ./configure --prefix=`pwd`
 make
+```
+
+Install VCFtools.
+
+```bash
+git clone https://github.com/vcftools/vcftools.git
+cd vcftools
+autogen.sh
+./configure --prefix=`pwd`
+make
+make install
 ```
 
 # Usage
