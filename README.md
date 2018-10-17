@@ -377,6 +377,39 @@ vcflib/bin/vcffilter -f "DP > 200 & VDB > 0.5" aln_consensus.vcf | grep -v "^#" 
 1000000 5121    .       A       T       221.999 .       AC1=2;AF1=1;DP=213;DP4=0,0,105,104;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.743159   GT:PL   1/1:255,255,0
 ```
 
+# Summarise SNPs and INDELs per sample
+
+Use `bcftools stats` with the `-s -` parameter. The example VCF file `eg/ex.vcf` has four variants across three samples (one, two, and three).
+
+* Sample one has two SNPs (both het) and one deletion (het)
+* Sample two has two SNPs (one het and one hom alt) and insertion (het)
+* Sample three has one SNP (het) and one insertion (hom alt) and one deletion (hom alt)
+
+You can confirm the numbers from the stats output.
+
+```bash
+cat eg/ex.vcf | grep -v "^#"
+1       866511  rs60722469      C       CCCCT   258.62  PASS    AC=2;AF=1.00;AN=2;DB;DP=11;FS=0.000;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant   GT:AD:DP:GQ:PL  0/0:6,5:11:14.79:300,15,0       0/1:6,5:11:14.79:300,15,0     1/1:6,5:11:14.79:300,15,0
+1       884091  rs7522415       C       G       65.46   PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-0.259;DB;DP=12;Dels=0.00;FS=0.000;HRun=1;HaplotypeScore=0.0000;MQ0=0;MQ=53.22;MQRankSum=0.779;QD=5.45;ReadPosRankSum=2.047;set=variant2 GT:AD:DP:GQ:PL        0/1:6,6:12:95.45:95,0,123       1/1:6,6:12:95.45:95,0,123       0/0:6,6:12:95.45:95,0,123
+1       897730  rs7549631       C       T       225.34  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-2.218;DB;DP=21;Dels=0.00;FS=6.419;HRun=1;HaplotypeScore=1.8410;MQ0=0;MQ=58.89;MQRankSum=-0.387;QD=10.73;ReadPosRankSum=-0.880;set=variant2   GT:AD:DP:GQ:PL   0/1:11,10:21:99:255,0,348       0/1:11,10:21:99:255,0,348       0/1:11,10:21:99:255,0,348
+1       1158562 rs57524763      AAC     A       220.99  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0.000;HRun=0;HaplotypeScore=101.7487;MQ0=0;MQ=55.80;MQRankSum=-1.910;QD=11.05;ReadPosRankSum=0.400;set=variant GT:AD:DP:GQ:PL
+        0/1:14,6:20:99:260,0,486        0/0:14,6:20:99:260,0,486        1/1:14,6:20:99:260,0,486
+
+bcftools stats -s - eg/ex.vcf | grep -A 4 "Per-sample counts"
+# PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+# PSC   [2]id   [3]sample       [4]nRefHom      [5]nNonRefHom   [6]nHets        [7]nTransitions [8]nTransversions       [9]nIndels      [10]average depth       [11]nSingletons [12]nHapRef     [13]nHapAlt     [14]nMissing
+PSC     0       one     1       0       2       1       1       1       16.0    0       0       0       0
+PSC     0       two     1       1       1       1       1       1       16.0    0       0       0       0
+PSC     0       three   1       0       1       1       0       2       16.0    0       0       0       0
+
+bcftools stats -s - eg/ex.vcf | grep -A 4 "Per-Sample Indels"
+# PSI, Per-Sample Indels
+# PSI   [2]id   [3]sample       [4]in-frame     [5]out-frame    [6]not applicable       [7]out/(in+out) ratio   [8]nHets        [9]nAA
+PSI     0       one     0       0       0       0.00    1       0
+PSI     0       two     0       0       0       0.00    1       0
+PSI     0       three   0       0       0       0.00    0       2
+```
+
 # Summarise genotypes in a VCF file
 
 Use the `vcffixup` tool from [vcflib](https://github.com/vcflib/vcflib), which can count the allele frequencies across alleles present in each sample.

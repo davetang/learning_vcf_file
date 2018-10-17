@@ -3,7 +3,6 @@ test*
 l[0-9]*
 *.swp
 *.tar.bz2
-*.vcf
 *.bam
 *.bai
 *.idx
