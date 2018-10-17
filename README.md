@@ -14,6 +14,7 @@ Table of Contents
    * [Extracting INFO field/s](#extracting-info-fields)
    * [Filtering VCF on the FILTER column](#filtering-vcf-on-the-filter-column)
    * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
+   * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
    * [Summarise genotypes in a VCF file](#summarise-genotypes-in-a-vcf-file)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
    * [Random subset of variants](#random-subset-of-variants)
