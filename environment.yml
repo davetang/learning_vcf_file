@@ -1,0 +1,16 @@
+name: learning_vcf
+channels:
+  - anaconda
+  - bioconda
+dependencies:
+  - samtools=1.9=h8ee4bcc_1
+  - openssl
+  - bwa
+  - bcftools
+  - freebayes
+  - snpsift
+  - vt
+  - vcftools
+  - vt
+  - vcflib
+  - snpeff

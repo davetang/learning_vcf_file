@@ -1,0 +1,49 @@
+---
+title: "Generating a random reference sequence, variants, and reads"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  ref_size: 1000000
+  ref_name: "test.fa"
+  mut_name: "test_mut.fa"
+  mut_log: "test_mut.log"
+  mut_perc: 0.01
+  read_num: 1000000
+  read_len: 100
+  inner_dist: 400
+  seed: 31
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Summary
+
+This [parameterised notebook](https://bookdown.org/yihui/rmarkdown/parameterized-reports.html) will run the Perl scripts to generate the reference sequence and paired-end reads that contain variants.
+
+# Workflow
+
+Create a random reference sequence (`r params$ref_name`) that is `r params$ref_size` bps.
+
+```{r gen_seq}
+gen_seq <- paste("../script/generate_random_seq.pl", params$ref_size, params$seed, ">", params$ref_name, sep = " ")
+system(gen_seq)
+message(gen_seq)
+```
+
+Mutate `r params$ref_name` with a `r params$mut_perc` mutation percent and save output in `r params$mut_name`.
+
+```{r mut_seq}
+mut_seq <- paste("../script/mutate_fasta.pl", params$ref_name, params$mut_perc, params$seed, ">", params$mut_name, "2>", params$mut_log, sep = " ")
+system(mut_seq)
+message(mut_seq)
+```
+
+Generate `r params$read_num` random reads of length `r params$read_len` from `r params$mut_name`.
+
+```{r gen_read}
+gen_read <- paste("../script/random_paired_end.pl", params$mut_name, params$read_len, params$read_num, params$inner_dist, params$seed, sep = " ")
+system(gen_read)
+message(gen_read)
+```

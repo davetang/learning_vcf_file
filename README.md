@@ -47,7 +47,20 @@ The _de facto_ file format for representing genetic variation is the Variant Cal
 
 # Installation
 
-Install in current directory; change `--prefix` if you want to install elsewhere.
+I recommend using [Conda](https://docs.conda.io/en/latest/), in particular [Miniconda](https://docs.conda.io/en/latest/miniconda.html), for installing VCFtools and BCFtools. I have created `environment.yml` which can be used to install all the necessary tools, used in the examples, into [a new environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file).
+
+```bash
+# create and install necessary programs
+conda env create -f environment.yml
+
+# activate the environment
+source activate learning_vcf
+
+# deactivate the environment you finish
+source deactivate
+```
+
+Otherwise you can compile your own version and install BCFtools into the current directory; change `--prefix` if you want to install elsewhere.
 
 ```bash
 mkdir bin
@@ -75,10 +88,10 @@ make install
 Typing `bcftools` without any parameters will output the usage and the subcommands.
 
 ```bash
-./bcftools
+bcftools
 
 Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
-Version: 1.6 (using htslib 1.6)
+Version: 1.9 (using htslib 1.9)
 
 Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
 
@@ -122,7 +135,7 @@ Commands:
 I have included an example VCF file in the `eg` folder of this repository. Use `bcftools view` to view a VCF, bgzipped VCF, and BCF file.
 
 ```bash
-bin/bcftools-1.6/bcftools view eg/Pfeiffer.vcf | grep -v "^#" | head -5
+bcftools view eg/Pfeiffer.vcf | grep -v "^#" | head -5
 1       866511  rs60722469      C       CCCCT   258.62  PASS    AC=2;AF=1;AN=2;DB;DP=11;FS=0;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant  GT:AD:DP:GQ:PL  1/1:6,5:11:14.79:300,15,0
 1       879317  rs7523549       C       T       150.77  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.455;DB;DP=21;Dels=0;FS=1.984;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.037;QD=7.18;ReadPosRankSum=0.112;set=variant2     GT:AD:DP:GQ:PL  0/1:14,7:21:99:181,0,367
 1       879482  .       G       C       484.52  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.934;DP=48;Dels=0;FS=4.452;HRun=0;HaplotypeScore=0.5784;MQ0=0;MQ=59.13;MQRankSum=-0.24;QD=10.09;ReadPosRankSum=1.537;set=variant2        GT:AD:DP:GQ:PL  0/1:28,20:48:99:515,0,794
@@ -240,7 +253,7 @@ Use the `convert` subcommand.
 ```bash
 # -O, --output-type <b|u|z|v>    b: compressed BCF, u: uncompressed BCF, z: compressed VCF, v: uncompressed VCF [v]
 # -o, --output <file>            output file name [stdout]
-./bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # we can use cat to view the file
 cat aln_consensus.vcf | grep -v "^#" | head
@@ -263,7 +276,7 @@ The `view` subcommand lets you select specific types of variants.
 ## SNPs
 
 ```bash
-./bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
+bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
 1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
 1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
 1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
@@ -279,7 +292,7 @@ The `view` subcommand lets you select specific types of variants.
 ## INDELs
 
 ```bash
-./bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
+bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
 1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
 1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
 1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
@@ -301,7 +314,7 @@ See my [blog post](http://davetang.org/muse/2016/07/28/vcf-to-ped/).
 The VCF has various information fields; use the `query` subcommand to extract specific field/s.
 
 ```bash
-./bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
+bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
 DP=57   AF1=1   AC1=2   MQ=60
 DP=68   AF1=1   AC1=2   MQ=60
 DP=84   AF1=1   AC1=2   MQ=60
@@ -317,7 +330,7 @@ DP=177  AF1=1   AC1=2   MQ=60
 Combining with the `view` subcommand:
 
 ```bash
-./bcftools view -v snps aln_consensus.bcf | bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' - | head
+bcftools view -v snps aln_consensus.bcf | bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' - | head
 DP=112  AF1=1   AC1=2   MQ=60
 DP=101  AF1=1   AC1=2   MQ=60
 DP=203  AF1=1   AC1=2   MQ=60
@@ -528,7 +541,7 @@ Another option is to use `bcftools view` but you can only subset one region manu
 
 ```bash
 # -t, --targets chr|chr:pos|chr:from-to|chr:from-[,...]
-bin/bcftools-1.6/bcftools view -t 1:866511-882000 eg/Pfeiffer.vcf
+bcftools view -t 1:866511-882000 eg/Pfeiffer.vcf
 
 # VCF header not shown
 #CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  manuel
@@ -631,16 +644,25 @@ tabix -p vcf ESP6500SI-V2-SSA137.all.vcf.gz
 
 # Creating a test file
 
-The ```aln_consensus.bcf``` file was created from a simple pipeline. Firstly a random reference sequence was generated; genetic variants are created by modifying the reference sequence, i.e. introducing mutations, into a mutated copy and sequence reads were derived from the mutated reference sequence. Lastly, the reads were mapped back to the original non-mutated reference sequence. The ```pipeline.groovy``` file contains the pipeline, which is written in [Groovy](http://www.groovy-lang.org/) and processed by Bpipe. I have a [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/) that provides more information.
+The `aln_consensus.bcf` file was created from a simple pipeline. Firstly a random reference sequence was generated; genetic variants are created by modifying the reference sequence, i.e. introducing mutations, into a mutated copy and sequence reads were derived from the mutated reference sequence. Lastly, the reads were mapped back to the original non-mutated reference sequence. The `pipeline.groovy` file contains the pipeline, which is written in [Groovy](http://www.groovy-lang.org/) and processed by Bpipe. I have a [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/) that provides more information.
 
-To create ```aln_consensus.bcf```, simply clone this repository and type ```make```.
+To create `aln_consensus.bcf`, simply clone this repository and type `make`. This will download and install all the necessary programs from online and run the pipeline.
 
 ```bash
 git clone https://github.com/davetang/learning_vcf_file.git
 make
 ```
 
-This will download and install all the necessary programs from online and run the pipeline.
+Alternatively, use Conda to install all the necessary tools and use `analysis/run.sh`.
+
+```bash
+conda env create -f environment.yml
+cd analysis
+wget https://github.com/broadinstitute/gatk/releases/download/4.1.1.0/gatk-4.1.1.0.zip
+unzip gatk-4.1.1.0.zip
+rm gatk-4.1.1.0.zip
+./run.sh
+```
 
 ## Adjusting parameters
 
@@ -662,7 +684,7 @@ INNER_DIST=400
 ## Consensus caller
 
 ```bash
-./bcftools call -c -o aln_consensus.bcf -O b aln.bcf
+bcftools call -c -o aln_consensus.bcf -O b aln.bcf
 ```
 
 # Using GATK for calling variants
@@ -727,7 +749,7 @@ How many variants were called using BCFtools?
 
 ```bash
 # convert BCF to VCF
-./bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
 
 # count
 cat aln_consensus.vcf | grep -v "^#" | wc -l
