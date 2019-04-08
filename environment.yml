@@ -1,9 +1,10 @@
 name: learning_vcf
 channels:
-  - anaconda
+  - conda-forge
   - bioconda
+  - defaults
 dependencies:
-  - samtools=1.9=h8ee4bcc_1
+  - samtools
   - openssl
   - bwa
   - bcftools
@@ -14,3 +15,4 @@ dependencies:
   - vt
   - vcflib
   - snpeff
+  - pandoc

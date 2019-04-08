@@ -58,6 +58,9 @@ source activate learning_vcf
 
 # deactivate the environment you finish
 source deactivate
+
+# remove environment
+# conda env remove --name learning_vcf
 ```
 
 Otherwise you can compile your own version and install BCFtools into the current directory; change `--prefix` if you want to install elsewhere.
