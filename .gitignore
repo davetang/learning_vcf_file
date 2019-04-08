@@ -17,7 +17,6 @@ vcflib
 vcftools*
 compare*
 bpipe*
-bcftools*
 samtools*
 bwa
 htslib*
