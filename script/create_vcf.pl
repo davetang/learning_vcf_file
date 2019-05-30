@@ -123,7 +123,7 @@ sub store_genome {
    my $chr = '';
    while(<IN>){
       chomp;
-      if (/^>(.*)$/){
+      if (/^>(\w+)/){
          $chr = $1;
       } else {
          $genome{$chr} .= $_;

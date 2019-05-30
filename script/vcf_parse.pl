@@ -21,6 +21,10 @@ my $infile = shift or die $usage;
 my $vcf = Vcf->new(file => $infile);
 
 $vcf->parse_header();
+my @sample = $vcf->get_samples();
+
+# print header
+print join("\t", "CHROM", "POS", "REF", "ALT", @sample), "\n";
 
 VARIANT: while (my $x = $vcf->next_data_hash()){
 
@@ -67,15 +71,42 @@ VARIANT: while (my $x = $vcf->next_data_hash()){
    my $pos = $$x{POS};
    my $ref = $$x{REF};
    my $alt = $$x{ALT};
+
+   # if (exists $x->{"INFO"}
+
    my $line = join("\t", $chr, $pos, $ref, @$alt);
 
-   for my $gt (keys %{$$x{gtypes}}){
+   # we expect normalised VCF files, i.e. only one variant per line
+   if (scalar @$alt > 1){
+      die "More than 1 alternate allele on line $.";
+   }
+
+   # for my $gt (keys %{$$x{gtypes}}){
+   # use sample array to keep same order each time
+   for my $gt (@sample){
 
       # converts encoding into actual alleles
       my ($al1, $sep, $al2) = $vcf->parse_alleles($x, $gt);
+      my $allele = "$al1$sep$al2";
 
-      my $allele = "\t$al1$sep$al2";
-      $line .= $allele;
+      my $encoding = '';
+      # "0" indicates two reference alleles
+      if ($al1 eq $ref && $al2 eq $ref){
+         $encoding = 0;
+      # "2" indicates two alternate alleles
+      } elsif ($al1 eq $alt->[0] && $al2 eq $alt->[0]){
+         $encoding = 2;
+      # "1" indicates heterozygous
+      } elsif ($al1 eq $alt->[0] || $al2 eq $alt->[0]){
+         $encoding = 1;
+      # "3" indicates missing genotype
+      } elsif ($al1 eq '.' && $al2 eq '.'){
+         $encoding = 3;
+      } else {
+         die "Unexpected allele combination on line $.\n";
+      }
+
+      $line .= "\t$encoding";
 
    }
 

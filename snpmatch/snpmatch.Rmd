@@ -1,0 +1,163 @@
+---
+title: "SNPmatch"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Motivation
+
+Given a SNP profile for a sample of unknown identity, what is the most likely identity based on its match with known samples that have been genotyped? [SNPmatch](https://github.com/Gregor-Mendel-Institute/SNPmatch) can match a SNP profile of a sample to a database of samples and calculates probabilities and likelihoods of the match/es.
+
+## Background
+
+SNPmatch takes as input a SNP profile of an unknown sample and performs the [following calculations](https://www.ncbi.nlm.nih.gov/pubmed/29257129) to identify the most likely match from a database.
+
+1. For each database strain "a", SNPmatch calculates the probability ($p_a$) of a sample matching to it. This is calculated from the genotype probability scores (PL) from GATK if present.
+
+$$
+p_a = \sum_{j} p(g_j | a_j == g_j)
+$$
+
+where, $j$ is the genomic position of a marker, $a_j$ is the genotype of database strain "a" at position $j$ and $g_j$ is the genotype of a sample at position $j$.
+
+2. Likelihoods are calculated for each strain based on the binomial distribution.
+
+$$
+\mathcal{L}_{a} = (p_a \times n_a \times ln(p_a / (1 - p))) + ((1 - p_a) \times n_a \times ln((1 - p_a)/p))
+$$
+
+where, $n_a$ is the number of informative sites between strain "a" and the sample, $p$ is the error rate (0.001).
+
+3. Likelihood ratios (LR) are calculated for each strain with the top likely strain.
+
+$$
+LR_{a} = \mathcal{L}_a / max(\{\mathcal{L}_i : i = 1, \dots, n\})
+$$
+
+under the assumption that LR is a chi-squared distribution, a threshold of 3.841 gives a list of strains that are not significantly different from the top hit (at a 95% confidence level).
+
+## Installation
+
+First install `SNPmatch` if you haven't already. I will use [Docker](https://github.com/davetang/learning_docker) and [docker-miniconda](https://hub.docker.com/r/continuumio/miniconda/) to install `SNPmatch`.
+
+```{bash eval=FALSE}
+docker pull continuumio/miniconda
+
+docker run -it -v /Users/dtang/github/learning_vcf_file:/learning_vcf_file continuumio/miniconda /bin/bash
+
+apt-get install build-essential
+conda install -c bioconda bcftools
+```
+
+Use `pip` to install `SNPmatch`.
+
+```{bash eval=FALSE}
+pip install SNPmatch
+```
+
+## Testing
+
+To get started, we will create a random reference.
+
+```{bash}
+../script/generate_random_seq.pl 100000 1984 > raw/ref.fa
+```
+
+Next we will create a VCF file with 100 random SNVs.
+
+```{bash}
+../script/create_snv.pl raw/ref.fa 2000 1984 > raw/snv.tsv
+../script/create_vcf.pl raw/ref.fa raw/snv.tsv > raw/snv.vcf
+rm raw/snv.tsv
+```
+
+Now we add 10 samples with random genotypes to the VCF file.
+
+```{bash}
+../script/vcf_add_sample.pl raw/snv.vcf 10 1984 > raw/sample.vcf
+rm raw/snv.vcf
+```
+
+Finally, we create a SNPmatch database.
+
+```{bash eval=FALSE}
+snpmatch makedb -i raw/sample.vcf -o db
+```
+
+Now we're ready to do some testing!
+
+### Example 1
+
+SNPmatch can take as input either a VCF or BED file. However their "BED" specification is not the same as the [UCSC Genome Browser standard](https://genome.ucsc.edu/FAQ/FAQformat.html#format1). Their format is a three column tab-delimited file, where the columns are for the chromosome, position, and genotype for each SNV.
+
+```
+1 125 0/0
+1 284 0/0
+1 336 0/0
+```
+
+In our first example we will create a sample with an identical SNV profile as sample 1. (I have to separate the examples into their own directories because `snpmatch` will complain if it sees another `*.npz` file in the same directory.)
+
+```{bash eval=FALSE}
+cat raw/sample.vcf | grep -v "^#" | cut -f1,2,10 > example/eg1/eg1.bed
+```
+
+We will use `snpmatch` to perform our query to the SNV database.
+
+```{bash eval=FALSE}
+snpmatch inbred -v -i example/eg1/eg1.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg1/eg1
+```
+
+Examine the `scores` output.
+
+```{bash}
+cat example/eg1/eg1.scores.txt
+```
+
+The columns for the `scores` file are:
+
+1. Sample ID
+2. Number of matched SNPs
+3. Total informative SNPs
+4. Probability of match
+5. Likelihood
+6. Likelihood ratio against best hit
+7. Number of SNPs
+8. Average depth of SNPs
+
+We can see that our sample's SNVs matched all of sample 1's SNVs: 2000 / 2000 giving a probability and likelihood of 1. The script that created the sample genotypes was based on a "coin flip", hence the probability of two samples matching is around 50%.
+
+### Example 2
+
+We'll use half the total number of SNVs this time but again with an identical profile to sample 1.
+
+```{bash eval=FALSE}
+cat raw/sample.vcf | grep -v "^#" | cut -f1,2,10 | perl -nle "if ($. % 2 == 0){ print }" > example/eg2/eg2.bed
+snpmatch inbred -v -i example/eg2/eg2.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg2/eg2
+```
+
+Let's check out the results.
+
+```{bash}
+cat example/eg2/eg2.scores.txt
+```
+
+Not as expected.
+
+### Example 3
+
+However, if I don't pipe STDOUT to `perl`, the results are as expected.
+
+```{bash eval=FALSE}
+cat raw/sample.vcf | grep -v "^#" | head -1000 | cut -f1,2,10 > example/eg3/eg3.bed
+snpmatch inbred -v -i example/eg3/eg3.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg3/eg3
+```
+
+As expected.
+
+```{bash}
+cat example/eg3/eg3.scores.txt
+```
