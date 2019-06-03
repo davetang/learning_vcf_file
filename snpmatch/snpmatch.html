@@ -228,6 +228,11 @@ apt-get install build-essential
 conda install -c bioconda bcftools</code></pre>
 <p>Use <code>pip</code> to install <code>SNPmatch</code>.</p>
 <pre class="bash"><code>pip install SNPmatch</code></pre>
+<p>Or use the <code>Dockerfile</code> in <code>src</code>.</p>
+<pre class="bash"><code># once inside src
+docker build -t snpmatch .
+
+docker run -it -v /Users/dtang/github/learning_vcf_file:/learning_vcf_file snpmatch /bin/bash</code></pre>
 </div>
 <div id="testing" class="section level2">
 <h2>Testing</h2>
@@ -250,21 +255,23 @@ rm raw/snv.vcf</code></pre>
 1 284 0/0
 1 336 0/0</code></pre>
 <p>In our first example we will create a sample with an identical SNV profile as sample 1. (I have to separate the examples into their own directories because <code>snpmatch</code> will complain if it sees another <code>*.npz</code> file in the same directory.)</p>
-<pre class="bash"><code>cat raw/sample.vcf | grep -v &quot;^#&quot; | cut -f1,2,10 &gt; example/eg1/eg1.bed</code></pre>
+<pre class="bash"><code>rm -rf example/eg1
+mkdir example/eg1
+cat raw/sample.vcf | grep -v &quot;^#&quot; | cut -f1,2,10 &gt; example/eg1/eg1.bed</code></pre>
 <p>We will use <code>snpmatch</code> to perform our query to the SNV database.</p>
 <pre class="bash"><code>snpmatch inbred -v -i example/eg1/eg1.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg1/eg1</code></pre>
 <p>Examine the <code>scores</code> output.</p>
 <pre class="bash"><code>cat example/eg1/eg1.scores.txt</code></pre>
-<pre><code>## 1    2000    2000    1.0 1.0 1.0 2000    NA
-## 2    1022    2000    0.511   16629.615450821533  16629.615450821533  2000    NA
-## 3    1018    2000    0.509   16703.138152185285  16703.138152185285  2000    NA
-## 4    1019    2000    0.5095  16684.754475681395  16684.754475681395  2000    NA
-## 5    986 2000    0.493   17292.47192441587   17292.47192441587   2000    NA
-## 6    1012    2000    0.506   16813.482222516785  16813.482222516785  2000    NA
-## 7    1007    2000    0.5035  16905.490623105397  16905.490623105397  2000    NA
-## 8    981 2000    0.4905  17384.740343380647  17384.740343380647  2000    NA
-## 9    999 2000    0.4995  17052.80806853681   17052.80806853681   2000    NA
-## 10   996 2000    0.498   17108.085110766096  17108.085110766096  2000    NA</code></pre>
+<pre><code>## 1    1980    1980    1.0 1.0 1.0 1980    NA
+## 2    1009    1980    0.5095959595959596  16514.414258932982  16514.414258932982  1980    NA
+## 3    1006    1980    0.5080808080808081  16569.57022938357   16569.57022938357   1980    NA
+## 4    1007    1980    0.5085858585858586  16551.182885077746  16551.182885077746  1980    NA
+## 5    978 1980    0.49393939393939396 17085.23615078422   17085.23615078422   1980    NA
+## 6    1002    1980    0.5060606060606061  16643.13981328996   16643.13981328996   1980    NA
+## 7    995 1980    0.5025252525252525  16771.96437291761   16771.96437291761   1980    NA
+## 8    973 1980    0.4914141414141414  17177.486029861284  17177.486029861284  1980    NA
+## 9    989 1980    0.4994949494949495  16882.464214759748  16882.464214759748  1980    NA
+## 10   986 1980    0.49797979797979797 16937.741408505484  16937.741408505484  1980    NA</code></pre>
 <p>The columns for the <code>scores</code> file are:</p>
 <ol style="list-style-type: decimal">
 <li>Sample ID</li>
@@ -281,27 +288,32 @@ rm raw/snv.vcf</code></pre>
 <div id="example-2" class="section level3">
 <h3>Example 2</h3>
 <p>We’ll use half the total number of SNVs this time but again with an identical profile to sample 1.</p>
-<pre class="bash"><code>cat raw/sample.vcf | grep -v &quot;^#&quot; | cut -f1,2,10 | perl -nle &quot;if ($. % 2 == 0){ print }&quot; &gt; example/eg2/eg2.bed
-snpmatch inbred -v -i example/eg2/eg2.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg2/eg2</code></pre>
+<pre class="bash"><code>rm -rf example/eg2
+mkdir example/eg2
+cat raw/sample.vcf | grep -v &quot;^#&quot; | cut -f1,2,10 | perl -nle &quot;if ($. % 2 == 0){ print }&quot; &gt; example/eg2/eg2.bed</code></pre>
+<p>Run <code>snpmatch</code>.</p>
+<pre class="bash"><code>snpmatch inbred -v -i example/eg2/eg2.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg2/eg2</code></pre>
 <p>Let’s check out the results.</p>
 <pre class="bash"><code>cat example/eg2/eg2.scores.txt</code></pre>
-<pre><code>## 1    514 1000    0.514   8259.695714936273   1.0368199969939522  1020    NA
-## 2    490 1000    0.49    8701.600014528602   1.0922911947702092  1020    NA
-## 3    501 1000    0.501   8498.774513176264   1.066830991033872   1020    NA
-## 4    530 1000    0.53    7966.373853594235   1.0 1020    NA
-## 5    487 1000    0.487   8757.000081471551   1.099245433670001   1020    NA
-## 6    484 1000    0.484   8812.436172983842   1.1062041946484704  1020    NA
-## 7    492 1000    0.492   8664.686645197171   1.0876575471395777  1020    NA
-## 8    512 1000    0.512   8296.433052811099   1.041431547813683   1020    NA
-## 9    474 1000    0.474   8997.483502817286   1.1294327467142204  1020    NA
-## 10   476 1000    0.476   8960.441974174311   1.1247830115494237  1020    NA</code></pre>
-<p>Not as expected.</p>
+<pre><code>## 1    990 990 1.0 1.0 1.0 990 NA
+## 2    521 990 0.5262626262626262  7954.449848224507   7954.449848224507   990 NA
+## 3    509 990 0.5141414141414141  8174.527744161916   8174.527744161916   990 NA
+## 4    517 990 0.5222222222222223  8027.74438586295    8027.74438586295    990 NA
+## 5    496 990 0.501010101010101   8413.602601439286   8413.602601439286   990 NA
+## 6    504 990 0.509090909090909   8266.398780785077   8266.398780785077   990 NA
+## 7    504 990 0.509090909090909   8266.398780785077   8266.398780785077   990 NA
+## 8    487 990 0.4919191919191919  8579.516006354626   8579.516006354626   990 NA
+## 9    510 990 0.5151515151515151  8156.1656660772005  8156.1656660772005  990 NA
+## 10   468 990 0.4727272727272727  8930.85310006706    8930.85310006706    990 NA</code></pre>
 </div>
 <div id="example-3" class="section level3">
 <h3>Example 3</h3>
 <p>However, if I don’t pipe STDOUT to <code>perl</code>, the results are as expected.</p>
-<pre class="bash"><code>cat raw/sample.vcf | grep -v &quot;^#&quot; | head -1000 | cut -f1,2,10 &gt; example/eg3/eg3.bed
-snpmatch inbred -v -i example/eg3/eg3.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg3/eg3</code></pre>
+<pre class="bash"><code>rm -rf example/eg3
+mkdir example/eg3
+cat raw/sample.vcf | grep -v &quot;^#&quot; | head -1000 | cut -f1,2,10 &gt; example/eg3/eg3.bed</code></pre>
+<p>Run <code>snpmatch</code>.</p>
+<pre class="bash"><code>snpmatch inbred -v -i example/eg3/eg3.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg3/eg3</code></pre>
 <p>As expected.</p>
 <pre class="bash"><code>cat example/eg3/eg3.scores.txt</code></pre>
 <pre><code>## 1    1000    1000    1.0 1.0 1.0 1000    NA
@@ -315,6 +327,34 @@ snpmatch inbred -v -i example/eg3/eg3.bed -d db.hdf5 -e db.acc.hdf5 -o example/e
 ## 9    508 1000    0.508   8369.95575353433    8369.95575353433    1000    NA
 ## 10   500 1000    0.5 8517.193193903857   8517.193193903857   1000    NA</code></pre>
 </div>
+<div id="example-4" class="section level3">
+<h3>Example 4</h3>
+<p>VCF input.</p>
+<pre class="bash"><code>rm -rf example/eg4
+mkdir example/eg4
+cat raw/sample.vcf | grep &quot;^#&quot; &gt; header
+cat raw/sample.vcf | grep -v &quot;^#&quot; | head -50 | cut -f 1-10 &gt; tmp
+cat header tmp &gt; example/eg4/eg4.vcf
+rm header tmp</code></pre>
+<p>Run <code>snpmatch</code>.</p>
+<pre class="bash"><code>snpmatch inbred -v -i example/eg4/eg4.vcf -d db.hdf5 -e db.acc.hdf5 -o example/eg4/eg4</code></pre>
+<p>As expected.</p>
+<pre class="bash"><code>cat example/eg4/eg4.scores.txt</code></pre>
+<pre><code>## 1    50  50  1.0 1.0 1.0 50  NA
+## 2    28  50  0.56    370.9584865237887   370.9584865237887   50  NA
+## 3    32  50  0.64    298.9013438810118   298.9013438810118   50  NA
+## 4    22  50  0.44    481.4825708973543   481.4825708973543   50  NA
+## 5    21  50  0.42    500.1851416292928   500.1851416292928   50  NA
+## 6    17  50  0.34    575.8306906605533   575.8306906605533   50  NA
+## 7    30  50  0.6 334.7630317280893   334.7630317280893   50  NA
+## 8    26  50  0.52    407.47898963976445  407.47898963976445  50  NA
+## 9    27  50  0.54    389.17846934241504  389.17846934241504  50  NA
+## 10   24  50  0.48    444.32035109761966  444.32035109761966  50  NA</code></pre>
+</div>
+</div>
+<div id="notes" class="section level2">
+<h2>Notes</h2>
+<p>Make sure there are <a href="https://github.com/Gregor-Mendel-Institute/SNPmatch/issues/13">no duplicate entries</a> in your input file or you will get unexpected results.</p>
 </div>
 
 

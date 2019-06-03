@@ -4,6 +4,7 @@
 
 use strict;
 use warnings;
+use List::MoreUtils qw(uniq);
 
 my $usage = "Usage: $0 <infile.fa> <num> <seed>\n";
 my $infile = shift or die $usage;
@@ -52,6 +53,7 @@ sub random_snv {
    srand($seed);
    my @rand_pos = map { int(rand($seq_len)) } ( 1 .. $num );
    @rand_pos = sort({$a <=> $b} @rand_pos);
+   @rand_pos = uniq(@rand_pos);
 
    # substr is zero based
    foreach my $pos (@rand_pos){

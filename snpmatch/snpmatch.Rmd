@@ -58,6 +58,15 @@ Use `pip` to install `SNPmatch`.
 pip install SNPmatch
 ```
 
+Or use the `Dockerfile` in `src`.
+
+```{bash eval=FALSE}
+# once inside src
+docker build -t snpmatch .
+
+docker run -it -v /Users/dtang/github/learning_vcf_file:/learning_vcf_file snpmatch /bin/bash
+```
+
 ## Testing
 
 To get started, we will create a random reference.
@@ -102,6 +111,8 @@ SNPmatch can take as input either a VCF or BED file. However their "BED" specifi
 In our first example we will create a sample with an identical SNV profile as sample 1. (I have to separate the examples into their own directories because `snpmatch` will complain if it sees another `*.npz` file in the same directory.)
 
 ```{bash eval=FALSE}
+rm -rf example/eg1
+mkdir example/eg1
 cat raw/sample.vcf | grep -v "^#" | cut -f1,2,10 > example/eg1/eg1.bed
 ```
 
@@ -135,7 +146,14 @@ We can see that our sample's SNVs matched all of sample 1's SNVs: 2000 / 2000 gi
 We'll use half the total number of SNVs this time but again with an identical profile to sample 1.
 
 ```{bash eval=FALSE}
+rm -rf example/eg2
+mkdir example/eg2
 cat raw/sample.vcf | grep -v "^#" | cut -f1,2,10 | perl -nle "if ($. % 2 == 0){ print }" > example/eg2/eg2.bed
+```
+
+Run `snpmatch`.
+
+```{bash eval=FALSE}
 snpmatch inbred -v -i example/eg2/eg2.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg2/eg2
 ```
 
@@ -145,14 +163,19 @@ Let's check out the results.
 cat example/eg2/eg2.scores.txt
 ```
 
-Not as expected.
-
 ### Example 3
 
 However, if I don't pipe STDOUT to `perl`, the results are as expected.
 
 ```{bash eval=FALSE}
+rm -rf example/eg3
+mkdir example/eg3
 cat raw/sample.vcf | grep -v "^#" | head -1000 | cut -f1,2,10 > example/eg3/eg3.bed
+```
+
+Run `snpmatch`.
+
+```{bash eval=FALSE}
 snpmatch inbred -v -i example/eg3/eg3.bed -d db.hdf5 -e db.acc.hdf5 -o example/eg3/eg3
 ```
 
@@ -161,3 +184,32 @@ As expected.
 ```{bash}
 cat example/eg3/eg3.scores.txt
 ```
+
+### Example 4
+
+VCF input.
+
+```{bash eval=FALSE}
+rm -rf example/eg4
+mkdir example/eg4
+cat raw/sample.vcf | grep "^#" > header
+cat raw/sample.vcf | grep -v "^#" | head -50 | cut -f 1-10 > tmp
+cat header tmp > example/eg4/eg4.vcf
+rm header tmp
+```
+
+Run `snpmatch`.
+
+```{bash eval=FALSE}
+snpmatch inbred -v -i example/eg4/eg4.vcf -d db.hdf5 -e db.acc.hdf5 -o example/eg4/eg4
+```
+
+As expected.
+
+```{bash}
+cat example/eg4/eg4.scores.txt
+```
+
+## Notes
+
+Make sure there are [no duplicate entries](https://github.com/Gregor-Mendel-Institute/SNPmatch/issues/13) in your input file or you will get unexpected results.
