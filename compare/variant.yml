@@ -1,0 +1,13 @@
+name: variant
+channels:
+  - bioconda
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - vcftools
+  - bcftools
+  - bedtools
+  - perl-vcftools-vcf
+  - tabix
+  - snpsift
