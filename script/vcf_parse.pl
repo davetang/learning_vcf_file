@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-# use Data::Dumper;
+use Data::Dumper;
 
 # libraries are initialised during compile
 BEGIN{
@@ -23,8 +23,9 @@ my $vcf = Vcf->new(file => $infile);
 $vcf->parse_header();
 my @sample = $vcf->get_samples();
 
-# print header
-print join("\t", "CHROM", "POS", "REF", "ALT", @sample), "\n";
+# I want to store variants by their chromosome and position on the chromosome; this will be the index
+# the value will be a reference to the data structure used by the Vcf package
+my %variant = ();
 
 VARIANT: while (my $x = $vcf->next_data_hash()){
 
@@ -72,15 +73,18 @@ VARIANT: while (my $x = $vcf->next_data_hash()){
    my $ref = $$x{REF};
    my $alt = $$x{ALT};
 
-   # if (exists $x->{"INFO"}
+   my $key = $chr . ':' . $pos;
+   $variant{$key} = \$x;
 
-   my $line = join("\t", $chr, $pos, $ref, @$alt);
+   # if (exists $x->{"INFO"}
 
    # we expect normalised VCF files, i.e. only one variant per line
    if (scalar @$alt > 1){
       die "More than 1 alternate allele on line $.";
    }
 
+   my $line = join("\t", $chr, $pos, $ref, @$alt);
+   # ignore this section; I was trying to come up with different ways of storing the alleles
    # for my $gt (keys %{$$x{gtypes}}){
    # use sample array to keep same order each time
    for my $gt (@sample){
@@ -110,6 +114,39 @@ VARIANT: while (my $x = $vcf->next_data_hash()){
 
    }
 
+   # print "$line\n";
+
+}
+
+# print header
+print join("\t", "CHROM", "POS", "REF", "ALT", @sample), "\n";
+
+foreach my $index (keys %variant){
+   # print Dumper $variant{$index};
+   # foreach my $s (@sample){
+   #    print join("\t", $index, $s, ${$variant{$index}}->{'gtypes'}->{$s}->{'GT'}), "\n";
+   # }
+   print_column($variant{$index});
+}
+
+sub print_column {
+   my ($x) = @_;
+   # print ${$x}->{"REF"}, "\n";
+
+   my $chr = ${$x}->{"CHROM"};
+   my $pos = ${$x}->{"POS"};
+   my $ref = ${$x}->{"REF"};
+   my $alt = ${$x}->{"ALT"};
+
+   my $line = join("\t", $chr, $pos, $ref, @$alt);
+
+   # we expect normalised VCF files, i.e. only one variant per line
+   if (scalar @$alt > 1){
+      die "More than 1 alternate allele on line $.";
+   }
+   foreach my $s (@sample){
+      $line .= "\t${$x}->{'gtypes'}->{$s}->{'GT'}";
+   }
    print "$line\n";
 
 }
