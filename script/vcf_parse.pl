@@ -83,9 +83,18 @@ VARIANT: while (my $x = $vcf->next_data_hash()){
       die "More than 1 alternate allele on line $.";
    }
 
-   my $line = join("\t", $chr, $pos, $ref, @$alt);
+   my $alt_len = length($$alt[0]);
+   my $ref_len = length($ref);
+   if ($ref_len > 1 && $alt_len == 1){
+      print "Deletion\n";
+   }
+   if ($ref_len == 1 && $alt_len > 1){
+      print "Insertion\n";
+   }
+
    # ignore this section; I was trying to come up with different ways of storing the alleles
    # for my $gt (keys %{$$x{gtypes}}){
+   my $line = join("\t", $chr, $pos, $ref, @$alt);
    # use sample array to keep same order each time
    for my $gt (@sample){
 

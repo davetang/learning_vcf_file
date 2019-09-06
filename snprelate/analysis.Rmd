@@ -1,0 +1,79 @@
+---
+title: "SNPRelate"
+author: "Dave Tang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(gdsfmt)
+library(SNPRelate)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Following the [SNPRelate](https://bioconductor.org/packages/release/bioc/vignettes/SNPRelate/inst/doc/SNPRelateTutorial.html) tutorial. I have written about this package on [my blog](https://davetang.org/muse/2015/07/24/dna-sequencing-data/) too.
+
+```{r install, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly=TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("gdsfmt")
+BiocManager::install("SNPRelate")
+```
+
+Create GDS file.
+
+```{r vcf_to_gds}
+my_vcf <- "../eg/1001genomes_snp-short-indel_only_ACGTN_5000.vcf.gz"
+my_gds <- sub(pattern = "vcf.gz$", replacement = "gds", x = my_vcf)
+
+if (!basename(my_gds) %in% list.files("../eg")){
+  snpgdsVCF2GDS(my_vcf, my_gds, method="biallelic.only")
+}
+```
+
+Open GDS file and tally genotypes. For bi-allelic SNP sites:
+
+* 0 indicates two alternate alleles
+* 1 indicates heterzygous
+* 2 indicates two reference alleles
+* 3 indicates missing genotype
+
+```{r genofile}
+genofile <- snpgdsOpen(my_gds)
+
+table(read.gdsn( index.gdsn(genofile, "genotype")))
+```
+
+Remove variants in approximate linkage equilibrium.
+
+```{r pruning}
+set.seed(1000)
+
+snpset <- snpgdsLDpruning(genofile, ld.threshold=0.2)
+```
+
+PCA.
+
+```{r pca}
+snpset.id <- unlist(unname(snpset))
+pca <- snpgdsPCA(genofile, snp.id=snpset.id, num.thread=2)
+
+tab <- data.frame(sample.id = pca$sample.id,
+                  EV1 = pca$eigenvect[,1],    # the first eigenvector
+                  EV2 = pca$eigenvect[,2],    # the second eigenvector
+                  stringsAsFactors = FALSE)
+
+plot(tab$EV2, tab$EV1, xlab="eigenvector 2", ylab="eigenvector 1", pch = 16)
+```
+
+Identity-By-State Analysis.
+
+```{r ibs}
+ibs <- snpgdsIBS(genofile, num.thread=2)
+
+set.seed(100)
+ibs.hc <- snpgdsHCluster(snpgdsIBS(genofile, num.thread=2))
+rv <- snpgdsCutTree(ibs.hc)
+plot(rv$dendrogram, leaflab="none")
+```
