@@ -30,6 +30,7 @@ Table of Contents
       * [SnpSift](#snpsift)
    * [Visualisation](#visualisation)
    * [Useful links](#useful-links)
+   * [Stargazers over time](#stargazers-over-time)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
@@ -978,3 +979,6 @@ chromoqc(chrom, xlim=c(860000, 900000))
 * The author of ANNOVAR writes about VCF files: <http://annovar.openbioinformatics.org/en/latest/articles/VCF/>
 * [Encoding Structural Variants in VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/VCF%20(Variant%20Call%20Format)%20version%204.0/encoding-structural-variants) version 4.0
 
+# Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/davetang/learning_vcf_file.svg)](https://starchart.cc/davetang/learning_vcf_file)
