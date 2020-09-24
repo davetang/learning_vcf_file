@@ -1,6 +1,7 @@
 Table of Contents
 =================
 
+   * [Table of Contents](#table-of-contents)
    * [VCF files](#vcf-files)
    * [Installation](#installation)
    * [Usage](#usage)
@@ -11,6 +12,7 @@ Table of Contents
       * [SNPs](#snps)
       * [INDELs](#indels)
    * [VCF to PED](#vcf-to-ped)
+   * [VCF to BED](#vcf-to-bed)
    * [Extracting INFO field/s](#extracting-info-fields)
    * [Filtering VCF on the FILTER column](#filtering-vcf-on-the-filter-column)
    * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
@@ -312,6 +314,51 @@ bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
 # VCF to PED
 
 See my [blog post](http://davetang.org/muse/2016/07/28/vcf-to-ped/).
+
+# VCF to BED
+
+VCF to [Browser Extensible Data](https://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) format and not [Binary PED](http://zzz.bwh.harvard.edu/plink/data.shtml#bed) format; for Binary PED, see the `plink` directory in this repo. For Browser Extensible Data use [BEDOPS](https://bedops.readthedocs.io/en/latest/index.html), specifically the [vcf2bed](https://bedops.readthedocs.io/en/latest/content/reference/file-management/conversion/vcf2bed.html) tool.
+
+Install using Conda from [Bioconda](https://anaconda.org/bioconda/bedops).
+
+```bash
+conda create -c bioconda -n bedops bedops
+
+conda activate bedops
+```
+
+Simple usage.
+
+```bash
+# check out our example VCF file
+cat eg/ex.vcf | grep -v "^#" | cut -f1-6
+1  866511   rs60722469  C  CCCCT 258.62
+1  884091   rs7522415   C  G  65.46
+1  897730   rs7549631   C  T  225.34
+1  1158562  rs57524763  AAC   A  220.99
+
+# convert to BED
+vcf2bed < eg/ex.vcf | cut -f1-3
+1  866510   866511
+1  884090   884091
+1  897729   897730
+1  1158561  1158562
+```
+
+Note that the deletion (rs57524763) only has 1 bp but the reference should be 3 bp long. Use `--deletions` to have the coordinates reflect the length of the reference sequence (and to only report deletions).
+
+```bash
+vcf2bed --deletions < eg/ex.vcf | cut -f1-3
+1  1158561  1158564
+
+# there is also the insertions option to report only insertions
+vcf2bed --insertions < eg/ex.vcf | cut -f1-3
+
+# and snvs
+vcf2bed --snvs < eg/ex.vcf | cut -f1-3
+1  884090   884091
+1  897729   897730
+```
 
 # Extracting INFO field/s
 
