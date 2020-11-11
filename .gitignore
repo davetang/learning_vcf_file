@@ -1,6 +1,4 @@
-test*
 .bpipe
-l[0-9]*
 *.swp
 *.tar.bz2
 *.bam
@@ -24,5 +22,6 @@ aln.bam.bai
 aln.bcf
 aln.sam
 ExAC.r0.3.1*
-bin
-gatk-4.1.1.0
+gatk-*
+cromwell-*.jar
+womtool-*.jar
