@@ -1,0 +1,17 @@
+name: variant_tools
+channels:
+  - bioconda
+  - anaconda
+  - defaults
+dependencies:
+  - openjdk=8
+  - samtools
+  - tabix
+  - bwa
+  - bcftools
+  - vcftools
+  - freebayes
+  - snpsift
+  - snpeff
+  - vt
+  - vcflib
