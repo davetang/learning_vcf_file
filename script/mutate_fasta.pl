@@ -7,16 +7,16 @@ use warnings;
 
 my $usage = "Usage: $0 <infile.fa> <mutation percent> <seed>\n";
 my $infile = shift or die $usage;
-my $mutation = shift or die $usage;
+my $percent = shift or die $usage;
 my $seed = shift or die $usage;
 
-#set seed for reproducibility
+# set seed for reproducibility
 srand($seed);
 
-#original sequence
 my $seq = read_fasta($infile);
 my $header = get_fasta_header($infile);
-my $mutated = mutate_seq(\$seq, \$mutation);
+my $mutated = mutate_seq($seq, $percent);
+$mutated = add_newline($mutated, 60);
 
 print "$header\n$mutated\n";
 
@@ -44,64 +44,81 @@ sub read_fasta {
 }
 
 sub mutate_seq {
-   my ($seq,$pc) = @_;
-   my $outfile = $infile;
-   $outfile =~ s/\.fa$/_mutated.txt/;
-   my $s = $$seq;
+
+   my ($seq, $pc) = @_;
    my @nuc = qw/ A C G T /;
    my @mutation = qw/insert delete point/;
 
-   my @track = 1 .. length($s);
-   my $point = 0;
-   my $insert = 0;
-   my $delete = 0;
+   my $total_num = int(length($seq) * $pc);
+   my $point_num = int($total_num * .8);
+   my $del_num = int($total_num * .1);
+   my $ins_num = int($total_num * .1);
+   my %mut_log = ();
 
-   for (1 .. $$pc * length($s)){
-      #pick a random base to mutate
-      my $rand_ind = int(rand(length($s)));
-      #what type of mutation should we introduce
-      my $type = int(rand(scalar(@mutation)));
-      $type = $mutation[$type];
+   %mut_log = pick_locus(\%mut_log, $point_num, "point");
+   %mut_log = pick_locus(\%mut_log, $ins_num, "ins");
+   %mut_log = pick_locus(\%mut_log, $del_num, "del");
+
+   foreach my $pos (sort {$b <=> $a} keys %mut_log){
+      my $type = $mut_log{$pos};
+      my $ref = substr($seq, $pos, 1);
 
       if ($type eq 'point'){
-         ++$point;
-         my $base = substr($s, $rand_ind, 1);
-         my $rand_nuc = $base;
-         while($rand_nuc eq $base){
-            $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
+         my $alt = $ref;
+         while($alt eq $ref){
+            $alt = $nuc[int(rand(scalar(@nuc)))];
          }
-         substr($s, $rand_ind, 1, $rand_nuc);
-         $track[$rand_ind] = "$type: $base -> $rand_nuc";
-#         print "$type on ", $rand_ind+1, " $base -> $rand_nuc\n";
-      }
-
-      elsif ($type eq 'delete'){
-         ++$delete;
-         # breakpoint and join with loss of a base
-         my $a = substr($s, 0, $rand_ind-1);
-         my $b = substr($s, $rand_ind, length($s));
-         my $rand_nuc = substr($s, $rand_ind-1, 1);
-         $s = $a . $b;
-         splice @track, $rand_ind, 1;
-         $track[$rand_ind] = "$type: $rand_nuc";
-      }
-
-      elsif ($type eq 'insert'){
-         ++$insert;
+         substr($seq, $pos, 1, $alt);
+         $mut_log{$pos} = "$ref -> $alt";
+      } elsif ($type eq 'del'){
+         substr($seq, $pos, 1, '');
+         my $prev_ref = substr($seq, $pos-1, 1);
+         $mut_log{$pos} = "${prev_ref}$ref -> $prev_ref";
+      } elsif ($type eq 'ins'){
          my $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
-         my $a = substr($s, 0, $rand_ind);
-         my $b = substr($s, $rand_ind, length($s));
-         $s = $a . $rand_nuc . $b;
-         splice @track, $rand_ind, 0, "$type: $rand_nuc";
-#         print "$type on ", $rand_ind+1, " $rand_nuc\n";
+         my $alt = $ref . $rand_nuc;
+         substr($seq, $pos, 1, $alt);
+         $mut_log{$pos} = "$ref -> $alt";
+      } else {
+         die "Unknown mutation\n";
       }
-
    }
-   for (my $i=0; $i<scalar(@track); ++$i){
-      warn $i+1,"\t$track[$i]\n" if $track[$i] !~ /^\d/;
+   my $outfile = $infile;
+   $outfile =~ s/\.fa$/_mutation.log/;
+   open(my $fh, '>', $outfile) || die "Could not open $outfile for writing: $!\n";
+   foreach my $pos (sort {$a <=> $b} keys %mut_log){
+      print $fh "$pos\t$mut_log{$pos}\n";
    }
-   my $total = $point + $delete + $insert;
-   warn "Point: $point\nDelete: $delete\nInsert: $insert\n";
-   warn "Total: $total\n";
-   return($s);
+   close($fh);
+   return($seq);
 }
+
+sub pick_locus {
+   my ($mut_log, $num, $type) = @_;
+   for (1 .. $num){
+      # pick a random base to mutate
+      # if we already picked that base, repeat until we find a new one
+      my $rand_ind = int(rand(length($seq)));
+      if (exists $mut_log->{$rand_ind}){
+         while (exists $mut_log->{$rand_ind}){
+            $rand_ind = int(rand(length($seq)));
+         }
+         $mut_log->{$rand_ind} = $type;
+      } else {
+         $mut_log->{$rand_ind} = $type;
+      }
+   }
+   return(%{$mut_log});
+}
+
+sub add_newline {
+   my ($line, $pos) = @_;
+   my $mod = '';
+   for (my $i = 0; $i < length($line); $i += $pos){
+      $mod .= substr($line, $i, $pos) . "\n";
+   }
+   return($mod);
+}
+
+__END__
+
