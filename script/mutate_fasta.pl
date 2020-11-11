@@ -68,17 +68,17 @@ sub mutate_seq {
          while($alt eq $ref){
             $alt = $nuc[int(rand(scalar(@nuc)))];
          }
+         $mut_log{$pos} = "$ref\t$alt";
          substr($seq, $pos, 1, $alt);
-         $mut_log{$pos} = "$ref -> $alt";
       } elsif ($type eq 'del'){
-         substr($seq, $pos, 1, '');
          my $prev_ref = substr($seq, $pos-1, 1);
-         $mut_log{$pos} = "${prev_ref}$ref -> $prev_ref";
+         $mut_log{$pos} = "${prev_ref}$ref\t$prev_ref";
+         substr($seq, $pos, 1, '');
       } elsif ($type eq 'ins'){
          my $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
          my $alt = $ref . $rand_nuc;
+         $mut_log{$pos} = "$ref\t$alt";
          substr($seq, $pos, 1, $alt);
-         $mut_log{$pos} = "$ref -> $alt";
       } else {
          die "Unknown mutation\n";
       }
@@ -87,7 +87,17 @@ sub mutate_seq {
    $outfile =~ s/\.fa$/_mutation.log/;
    open(my $fh, '>', $outfile) || die "Could not open $outfile for writing: $!\n";
    foreach my $pos (sort {$a <=> $b} keys %mut_log){
-      print $fh "$pos\t$mut_log{$pos}\n";
+      # use 1 bp coordinates to be compatible with VCF files
+      my $pos_one_base = $pos + 1;
+      my $mut = $mut_log{$pos};
+      my ($ref, $alt) = split(/\t/, $mut);
+      # if deletion, report coorindate of previous base
+      if (length($ref) > length($alt)){
+         print $fh "$pos\t$mut\n";
+      } else {
+         print $fh "$pos_one_base\t$mut\n";
+      }
+
    }
    close($fh);
    return($seq);

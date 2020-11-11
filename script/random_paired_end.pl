@@ -36,11 +36,11 @@ if ($len > $seq_len){
 my $fake_qual = 'J' x $len;
 
 my $name = 'l' . $len . '_' . 'n' . $num . '_' . 'd' . $inner_mate . '_' . $seed;
-my $first_out = $name . '_1.fq';
-my $second_out = $name . '_2.fq';
+my $first_out = $name . '_1.fq.gz';
+my $second_out = $name . '_2.fq.gz';
 
-open(R1,'>',$first_out) || die "Could not open $first_out for writing: $!\n";
-open(R2,'>',$second_out) || die "Could not open $second_out for writing: $!\n";
+open(my $read1, '|-', "gzip >$first_out") || die "Could not write output to $first_out: $!\n";
+open(my $read2, '|-', "gzip >$second_out") || die "Could not write output to  $second_out: $!\n";
 
 for (1 .. $num){
 
@@ -53,17 +53,18 @@ for (1 .. $num){
 
    my $first_read = substr($seq,$first_start,$len);
    my $first_pos = $first_start + 1;
-   print R1 "\@$_:$first_pos\n$first_read\n+\n$fake_qual\n";
+   print $read1 "\@$_:$first_pos\n$first_read\n+\n$fake_qual\n";
 
    my $second_start = $first_start + $inner_mate;
    my $second_read = substr($seq,$second_start,$len);
    $second_read = reverse($second_read);
    $second_read =~ tr/ACGT/TGCA/;
    my $second_pos = $second_start + 1;
-   print R2 "\@$_:$first_pos\n$second_read\n+\n$fake_qual\n";
+   print $read2 "\@$_:$first_pos\n$second_read\n+\n$fake_qual\n";
 }
 
-close(R1);
-close(R2);
+close($read1);
+close($read2);
 
 exit(0);
+
