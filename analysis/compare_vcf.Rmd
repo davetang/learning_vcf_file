@@ -1,0 +1,142 @@
+---
+title: "Compare VCF files"
+author: "Dave Tang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(cowplot)
+library(UpSetR)
+theme_set(theme_bw())
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = ".")
+```
+
+VCF files are really just tab-delimited files (with additional metadata); we can use `read_tsv` to load VCF files into R.
+
+```{r load_vcf, message=FALSE, warning=FALSE}
+vcf_colnames <- c("chrom", "pos", "id", "ref", "alt", "qual", "filter", "info", "format", "sample")
+
+fb_variant <- read_tsv(file = "../benchmark/test_31.fb.vcf.gz", col_names = vcf_colnames, comment = "#")
+bt_variant <- read_tsv(file = "../benchmark/test_31.bt.vcf.gz", col_names = vcf_colnames, comment = "#")
+hc_variant <- read_tsv(file = "../benchmark/test_31.hc.vcf.gz", col_names = vcf_colnames, comment = "#")
+```
+
+Check out the first few lines.
+
+```{r check_vcf_ns}
+head(hc_variant)
+```
+
+A simple way to compare variants is to create a unique ID using the `chrom`, `id`, `ref`, and `alt` columns in each table and intersect each table using these variant IDs.
+
+```{r add_vid}
+add_vid <- function(df){
+  df %>%
+    mutate(vid = paste(chrom, pos, ref, alt, sep = "_")) %>%
+    select(vid, everything())
+}
+
+fb_variant <- add_vid(fb_variant)
+bt_variant <- add_vid(bt_variant)
+hc_variant <- add_vid(hc_variant)
+```
+
+An UpSet plot can nicely show the number of common variants.
+
+```{r upsetr_variant_list}
+variant_list <- list(BCFtools = bt_variant$vid,
+                     FreeBayes = fb_variant$vid,
+                     HaplotypeCaller = hc_variant$vid)
+
+upset(fromList(variant_list),
+      order.by = "freq",
+      point.size = 5,
+      text.scale = 1.5)
+```
+
+We can see that 92.4% of the variants are commonly called by all three tools. FreeBayes has the largest number of private variants.
+
+We can a mutation type column to our tables to compare specific mutations.
+
+```{r add_mut_type}
+add_mut_type <- function(df){
+  df %>%
+    mutate(type = case_when(nchar(ref) == 1 & nchar(alt) == 1 ~ "snv",
+                            nchar(ref) > 1 & nchar(alt) == 1 ~ "del",
+                            nchar(ref) == 1 & nchar(alt) > 1 ~ "ins"))
+}
+
+fb_variant <- add_mut_type(fb_variant)
+bt_variant <- add_mut_type(bt_variant)
+hc_variant <- add_mut_type(hc_variant)
+```
+
+Compare SNVs.
+
+```{r compare_snvs}
+snvs <- list(BCFtools = bt_variant %>% filter(type == "snv") %>% pull(vid),
+             FreeBayes = fb_variant %>% filter(type == "snv") %>% pull(vid),
+             HaplotypeCaller = hc_variant %>% filter(type == "snv") %>% pull(vid))
+
+upset(fromList(snvs),
+      order.by = "freq",
+      point.size = 5,
+      text.scale = 1.5)
+```
+
+Check the mutation log to see if those private SNVs are "real" or not.
+
+```{r load_mutation_log, message=FALSE, warning=FALSE}
+mut_log <- read_tsv(file = "../benchmark/test_31_mutation.log", col_names = c("pos", "ref", "alt"))
+
+hc_variant %>% filter(type == "snv") %>% pull(vid) -> hc_snv
+setdiff(hc_snv, union(bt_variant$vid, fb_variant$vid)) %>%
+  as.data.frame() %>%
+  separate(col = ".", sep = "_", into = c("chrom", "pos", "ref", "alt")) %>%
+  mutate(pos = as.numeric(pos)) %>%
+  full_join(y = mut_log, by = "pos") %>%
+  filter(!is.na(ref.x)) %>%
+  mutate(real = case_when(ref.x == ref.y & alt.x == alt.y ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  summarise(hc_real_percent = sum(real)*100/n())
+
+bt_variant %>% filter(type == "snv") %>% pull(vid) -> bt_snv
+setdiff(bt_snv, union(hc_variant$vid, fb_variant$vid)) %>%
+  as.data.frame() %>%
+  separate(col = ".", sep = "_", into = c("chrom", "pos", "ref", "alt")) %>%
+  mutate(pos = as.numeric(pos)) %>%
+  full_join(y = mut_log, by = "pos") %>%
+  filter(!is.na(ref.x)) %>%
+  mutate(real = case_when(ref.x == ref.y & alt.x == alt.y ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  summarise(bt_real_percent = sum(real)*100/n())
+```
+
+Compare insertions.
+
+```{r compare_ins}
+insertions <- list(BCFtools = bt_variant %>% filter(type == "ins") %>% pull(vid),
+                   FreeBayes = fb_variant %>% filter(type == "ins") %>% pull(vid),
+                   HaplotypeCaller = hc_variant %>% filter(type == "ins") %>% pull(vid))
+
+upset(fromList(insertions),
+      order.by = "freq",
+      point.size = 5,
+      text.scale = 1.5)
+```
+
+Compare deletions.
+
+```{r compare_del}
+deletions <- list(BCFtools = bt_variant %>% filter(type == "del") %>% pull(vid),
+                  FreeBayes = fb_variant %>% filter(type == "del") %>% pull(vid),
+                  HaplotypeCaller = hc_variant %>% filter(type == "del") %>% pull(vid))
+
+upset(fromList(deletions),
+      order.by = "freq",
+      point.size = 5,
+      text.scale = 1.5)
+```
