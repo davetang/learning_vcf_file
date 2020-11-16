@@ -14,34 +14,28 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = ".")
 ```
 
-VCF files are really just tab-delimited files (with additional metadata); we can use `read_tsv` to load VCF files into R.
+VCF files are really just tab-delimited files (with additional metadata); we can use `read_tsv` to load VCF files into R. In addition we will add variant IDs (`vid`) using the `chrom`, `id`, `ref`, and `alt` columns in each table and add a variant type column (`type`).
 
 ```{r load_vcf, message=FALSE, warning=FALSE}
-vcf_colnames <- c("chrom", "pos", "id", "ref", "alt", "qual", "filter", "info", "format", "sample")
-
-fb_variant <- read_tsv(file = "../benchmark/test_31.fb.vcf.gz", col_names = vcf_colnames, comment = "#")
-bt_variant <- read_tsv(file = "../benchmark/test_31.bt.vcf.gz", col_names = vcf_colnames, comment = "#")
-hc_variant <- read_tsv(file = "../benchmark/test_31.hc.vcf.gz", col_names = vcf_colnames, comment = "#")
+read_vcf <- function(file){
+  vcf_colnames <- c("chrom", "pos", "id", "ref", "alt", "qual", "filter", "info", "format", "sample")
+  read_tsv(file, col_names = vcf_colnames, comment = "#") %>%
+    mutate(type = case_when(nchar(ref) == 1 & nchar(alt) == 1 ~ "snv",
+                            nchar(ref) > 1 & nchar(alt) == 1 ~ "del",
+                            nchar(ref) == 1 & nchar(alt) > 1 ~ "ins",
+                            TRUE ~ "complex")) %>%
+    mutate(vid = paste(chrom, pos, ref, alt, sep = "_")) %>%
+    select(vid, everything())
+}
+fb_variant <- read_vcf(file = "../benchmark/test_31.fb.vcf.gz")
+bt_variant <- read_vcf(file = "../benchmark/test_31.bt.vcf.gz")
+hc_variant <- read_vcf(file = "../benchmark/test_31.hc.vcf.gz")
 ```
 
 Check out the first few lines.
 
 ```{r check_vcf_ns}
 head(hc_variant)
-```
-
-A simple way to compare variants is to create a unique ID using the `chrom`, `id`, `ref`, and `alt` columns in each table and intersect each table using these variant IDs.
-
-```{r add_vid}
-add_vid <- function(df){
-  df %>%
-    mutate(vid = paste(chrom, pos, ref, alt, sep = "_")) %>%
-    select(vid, everything())
-}
-
-fb_variant <- add_vid(fb_variant)
-bt_variant <- add_vid(bt_variant)
-hc_variant <- add_vid(hc_variant)
 ```
 
 An UpSet plot can nicely show the number of common variants.
@@ -58,21 +52,6 @@ upset(fromList(variant_list),
 ```
 
 We can see that 92.4% of the variants are commonly called by all three tools. FreeBayes has the largest number of private variants.
-
-We can a mutation type column to our tables to compare specific mutations.
-
-```{r add_mut_type}
-add_mut_type <- function(df){
-  df %>%
-    mutate(type = case_when(nchar(ref) == 1 & nchar(alt) == 1 ~ "snv",
-                            nchar(ref) > 1 & nchar(alt) == 1 ~ "del",
-                            nchar(ref) == 1 & nchar(alt) > 1 ~ "ins"))
-}
-
-fb_variant <- add_mut_type(fb_variant)
-bt_variant <- add_mut_type(bt_variant)
-hc_variant <- add_mut_type(hc_variant)
-```
 
 Compare SNVs.
 
@@ -139,4 +118,52 @@ upset(fromList(deletions),
       order.by = "freq",
       point.size = 5,
       text.scale = 1.5)
+```
+
+## Complex UpSet plot
+
+Visualise using a complex UpSet plot. First we need to prepare the data frame.
+
+```{r variant_df}
+rbind(bt_variant %>% select(vid, type),
+      hc_variant %>% select(vid, type),
+      fb_variant %>% select(vid, type)) %>%
+  distinct(vid, type) -> all_variant
+
+all_variant$bt <- all_variant$vid %in% bt_variant$vid
+all_variant$hc <- all_variant$vid %in% hc_variant$vid
+all_variant$fb <- all_variant$vid %in% fb_variant$vid
+```
+
+UpSet plot with variant type.
+
+```{r complex_upset, fig.width=16, fig.height=6}
+ComplexUpset::upset(all_variant,
+                    c("bt", "hc", "fb"),
+                    base_annotations = list(
+                      'Intersection size' = ComplexUpset::intersection_size(
+                        counts = FALSE,
+                        aes = aes(fill = type)
+                      )
+                    ),
+                    width_ratio = 0.1
+)
+```
+
+UpSet plot with variant type as another plot.
+
+```{r complex_upset_2, fig.width=16, fig.height=6}
+ComplexUpset::upset(all_variant,
+                    c("bt", "hc", "fb"),
+                    annotations = list(
+                      'Type' = list(
+                        aes = aes(x = intersection, fill = type),
+                        geom = list(
+                          geom_bar(stat = 'count', position = 'fill'),
+                          scale_y_continuous(labels = scales::percent_format())
+                        )
+                      )
+                    ),
+                    width_ratio = 0.1
+)
 ```
