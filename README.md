@@ -605,33 +605,28 @@ bcftools view -t 1:866511-882000 eg/Pfeiffer.vcf
 
 # Subset a single sample from a multi-sample VCF file
 
-Use [GATK SelectVariants](https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_variantutils_SelectVariants.php); check link out for more subsetting recipes. The `-fraction` also creates a random subset of variants.
+Use [SelectVariants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants) from GATK to subset a sample from a multi-sample VCF file. Required arguments are `--output` and `--variant`, which specify the path to which variants should be written and the input VCF file, respectively. To use GATK, you need Java version 8. The script `broad_tools.sh` in `bin` will download GATK (and two other Broad Institute tools called Cromwell and Womtools as well).
+
+Subset `sample1` from `joint_call.vcf.gz`.
 
 ```bash
-# include this if you want to exclude homozygous reference
-# --excludeNonVariants \
-
-java -Xmx2g -jar GenomeAnalysisTK.jar \
--R ucsc.hg19.fasta \
--T SelectVariants \
---variant multi_sample.vcf \
--o output.vcf \
---keepOriginalAC \
--sn SAMPLE1 \
--sn SAMPLE2
-
-# Select a sample and restrict the output VCF to a set of intervals:
-java -Xmx2g -jar GenomeAnalysisTK.jar \
--R ucsc.hg19.fasta \
--T SelectVariants \
--V input.vcf \
--o output.vcf \
--L /path/to/my.interval_list \
--sn SAMPLE1 \
--sn SAMPLE2
+gatk SelectVariants \
+  --variant joint_call.vcf.gz \
+  --sample-name sample1 \
+  --output sample1.vcf.gz
 ```
 
-The `my.interval_list` file can be in [several formats](https://software.broadinstitute.org/gatk/guide/article?id=1319) including the popular BED format. The GATK engine recognises the .bed extension and interprets the coordinate system accordingly.
+The [exclude-non-variants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants#--exclude-non-variants) argument is useful to remove sites that are not variants.
+
+```bash
+gatk SelectVariants \
+  --variant joint_call.vcf.gz \
+  --sample-name sample1 \
+  --exclude-non-variants true \
+  --output sample1.vcf.gz
+```
+
+Refer to the [SelectVariants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants) documentation page for more examples.
 
 # Merging VCF files
 

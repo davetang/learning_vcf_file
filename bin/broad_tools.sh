@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # GATK
-gatk_ver=4.1.9.0
+gatk_ver=4.2.0.0
 gatk_url=https://github.com/broadinstitute/gatk/releases/download/${gatk_ver}/gatk-${gatk_ver}.zip
 
 if [[ ! -d gatk-${gatk_ver} ]]; then
@@ -19,7 +19,7 @@ else
 fi
 
 # Cromwell
-cromwell_ver=53.1
+cromwell_ver=65
 cromwell_url=https://github.com/broadinstitute/cromwell/releases/download/${cromwell_ver}/cromwell-${cromwell_ver}.jar
 if [[ ! -e cromwell-${cromwell_ver}.jar ]]; then
    wget ${cromwell_url}
@@ -29,7 +29,7 @@ else
 fi
 
 # WOMtool
-womtool_ver=53.1
+womtool_ver=65
 womtool_url=https://github.com/broadinstitute/cromwell/releases/download/${womtool_ver}/womtool-${womtool_ver}.jar
 if [[ ! -e womtool-${womtool_ver}.jar ]]; then
    wget ${womtool_url}
