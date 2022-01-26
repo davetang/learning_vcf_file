@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - 'workflow/**'
+  workflow_dispatch:
 
 # a list of the jobs that run as part of the workflow
 jobs:
