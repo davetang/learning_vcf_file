@@ -3,7 +3,7 @@
 // size of reference sequence
 REF_SIZE=1000000
 // seed
-SEED=1984
+SEED=31
 // basename
 BASE="test_${SEED}"
 // name of reference sequence
@@ -26,6 +26,7 @@ THREAD=8
 // Programs
 TOOLS="../tools"
 BWA="$TOOLS/bin/bwa"
+BGZIP="$TOOLS/bin/bgzip"
 SAMTOOLS="$TOOLS/bin/samtools"
 BCFTOOLS="$TOOLS/bin/bcftools"
 FREEBAYES="$TOOLS/bin/freebayes"
@@ -114,7 +115,13 @@ freebayes = {
    }
 }
 
+bgzip = {
+   produce("*.vcf.gz"){
+      exec "$BGZIP $input"
+   }
+}
+
 Bpipe.run {
-   random_ref + [ create_dict,index_ref ] + mutate_ref + random_read + bwa_align + sam_to_bam + index_bam + [ call_variant,haplotype_caller,freebayes ]
+   random_ref + [ create_dict,index_ref ] + mutate_ref + random_read + bwa_align + sam_to_bam + index_bam + [ call_variant+bgzip,haplotype_caller+bgzip,freebayes+bgzip ]
 }
 

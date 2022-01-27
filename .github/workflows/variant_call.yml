@@ -10,11 +10,8 @@ on:
 
 # a list of the jobs that run as part of the workflow
 jobs:
-  make_markdown:
+  variant_call:
     runs-on: ubuntu-latest
-
-    # the type of runner to run the given job
-    # container: davetang/r_build:4.1.2
 
     # a list of the steps that will run as part of the job
     steps:
@@ -26,11 +23,22 @@ jobs:
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
-      - run: cd workflow && ./install.sh
-        name: Install tools
+      - name: Install tools
+        run: cd workflow && ./install.sh
 
-      - run: cd workflow/simple && make
-        name: Run workflow
+      - name: Run workflow
+        run: cd workflow/simple && make
+
+      - name: Copy results
+        run: copy workflow/simple/*.vcf.gz eg
+
+      - name: Commit report
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'davetingpongtang@gmail.com'
+          git add "eg/aln*.vcf.gz"
+          git commit -m "Example VCF files"
+          git push origin master
 
       - run: echo "This job's status is ${{ job.status }}."
 
