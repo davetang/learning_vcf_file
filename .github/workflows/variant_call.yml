@@ -30,7 +30,7 @@ jobs:
         run: cd workflow/simple && make
 
       - name: Copy results
-        run: copy workflow/simple/*.vcf.gz eg
+        run: cp workflow/simple/*.vcf.gz eg
 
       - name: Commit report
         run: |
