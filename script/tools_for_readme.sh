@@ -7,7 +7,7 @@ relpath=$(dirname $0)
 
 if [[ -x $(command -v readlink) ]]; then
    root=$(readlink -f ${relpath}/..)
-elif [[ -x $(command -v readpath) ]]; then
+elif [[ -x $(command -v realpath) ]]; then
    root=$(realpath ${relpath}/..)
 else
    >&2 echo Could not convert ${relpath}/.. to an absolute path
