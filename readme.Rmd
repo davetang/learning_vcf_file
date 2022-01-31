@@ -4,7 +4,7 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-Sys.setenv( PATH=paste0(Sys.getenv("PATH"), ":", getwd(), "/bin") )
+Sys.setenv( PATH=paste0(Sys.getenv("PATH"), ":", getwd(), "/tools/bin") )
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -136,7 +136,7 @@ The four output types will be compared on a VCF file produced by the 1000 Genome
 
 Download and unzip.
 
-```bash
+```{bash engine.opts='-l'}
 cd eg
 wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/supporting/related_samples_vcf/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5_related_samples.20130502.genotypes.vcf.gz
 gunzip ALL.chr22.phase3_shapeit2_mvncall_integrated_v5_related_samples.20130502.genotypes.vcf.gz
