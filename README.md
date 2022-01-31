@@ -33,7 +33,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Mon 31 Jan 2022 07:35:21 AM UTC
+Mon 31 Jan 2022 07:54:39 AM UTC
 
 Learning the VCF format
 ================
@@ -287,9 +287,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m19.833s
-    ## user 0m34.235s
-    ## sys  0m2.046s
+    ## real 0m20.325s
+    ## user 0m35.787s
+    ## sys  0m2.009s
 
 VCF to uncompressed BCF.
 
@@ -298,9 +298,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m18.539s
-    ## user 0m34.218s
-    ## sys  0m1.964s
+    ## real 0m19.331s
+    ## user 0m35.712s
+    ## sys  0m2.050s
 
 VCF to compressed VCF.
 
@@ -309,9 +309,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m27.290s
-    ## user 0m47.421s
-    ## sys  0m2.708s
+    ## real 0m28.506s
+    ## user 0m49.036s
+    ## sys  0m2.739s
 
 File sizes
 
@@ -652,23 +652,29 @@ Using `bcftools index` to generate a `csi` index.
 
 ``` bash
 bcftools index eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.csi
 ```
 
-    ## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
-    ## Failed to read from aln.hc.vcf.gz: No such file or directory
+    ## 1000000  151 .   T   A   4111.06 .   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+    ## 1000000  172 .   TA  T   3122.03 .   AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+    ## 1000000  336 .   A   G   4884.06 .   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
+    ## 1000000  415 .   C   A   4569.06 .   AC=2;AF=1;AN=2;DP=106;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=27.24;SOR=3.442 GT:AD:DP:GQ:PL  1/1:0,102:102:99:4583,307,0
+    ## 1000000  733 .   G   T   9279.06 .   AC=2;AF=1;AN=2;DP=215;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.2;SOR=0.814  GT:AD:DP:GQ:PL  1/1:0,208:208:99:9293,626,0
 
 Using `tabix` to generate a `tbi` index.
 
 ``` bash
 tabix eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.tbi
 ```
 
-    ## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
-    ## Failed to read from aln.hc.vcf.gz: No such file or directory
+    ## 1000000  151 .   T   A   4111.06 .   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+    ## 1000000  172 .   TA  T   3122.03 .   AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+    ## 1000000  336 .   A   G   4884.06 .   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
+    ## 1000000  415 .   C   A   4569.06 .   AC=2;AF=1;AN=2;DP=106;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=27.24;SOR=3.442 GT:AD:DP:GQ:PL  1/1:0,102:102:99:4583,307,0
+    ## 1000000  733 .   G   T   9279.06 .   AC=2;AF=1;AN=2;DP=215;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.2;SOR=0.814  GT:AD:DP:GQ:PL  1/1:0,208:208:99:9293,626,0
 
 ## Subset variants within a specific genomic region
 
@@ -683,9 +689,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.090s
-    ## user 0m0.078s
-    ## sys  0m0.038s
+    ## real 0m0.091s
+    ## user 0m0.080s
+    ## sys  0m0.037s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -695,9 +701,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m4.467s
-    ## user 0m4.473s
-    ## sys  0m0.027s
+    ## real 0m4.650s
+    ## user 0m4.603s
+    ## sys  0m0.064s
 
 Use commas to list more than one loci.
 
