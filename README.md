@@ -20,6 +20,7 @@ Table of Contents
    * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
    * [Random subset of variants](#random-subset-of-variants)
+   * [Index a VCF file](#index-a-vcf-file)
    * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
    * [Output sample names](#output-sample-names)
    * [Subset sample/s from a multi-sample VCF file](#subset-samples-from-a-multi-sample-vcf-file)
@@ -32,7 +33,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Mon 31 Jan 2022 06:53:35 AM UTC
+Mon 31 Jan 2022 07:35:21 AM UTC
 
 Learning the VCF format
 ================
@@ -286,9 +287,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m17.523s
-    ## user 0m30.397s
-    ## sys  0m1.628s
+    ## real 0m19.833s
+    ## user 0m34.235s
+    ## sys  0m2.046s
 
 VCF to uncompressed BCF.
 
@@ -297,9 +298,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m16.260s
-    ## user 0m30.334s
-    ## sys  0m1.703s
+    ## real 0m18.539s
+    ## user 0m34.218s
+    ## sys  0m1.964s
 
 VCF to compressed VCF.
 
@@ -308,9 +309,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m24.450s
-    ## user 0m42.387s
-    ## sys  0m2.375s
+    ## real 0m27.290s
+    ## user 0m47.421s
+    ## sys  0m2.708s
 
 File sizes
 
@@ -578,8 +579,8 @@ bcftools view -H eg/aln.bt.vcf.gz | head -1
 
     ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
 
-The `fill-tags` plugin can additional tags to a VCF file including the
-AF tag.
+The `fill-tags` plugin can add additional tags to a VCF file including
+the AF tag.
 
 ``` bash
 bcftools plugin fill-tags eg/aln.bt.vcf.gz | grep -v "^#" | head -1
@@ -640,6 +641,35 @@ bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ pri
 
     ## 1019
 
+## Index a VCF file
+
+An index is required for several tasks such as [subsetting
+variants](#subset-variants-within-a-specific-genomic-region). Using
+either `bcftools index` or `tabix` seems to be fine, although they
+generate indexes with different suffixes.
+
+Using `bcftools index` to generate a `csi` index.
+
+``` bash
+bcftools index eg/aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+rm eg/aln.hc.vcf.gz.csi
+```
+
+    ## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
+    ## Failed to read from aln.hc.vcf.gz: No such file or directory
+
+Using `tabix` to generate a `tbi` index.
+
+``` bash
+tabix eg/aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+rm eg/aln.hc.vcf.gz.tbi
+```
+
+    ## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
+    ## Failed to read from aln.hc.vcf.gz: No such file or directory
+
 ## Subset variants within a specific genomic region
 
 Use `bcftools view` with `-r` or `-R`, which requires an index file. You
@@ -653,9 +683,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.075s
-    ## user 0m0.070s
-    ## sys  0m0.027s
+    ## real 0m0.090s
+    ## user 0m0.078s
+    ## sys  0m0.038s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -665,9 +695,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.959s
-    ## user 0m3.946s
-    ## sys  0m0.035s
+    ## real 0m4.467s
+    ## user 0m4.473s
+    ## sys  0m0.027s
 
 Use commas to list more than one loci.
 
@@ -739,7 +769,7 @@ Decomposing can refer to the splitting of multi-allelic variants; we can
 use `bcftools norm -m` for this.
 
 ``` bash
-bcftools view -H eg/PRJNA784038_illumina.vcf.gz | head -2 | cut -f-5
+bcftools view -H eg/PRJNA784038_illumina.vcf.gz | head -2 | cut -f1-5
 ```
 
     ## NC_045512.2  4   .   A   T
@@ -748,12 +778,12 @@ bcftools view -H eg/PRJNA784038_illumina.vcf.gz | head -2 | cut -f-5
 Splitting.
 
 ``` bash
-bcftools norm -m- eg/PRJNA784038_illumina.vcf.gz | grep -v "^#" | head -3
+bcftools norm -m- eg/PRJNA784038_illumina.vcf.gz | grep -v "^#" | head -3 | cut -f1-5
 ```
 
-    ## NC_045512.2  4   .   A   T   15.265  .   VDB=0.02;SGB=-0.453602;RPBZ=1.63951;MQBZ=0;MQSBZ=0;BQBZ=-1.38042;SCBZ=-0.632456;FS=0;MQ0F=0;MQ=60;DP=8;DP4=2,3,1,1;AN=2;AC=1    GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:49,0,168    ./.:.
-    ## NC_045512.2  16  .   C   A   19.8245 .   VDB=0.02;SGB=-0.453602;RPBZ=-1.41421;MQBZ=0;MQSBZ=0;BQBZ=-1.22474;SCBZ=-1.41421;FS=0;MQ0F=0;MQ=60;DP=22;DP4=7,7,3,3;AN=6;AC=1   GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:36,0,51 ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:53,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:39,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.
-    ## NC_045512.2  16  .   C   G   19.8245 .   VDB=0.02;SGB=-0.453602;RPBZ=-1.41421;MQBZ=0;MQSBZ=0;BQBZ=-1.22474;SCBZ=-1.41421;FS=0;MQ0F=0;MQ=60;DP=22;DP4=7,7,3,3;AN=6;AC=2   GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:36,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:53,0,122    ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:39,0,243    ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.
+    ## NC_045512.2  4   .   A   T
+    ## NC_045512.2  16  .   C   A
+    ## NC_045512.2  16  .   C   G
 
 Decomposing can also refer to converting MNVs into consecutive SNVs;
 this is achieved with `bcftools norm -a`.
@@ -874,7 +904,8 @@ chromoqc(chrom, xlim=c(860000, 900000))
   - [Encoding Structural Variants in
     VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/VCF%20\(Variant%20Call%20Format\)%20version%204.0/encoding-structural-variants)
     version 4.0
-  - <https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b>
+  - [BCFtools cheat
+    sheet](https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b)
 
 ## Stargazers over time
 
