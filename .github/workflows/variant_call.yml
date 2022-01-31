@@ -6,6 +6,7 @@ on:
   push:
     paths:
       - 'workflow/**'
+      - '.github/workflows/variant_call.yml'
   workflow_dispatch:
 
 # a list of the jobs that run as part of the workflow
@@ -30,14 +31,16 @@ jobs:
         run: cd workflow/simple && make
 
       - name: Copy results
-        run: cp workflow/simple/*.vcf.gz eg
+        run: |
+          cp workflow/simple/*.vcf.gz eg
+          cp workflow/simple/*[0-9].fa eg
 
       - name: Commit report
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'davetingpongtang@gmail.com'
-          git add "eg/aln*.vcf.gz"
-          git commit -m "Example VCF files"
+          git add eg/aln*.vcf.gz eg/*[0-9].fa
+          git commit -m "Workflow files"
           git push origin master
 
       - run: echo "This job's status is ${{ job.status }}."
