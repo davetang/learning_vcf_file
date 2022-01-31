@@ -45,15 +45,15 @@ jobs:
           git commit -m "Build README.md"
           git push origin master
 
-#      - name: Build MkDocs site
-#        run: |
-#          cd mkdocs && mkdocs build
-#
-#      - name: Deploy MkDocs
-#        run: |
-#          git branch gh-pages
-#          git pull
-#          cd mkdocs && mkdocs gh-deploy
+      - name: Build MkDocs site
+        run: |
+          cd mkdocs && mkdocs build
+
+      - name: Deploy MkDocs
+        run: |
+          git branch gh-pages
+          git pull
+          cd mkdocs && mkdocs gh-deploy
 
       - run: echo "This job's status is ${{ job.status }}."
 

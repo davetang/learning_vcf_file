@@ -371,7 +371,7 @@ Using `bcftools index` to generate a `csi` index.
 
 ```{bash engine.opts='-l'}
 bcftools index eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.csi
 ```
 
@@ -379,7 +379,7 @@ Using `tabix` to generate a `tbi` index.
 
 ```{bash engine.opts='-l'}
 tabix eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.tbi
 ```
 
