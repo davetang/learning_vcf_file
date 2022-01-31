@@ -1,175 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="None">
-        
-        
-        <link rel="shortcut icon" href="img/favicon.ico">
-        <title>My Docs</title>
-        <link href="css/bootstrap.min.css" rel="stylesheet">
-        <link href="css/font-awesome.min.css" rel="stylesheet">
-        <link href="css/base.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>Learning the VCF format</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
-        <script src="js/jquery-1.10.2.min.js" defer></script>
-        <script src="js/bootstrap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script> 
-    </head>
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
 
-    <body class="homepage">
-        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-            <div class="container">
-                <a class="navbar-brand" href=".">My Docs</a>
+<body class="wy-body-for-nav" role="document">
 
-                <!-- Expanded navigation -->
-                <div id="navbar-collapse" class="navbar-collapse collapse">
-
-                    <ul class="nav navbar-nav ml-auto">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
-                                <i class="fa fa-search"></i> Search
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="container">
-            <div class="row">
-                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
-    <div class="navbar-header">
-        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
-            <span class="fa fa-angle-down"></span>
-        </button>
-    </div>
+  <div class="wy-grid-for-nav">
 
     
-    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
-        <ul class="nav flex-column">
-            
-            <li class="nav-item" data-level="1"><a href="#learning-the-vcf-format" class="nav-link">Learning the VCF format</a>
-              <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#introduction" class="nav-link">Introduction</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#installation" class="nav-link">Installation</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#creating-vcf-example-files" class="nav-link">Creating VCF example files</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#usage" class="nav-link">Usage</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#vcf-to-bcf-and-other-conversions" class="nav-link">VCF to BCF and other conversions</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#viewing-a-vcfbcf-file" class="nav-link">Viewing a VCF/BCF file</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#comparing-output-types" class="nav-link">Comparing output types</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#filtering-for-different-types-of-mutations" class="nav-link">Filtering for different types of mutations</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#vcf-to-ped" class="nav-link">VCF to PED</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#vcf-to-bed" class="nav-link">VCF to BED</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#extracting-info-fields" class="nav-link">Extracting INFO field/s</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#filtering-vcf-on-the-filter-column" class="nav-link">Filtering VCF on the FILTER column</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#filtering-vcf-file-using-the-info-fields" class="nav-link">Filtering VCF file using the INFO field/s</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#summarise-snps-and-indels-per-sample" class="nav-link">Summarise SNPs and INDELs per sample</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#add-af-tag-to-a-vcf-file" class="nav-link">Add AF tag to a VCF file</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#check-whether-the-ref-sequence-is-correct" class="nav-link">Check whether the REF sequence is correct</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#random-subset-of-variants" class="nav-link">Random subset of variants</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#index-a-vcf-file" class="nav-link">Index a VCF file</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#subset-variants-within-a-specific-genomic-region" class="nav-link">Subset variants within a specific genomic region</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#output-sample-names" class="nav-link">Output sample names</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#subset-samples-from-a-multi-sample-vcf-file" class="nav-link">Subset sample/s from a multi-sample VCF file</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#merging-vcf-files" class="nav-link">Merging VCF files</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#decomposing-and-normalising-variants" class="nav-link">Decomposing and normalising variants</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#comparing-vcf-files" class="nav-link">Comparing VCF files</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#visualisation" class="nav-link">Visualisation</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#useful-links" class="nav-link">Useful links</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-level="2"><a href="#stargazers-over-time" class="nav-link">Stargazers over time</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-              </ul>
-            </li>
-        </ul>
-    </div>
-</div></div>
-                    <div class="col-md-9" role="main">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Learning the VCF format</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
 
-<h1 id="learning-the-vcf-format">Learning the VCF format</h1>
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#creating-vcf-example-files">Creating VCF example files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vcf-to-bcf-and-other-conversions">VCF to BCF and other conversions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#viewing-a-vcfbcf-file">Viewing a VCF/BCF file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comparing-output-types">Comparing output types</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filtering-for-different-types-of-mutations">Filtering for different types of mutations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vcf-to-ped">VCF to PED</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vcf-to-bed">VCF to BED</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extracting-info-fields">Extracting INFO field/s</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filtering-vcf-on-the-filter-column">Filtering VCF on the FILTER column</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#filtering-vcf-file-using-the-info-fields">Filtering VCF file using the INFO field/s</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#summarise-snps-and-indels-per-sample">Summarise SNPs and INDELs per sample</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-af-tag-to-a-vcf-file">Add AF tag to a VCF file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#check-whether-the-ref-sequence-is-correct">Check whether the REF sequence is correct</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#random-subset-of-variants">Random subset of variants</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#index-a-vcf-file">Index a VCF file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subset-variants-within-a-specific-genomic-region">Subset variants within a specific genomic region</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#output-sample-names">Output sample names</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subset-samples-from-a-multi-sample-vcf-file">Subset sample/s from a multi-sample VCF file</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#merging-vcf-files">Merging VCF files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#decomposing-and-normalising-variants">Decomposing and normalising variants</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comparing-vcf-files">Comparing VCF files</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#visualisation">Visualisation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#useful-links">Useful links</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stargazers-over-time">Stargazers over time</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Learning the VCF format</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="learning-the-vcf-format">Learning the VCF format</h1>
 <h2 id="introduction">Introduction</h2>
 <p><img alt="Build
 README" src="https://github.com/davetang/learning_vcf_file/actions/workflows/create_readme.yml/badge.svg" />
@@ -811,89 +781,51 @@ plot(chrom)
 </ul>
 <h2 id="stargazers-over-time">Stargazers over time</h2>
 <p><a href="https://starchart.cc/davetang/learning_vcf_file"><img alt="Stargazers over
-time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p></div>
+time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
+              
             </div>
-        </div>
+          </div>
+          <footer>
+  
 
-        <footer class="col-md-12">
-            <hr>
-            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
-        </footer>
-        <script>
-            var base_url = ".",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="js/base.js" defer></script>
-        <script src="search/main.js" defer></script>
+  <hr/>
 
-        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="searchModalLabel">Search</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            </div>
-            <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
-                <form>
-                    <div class="form-group">
-                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
-                    </div>
-                </form>
-                <div id="mkdocs-search-results"></div>
-            </div>
-            <div class="modal-footer">
-            </div>
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
         </div>
-    </div>
-</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            </div>
-            <div class="modal-body">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width: 20%;">Keys</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="help shortcut"><kbd>?</kbd></td>
-                    <td>Open this help</td>
-                  </tr>
-                  <tr>
-                    <td class="next shortcut"><kbd>n</kbd></td>
-                    <td>Next page</td>
-                  </tr>
-                  <tr>
-                    <td class="prev shortcut"><kbd>p</kbd></td>
-                    <td>Previous page</td>
-                  </tr>
-                  <tr>
-                    <td class="search shortcut"><kbd>s</kbd></td>
-                    <td>Search</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
-    </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
 </div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
 
-    </body>
+</body>
 </html>
 
 <!--
-MkDocs version : 1.1.2
-Build Date UTC : 2022-01-31 07:44:35.465974+00:00
+MkDocs version : 1.2.3
+Build Date UTC : 2022-01-31 07:54:41.694225+00:00
 -->
