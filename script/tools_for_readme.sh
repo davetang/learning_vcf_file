@@ -68,12 +68,6 @@ if [[ ! -e ${root}/bin/vt ]]; then
    rm -rf vt-${vt_ver}*
 fi
 
-for t in bcftools vcf2bed bgzip tabix gh-md-toc vt; do
-   if [[ ! -L ${root}/${t} ]]; then
-      ln -s ${root}/bin/${t} .
-   fi
-done
-
 >&2 echo Done
 exit 0
 

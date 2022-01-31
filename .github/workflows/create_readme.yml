@@ -1,0 +1,59 @@
+# name of workflow that will be displayed on the actions page
+name: Create README.md
+
+# execute workflow only when these files are modified
+on:
+  push:
+    paths:
+      - 'eg/**'
+      - 'create_readme.sh'
+      - 'readme.Rmd'
+      - '.github/workflows/create_readme.yml'
+
+# a list of the jobs that run as part of the workflow
+jobs:
+  make_markdown:
+    runs-on: ubuntu-latest
+
+    # the type of runner to run the given job
+    container: davetang/r_build:4.1.2
+
+    # a list of the steps that will run as part of the job
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+
+      - name: Install pandoc
+        run: apt update && apt install -y pandoc
+
+      - name: Install tools for README
+        run: script/tools_for_readme.sh
+
+      - name: Build README
+        run: ./create_readme.sh
+
+      - name: Commit report
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'davetingpongtang@gmail.com'
+          git add "README.md"
+          git commit -m "Build README.md"
+          git push origin master
+
+#      - name: Build MkDocs site
+#        run: |
+#          cd mkdocs && mkdocs build
+#
+#      - name: Deploy MkDocs
+#        run: |
+#          git branch gh-pages
+#          git pull
+#          cd mkdocs && mkdocs gh-deploy
+
+      - run: echo "This job's status is ${{ job.status }}."
+
