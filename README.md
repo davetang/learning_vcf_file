@@ -1,1001 +1,2574 @@
+
 Table of Contents
 =================
 
-   * [Table of Contents](#table-of-contents)
-   * [VCF files](#vcf-files)
+* [Learning the VCF format](#learning-the-vcf-format)
+   * [Introduction](#introduction)
    * [Installation](#installation)
+   * [Creating VCF example files](#creating-vcf-example-files)
    * [Usage](#usage)
-   * [Viewing a BCF file](#viewing-a-bcf-file)
+   * [VCF to BCF and other conversions](#vcf-to-bcf-and-other-conversions)
+   * [Viewing a VCF/BCF file](#viewing-a-vcfbcf-file)
    * [Comparing output types](#comparing-output-types)
-   * [BCF to VCF](#bcf-to-vcf)
    * [Filtering for different types of mutations](#filtering-for-different-types-of-mutations)
-      * [SNPs](#snps)
-      * [INDELs](#indels)
    * [VCF to PED](#vcf-to-ped)
    * [VCF to BED](#vcf-to-bed)
+   * [Convert to BED](#convert-to-bed)
    * [Extracting INFO field/s](#extracting-info-fields)
    * [Filtering VCF on the FILTER column](#filtering-vcf-on-the-filter-column)
    * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
    * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
-   * [Summarise genotypes in a VCF file](#summarise-genotypes-in-a-vcf-file)
+   * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
    * [Random subset of variants](#random-subset-of-variants)
    * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
-   * [Subset a single sample from a multi-sample VCF file](#subset-a-single-sample-from-a-multi-sample-vcf-file)
+   * [Output sample names](#output-sample-names)
+   * [Subset sample/s from a multi-sample VCF file](#subset-samples-from-a-multi-sample-vcf-file)
    * [Merging VCF files](#merging-vcf-files)
-   * [Creating a test file](#creating-a-test-file)
-      * [Adjusting parameters](#adjusting-parameters)
-      * [Consensus caller](#consensus-caller)
-   * [Using GATK for calling variants](#using-gatk-for-calling-variants)
+   * [Decomposing and normalising variants](#decomposing-and-normalising-variants)
    * [Comparing VCF files](#comparing-vcf-files)
-      * [Decompose and normalise](#decompose-and-normalise)
-      * [SnpSift](#snpsift)
    * [Visualisation](#visualisation)
    * [Useful links](#useful-links)
    * [Stargazers over time](#stargazers-over-time)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-# VCF files
+Mon 31 Jan 2022 06:39:06 AM UTC
 
-Natural selection relies on three conditions:
+Learning the VCF format
+================
 
-1. There must be genetic variation among species
-2. The genetic variation must be heritable
-3. The genetic variation results in differing fitness
+## Introduction
 
-The _de facto_ file format for representing genetic variation is the Variant Call Format (VCF). A good starting point for learning about the VCF is this [poster](http://vcftools.sourceforge.net/VCF-poster.pdf); the image below was taken from the poster. The binary equivalent of a VCF file is a BCF file, akin to the SAM and BAM formats. BCFtools is used to view and manipulate VCF/BCF files. I have included an example BCF file (aln_consensus.bcf) in this repository to demonstrate the various utilities of BCFtools. If you are interested in how this file was generated refer to [Creating a test file](#creating-a-test-file).
+![Build
+README](https://github.com/davetang/learning_vcf_file/actions/workflows/create_readme.yml/badge.svg)
+![Creating VCF
+examples](https://github.com/davetang/learning_vcf_file/actions/workflows/variant_call.yml/badge.svg)
+
+Natural selection occurs under three conditions:
+
+1.  Genetic variation occurs among individuals (and this occurs mainly
+    due to chance errors in replication)
+2.  The genetic variation must be heritable, i.e. passed from one
+    generation to the next, and
+3.  The genetic variation results in varying fitness, i.e. individuals
+    survive and reproduce with respect to genetic variation
+
+The *de facto* file format for storing genetic variation is the Variant
+Call Format (VCF) and was developed under the [1000 Genomes
+Project](https://pubmed.ncbi.nlm.nih.gov/21653522/). Currently, the
+Large Scale Genomics work stream of the Global Alliance for Genomics &
+Health (GA4GH) maintain the specification of the VCF (and other
+[high-throughput sequencing data
+formats](https://samtools.github.io/hts-specs/)). A good starting point
+for learning about the VCF is this
+[poster](http://vcftools.sourceforge.net/VCF-poster.pdf) and a portion
+of the poster is displayed below.
 
 ![VCF format](img/vcf_format.png)
 
-# Installation
+Initially, VCFtools (and the associated scripts) was used for working
+with VCF files. VCFtools was also developed by the 1000 Genomes Project
+team but the [tool](https://github.com/vcftools/vcftools) does not seem
+to be actively maintained anymore. As VCF files are simply tab-delimited
+flat files, they are slow to process and the BCF was implemented, which
+is a more efficient format for data processing. A BCF file is the binary
+equivalent of a VCF file, akin to the SAM and BAM formats and
+[BCFtools](https://github.com/samtools/bcftools) is used to work with
+BCF (and VCF) files. BCFtools is actively maintained and therefore
+should be used instead of VCFtools. To learn more about BCFtools (and
+SAMtools), check out the paper [Twelve years of SAMtools and
+BCFtools](https://academic.oup.com/gigascience/article/10/2/giab008/6137722)
+and please cite it if you use BCFtools for your work.
 
-I recommend using [Conda](https://docs.conda.io/en/latest/), in particular [Miniconda](https://docs.conda.io/en/latest/miniconda.html), for installing VCFtools and BCFtools. I have created `environment.yml` which can be used to install all the necessary tools, used in the examples, into [a new environment](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file).
+## Installation
 
-```bash
-# create and install necessary programs
-conda env create -f environment.yml
+The easiest way to install BCFtools is by using
+[Conda](https://docs.conda.io/en/latest/) (and I recommend using
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html)).
 
-# activate the environment
-source activate learning_vcf
-
-# deactivate the environment you finish
-source deactivate
-
-# remove environment
-# conda env remove --name learning_vcf
+``` bash
+conda install -c bioconda bcftools
 ```
 
-Otherwise you can compile your own version and install BCFtools into the current directory; change `--prefix` if you want to install elsewhere.
+It is also relatively straightforward to compile on Linux (if your
+system has all the prerequisites). The following code will install
+BCFtools (and HTSlib and SAMtools, which you will most likely be using
+as well) into the directory specified by `dir=`.
 
-```bash
-mkdir bin
-cd bin
-wget -c https://github.com/samtools/bcftools/releases/download/1.6/bcftools-1.6.tar.bz2
-tar xjf bcftools-1.6.tar.bz2
-cd bcftools-1.6
-./configure --prefix=`pwd`
-make
+``` bash
+dir=$HOME/tools
+
+ver=1.14
+for tool in htslib bcftools samtools; do
+   check=${tool}
+   if [[ ${tool} == htslib ]]; then
+      check=bgzip
+   fi
+   if [[ ! -e ${dir}/bin/${check} ]]; then
+      url=https://github.com/samtools/${tool}/releases/download/${ver}/${tool}-${ver}.tar.bz2
+      wget ${url}
+      tar xjf ${tool}-${ver}.tar.bz2
+      cd ${tool}-${ver}
+      ./configure --prefix=${dir}
+      make && make install
+      cd ..
+      rm -rf ${tool}-${ver}*
+   fi
+done
 ```
 
-Install VCFtools.
+## Creating VCF example files
 
-```bash
-git clone https://github.com/vcftools/vcftools.git
-cd vcftools
-autogen.sh
-./configure --prefix=`pwd`
-make
-make install
+Example VCF files were generated to test the functionality of BCFtool
+and other VCF tools. The `aln.bt.vcf.gz`, `aln.hc.vcf.gz`, and
+`aln.fb.vcf.gz` VCF files were generated using a simple workflow
+implemented in [Groovy](http://www.groovy-lang.org/) and processed by
+[Bpipe](https://github.com/ssadedin/bpipe), a tool for running
+bioinformatics workflows. You can view the workflow in
+`workflow/simple/pipeline.groovy`, which carries out the following
+steps: (i) a random reference sequence is generated, (ii) the reference
+sequence is mutated, (iii) reads are derived from the mutated reference
+then (iv) mapped back to the original non-mutated reference (v) and
+finally variants are called using three separate tools: BCFtools,
+HaplotypeCaller, and freebayes. Additional information is available in
+this [blog
+post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/).
+
+To run this workflow for yourself, run the following commands:
+
+``` bash
+git clone https://github.com/davetang/learning_vcf_file.git
+
+# installs the necessary tools
+cd workflow && ./install.sh
+
+# run the workflow using Bpipe
+cd simple && make
 ```
 
-# Usage
+If you want to play around with different parameters, simply edit the
+variables at the start of `workflow/simple/pipeline.groovy`. The status
+of this workflow is checked by [GitHub
+Actions](https://github.com/features/actions) and on successful
+completion the final variant calls are copied to the `eg` folder; please
+refer to `.github/workflows/variant_call.yml` for more details.
 
-Typing `bcftools` without any parameters will output the usage and the subcommands.
+## Usage
 
-```bash
-bcftools
+Running `bcftools` without any parameters will output the usage and the
+subcommands. (The `--help` option is used below to avoid an exit code of
+1 since this README is generated programmatically.)
 
-Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
-Version: 1.9 (using htslib 1.9)
-
-Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
-
-Commands:
-
- -- Indexing
-    index        index VCF/BCF files
-
- -- VCF/BCF manipulation
-    annotate     annotate and edit VCF/BCF files
-    concat       concatenate VCF/BCF files from the same set of samples
-    convert      convert VCF/BCF files to different formats and back
-    isec         intersections of VCF/BCF files
-    merge        merge VCF/BCF files files from non-overlapping sample sets
-    norm         left-align and normalize indels
-    plugin       user-defined plugins
-    query        transform VCF/BCF into user-defined formats
-    reheader     modify VCF/BCF header, change sample names
-    sort         sort VCF/BCF file
-    view         VCF/BCF conversion, view, subset and filter VCF/BCF files
-
- -- VCF/BCF analysis
-    call         SNP/indel calling
-    consensus    create consensus sequence by applying VCF variants
-    cnv          HMM CNV calling
-    csq          call variation consequences
-    filter       filter VCF/BCF files using fixed thresholds
-    gtcheck      check sample concordance, detect sample swaps and contamination
-    mpileup      multi-way pileup producing genotype likelihoods
-    roh          identify runs of autozygosity (HMM)
-    stats        produce VCF/BCF stats
-
- Most commands accept VCF, bgzipped VCF, and BCF with the file type detected
- automatically even when streaming from a pipe. Indexed VCF and BCF will work
- in all situations. Un-indexed VCF and BCF and streams will work in most but
- not all situations.
+``` bash
+bcftools --help
 ```
 
-# Viewing a BCF file
+    ## 
+    ## Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
+    ## Version: 1.14 (using htslib 1.14)
+    ## 
+    ## Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
+    ## 
+    ## Commands:
+    ## 
+    ##  -- Indexing
+    ##     index        index VCF/BCF files
+    ## 
+    ##  -- VCF/BCF manipulation
+    ##     annotate     annotate and edit VCF/BCF files
+    ##     concat       concatenate VCF/BCF files from the same set of samples
+    ##     convert      convert VCF/BCF files to different formats and back
+    ##     isec         intersections of VCF/BCF files
+    ##     merge        merge VCF/BCF files files from non-overlapping sample sets
+    ##     norm         left-align and normalize indels
+    ##     plugin       user-defined plugins
+    ##     query        transform VCF/BCF into user-defined formats
+    ##     reheader     modify VCF/BCF header, change sample names
+    ##     sort         sort VCF/BCF file
+    ##     view         VCF/BCF conversion, view, subset and filter VCF/BCF files
+    ## 
+    ##  -- VCF/BCF analysis
+    ##     call         SNP/indel calling
+    ##     consensus    create consensus sequence by applying VCF variants
+    ##     cnv          HMM CNV calling
+    ##     csq          call variation consequences
+    ##     filter       filter VCF/BCF files using fixed thresholds
+    ##     gtcheck      check sample concordance, detect sample swaps and contamination
+    ##     mpileup      multi-way pileup producing genotype likelihoods
+    ##     roh          identify runs of autozygosity (HMM)
+    ##     stats        produce VCF/BCF stats
+    ## 
+    ##  Most commands accept VCF, bgzipped VCF, and BCF with the file type detected
+    ##  automatically even when streaming from a pipe. Indexed VCF and BCF will work
+    ##  in all situations. Un-indexed VCF and BCF and streams will work in most but
+    ##  not all situations.
 
-I have included an example VCF file in the `eg` folder of this repository. Use `bcftools view` to view a VCF, bgzipped VCF, and BCF file.
+## VCF to BCF and other conversions
 
-```bash
-bcftools view eg/Pfeiffer.vcf | grep -v "^#" | head -5
-1       866511  rs60722469      C       CCCCT   258.62  PASS    AC=2;AF=1;AN=2;DB;DP=11;FS=0;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant  GT:AD:DP:GQ:PL  1/1:6,5:11:14.79:300,15,0
-1       879317  rs7523549       C       T       150.77  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.455;DB;DP=21;Dels=0;FS=1.984;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.037;QD=7.18;ReadPosRankSum=0.112;set=variant2     GT:AD:DP:GQ:PL  0/1:14,7:21:99:181,0,367
-1       879482  .       G       C       484.52  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.934;DP=48;Dels=0;FS=4.452;HRun=0;HaplotypeScore=0.5784;MQ0=0;MQ=59.13;MQRankSum=-0.24;QD=10.09;ReadPosRankSum=1.537;set=variant2        GT:AD:DP:GQ:PL  0/1:28,20:48:99:515,0,794
-1       880390  rs3748593       C       A       288.44  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.517;DB;DP=29;Dels=0;FS=1.485;HRun=0;HaplotypeScore=0;MQ0=0;MQ=56.93;MQRankSum=-0.065;QD=9.95;ReadPosRankSum=0.196;set=variant2 GT:AD:DP:GQ:PL  0/1:14,15:29:99:318,0,399
-1       881627  rs2272757       G       A       486.24  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.199;DB;DP=33;Dels=0;FS=0;HRun=1;HaplotypeScore=1.8893;MQ0=0;MQ=60;MQRankSum=0.777;QD=14.73;ReadPosRankSum=-0.669;set=variant2   GT:AD:DP:GQ:PL  0/1:15,18:33:99:516,0,420
+Use `bcftools view` or `bcftools convert` to make conversions and use
+`--output-type u` or `--output-type b` for uncompressed and compressed
+BCF, respectively.
+
+``` bash
+bcftools view -O u eg/aln.bt.vcf.gz > eg/aln.bt.un.bcf
+bcftools view -O b eg/aln.bt.vcf.gz > eg/aln.bt.bcf
+
+# uncompressed VCF
+bcftools convert -O v eg/aln.bt.vcf.gz > eg/aln.bt.vcf
 ```
 
-# Comparing output types
+`bcftools convert` has more conversion options such as converting gVCF
+to VCF and converting VCFs from `IMPUTE2` and `SHAPEIT`.
 
-I'll use the 1000 Genomes Project WGS VCF file. There are four output types: compressed BCF (b), uncompressed BCF (u), compressed VCF (z), and uncompressed VCF (v).
+## Viewing a VCF/BCF file
 
-```bash
-# download VCF file
-wget -c ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+Use `bcftools view` to view a VCF, bgzipped VCF, or BCF file; BCFtools
+will automatically detect the format.
 
-# size of file
-ls -lah ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
--rw-r--r-- 1 dtang dtang 1.9G Oct 12  2015 ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz
+Viewing a VCF file.
 
-# extract file
-time gunzip -c ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz > uncompressed.vcf
-
-real    1m22.484s
-user    0m56.220s
-sys     0m25.808s
+``` bash
+bcftools view eg/aln.bt.vcf | grep -v "^#" | head -2
 ```
 
-How long does it take to create the different output types?
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-```bash
-# how long for compressed VCF?
-time bcftools convert -o compressed.vcf.gz -O z uncompressed.vcf
+Viewing a bgzipped VCF file.
 
-real    11m30.628s
-user    11m8.632s
-sys     0m19.724s
-
-# how long for uncompressed BCF?
-time bcftools convert -o uncompressed.bcf -O u uncompressed.vcf
-
-real    3m3.253s
-user    2m41.240s
-sys     0m20.040s
-
-# how long for compressed BCF?
-time bcftools convert -o compressed.bcf -O b uncompressed.vcf
-
-real    6m50.487s
-user    6m37.076s
-sys     0m12.764s
+``` bash
+bcftools view eg/aln.bt.vcf.gz | grep -v "^#" | head -2
 ```
 
-What are the file sizes?
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-```bash
-ls -lah uncompressed.vcf
--rw-r--r-- 1 dtang dtang 12G Feb 17 16:55 uncompressed.vcf
+Viewing a BCF file.
 
-ls -lah uncompressed.bcf
--rw-r--r-- 1 dtang dtang 9.9G Feb 17 17:14 uncompressed.bcf
-
-ls -lah compressed.bcf
--rw-r--r-- 1 dtang dtang 2.0G Feb 17 17:22 compressed.bcf
-
-ls -lah compressed.vcf.gz
--rw-r--r-- 1 dtang dtang 1.9G Feb 17 17:09 compressed.vcf.gz
+``` bash
+bcftools view eg/aln.bt.vcf.gz | grep -v "^#" | head -2
 ```
 
-How long to read each file?
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-```bash
-time cat uncompressed.vcf | grep -v "^#" | wc -l
-84801880
+If you want to omit the header but do not want to type `grep -v "^#"`,
+you can use the `-H` option instead.
 
-real    0m26.856s
-user    0m7.696s
-sys     0m41.996s
-
-time bcftools view uncompressed.bcf | grep -v "^#" | wc -l
-84801880
-
-real    3m32.467s
-user    3m31.268s
-sys     0m30.992s
-
-time bcftools view compressed.vcf.gz | grep -v "^#" | wc -l
-84801880
-
-real    6m58.366s
-user    6m49.544s
-sys     0m32.448s
-
-
-time gunzip -c compressed.vcf.gz | grep -v "^#" | wc -l
-84801880
-
-real    1m3.143s
-user    1m3.488s
-sys     0m15.816s
-
-time bcftools view compressed.bcf | grep -v "^#" | wc -l
-84801880
-
-real    4m1.538s
-user    4m4.188s
-sys     0m27.620s
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | head -2
 ```
 
-Seems like using compressed VCF is the best choice (smallest size and gunzip is much faster).
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-# BCF to VCF
+## Comparing output types
 
-Use the `convert` subcommand.
+The four output types will be compared on a VCF file produced by the
+1000 Genomes Project.
 
-```bash
-# -O, --output-type <b|u|z|v>    b: compressed BCF, u: uncompressed BCF, z: compressed VCF, v: uncompressed VCF [v]
-# -o, --output <file>            output file name [stdout]
-bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
+1.  Compressed BCF (b)
+2.  Uncompressed BCF (u)
+3.  Compressed VCF (z)
+4.  Uncompressed VCF (v).
 
-# we can use cat to view the file
-cat aln_consensus.vcf | grep -v "^#" | head
-1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
-1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
-1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
-1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
-1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
-1000000 451     .       AGG     AGGG    214.458 .       INDEL;IDV=127;IMF=0.969466;DP=131;VDB=0.0478427;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,87,42;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
-1000000 915     .       G       GC      214.458 .       INDEL;IDV=179;IMF=0.913265;DP=196;VDB=0.929034;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,89,101;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
-1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
-1000000 1062    .       ATT     AT      214.458 .       INDEL;IDV=187;IMF=0.958974;DP=195;VDB=0.244824;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,92;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
-1000000 1207    .       T       G       221.999 .       DP=177;VDB=0.628515;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,79;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
+Download and unzip.
+
+``` bash
+wget https://davetang.org/file/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5_related_samples.20130502.genotypes.vcf.gz -O eg/1kgp.vcf.gz
+gunzip eg/1kgp.vcf.gz
 ```
 
-# Filtering for different types of mutations
+    ## --2022-01-31 06:37:44--  https://davetang.org/file/ALL.chr1.phase3_shapeit2_mvncall_integrated_v5_related_samples.20130502.genotypes.vcf.gz
+    ## Resolving davetang.org (davetang.org)... 23.111.165.2
+    ## Connecting to davetang.org (davetang.org)|23.111.165.2|:443... connected.
+    ## HTTP request sent, awaiting response... 200 OK
+    ## Length: 87310933 (83M) [application/x-gzip]
+    ## Saving to: ‘eg/1kgp.vcf.gz’
+    ## 
+    ##      0K .......... .......... .......... .......... ..........  0%  396K 3m35s
+    ##     50K .......... .......... .......... .......... ..........  0%  793K 2m41s
+    ##    100K .......... .......... .......... .......... ..........  0% 22.3M 1m49s
+    ##    150K .......... .......... .......... .......... ..........  0% 21.7M 82s
+    ##    200K .......... .......... .......... .......... ..........  0%  830K 86s
+    ##    250K .......... .......... .......... .......... ..........  0% 37.9M 72s
+    ##    300K .......... .......... .......... .......... ..........  0% 49.8M 62s
+    ##    350K .......... .......... .......... .......... ..........  0% 32.6M 55s
+    ##    400K .......... .......... .......... .......... ..........  0%  863K 60s
+    ##    450K .......... .......... .......... .......... ..........  0% 46.1M 54s
+    ##    500K .......... .......... .......... .......... ..........  0% 69.6M 49s
+    ##    550K .......... .......... .......... .......... ..........  0% 69.9M 45s
+    ##    600K .......... .......... .......... .......... ..........  0% 80.4M 41s
+    ##    650K .......... .......... .......... .......... ..........  0% 94.5M 39s
+    ##    700K .......... .......... .......... .......... ..........  0% 49.4M 36s
+    ##    750K .......... .......... .......... .......... ..........  0%  105M 34s
+    ##    800K .......... .......... .......... .......... ..........  0%  101M 32s
+    ##    850K .......... .......... .......... .......... ..........  1%  868K 36s
+    ##    900K .......... .......... .......... .......... ..........  1%  118M 34s
+    ##    950K .......... .......... .......... .......... ..........  1% 87.6M 32s
+    ##   1000K .......... .......... .......... .......... ..........  1%  105M 31s
+    ##   1050K .......... .......... .......... .......... ..........  1%  118M 29s
+    ##   1100K .......... .......... .......... .......... ..........  1% 99.0M 28s
+    ##   1150K .......... .......... .......... .......... ..........  1%  106M 27s
+    ##   1200K .......... .......... .......... .......... ..........  1%  110M 26s
+    ##   1250K .......... .......... .......... .......... ..........  1%  113M 25s
+    ##   1300K .......... .......... .......... .......... ..........  1%  106M 24s
+    ##   1350K .......... .......... .......... .......... ..........  1%  121M 23s
+    ##   1400K .......... .......... .......... .......... ..........  1%  115M 22s
+    ##   1450K .......... .......... .......... .......... ..........  1%  108M 21s
+    ##   1500K .......... .......... .......... .......... ..........  1%  114M 21s
+    ##   1550K .......... .......... .......... .......... ..........  1%  107M 20s
+    ##   1600K .......... .......... .......... .......... ..........  1% 69.6M 20s
+    ##   1650K .......... .......... .......... .......... ..........  1%  125M 19s
+    ##   1700K .......... .......... .......... .......... ..........  2%  899K 21s
+    ##   1750K .......... .......... .......... .......... ..........  2%  212M 20s
+    ##   1800K .......... .......... .......... .......... ..........  2%  159M 20s
+    ##   1850K .......... .......... .......... .......... ..........  2% 95.6M 19s
+    ##   1900K .......... .......... .......... .......... ..........  2%  121M 19s
+    ##   1950K .......... .......... .......... .......... ..........  2%  107M 18s
+    ##   2000K .......... .......... .......... .......... ..........  2%  112M 18s
+    ##   2050K .......... .......... .......... .......... ..........  2% 96.1M 18s
+    ##   2100K .......... .......... .......... .......... ..........  2% 95.4M 17s
+    ##   2150K .......... .......... .......... .......... ..........  2%  119M 17s
+    ##   2200K .......... .......... .......... .......... ..........  2% 70.0M 16s
+    ##   2250K .......... .......... .......... .......... ..........  2%  116M 16s
+    ##   2300K .......... .......... .......... .......... ..........  2% 26.6M 16s
+    ##   2350K .......... .......... .......... .......... ..........  2%  102M 16s
+    ##   2400K .......... .......... .......... .......... ..........  2%  119M 15s
+    ##   2450K .......... .......... .......... .......... ..........  2%  100M 15s
+    ##   2500K .......... .......... .......... .......... ..........  2%  103M 15s
+    ##   2550K .......... .......... .......... .......... ..........  3%  113M 14s
+    ##   2600K .......... .......... .......... .......... ..........  3% 91.7M 14s
+    ##   2650K .......... .......... .......... .......... ..........  3%  125M 14s
+    ##   2700K .......... .......... .......... .......... ..........  3% 76.8M 14s
+    ##   2750K .......... .......... .......... .......... ..........  3%  107M 13s
+    ##   2800K .......... .......... .......... .......... ..........  3% 84.9M 13s
+    ##   2850K .......... .......... .......... .......... ..........  3% 51.8M 13s
+    ##   2900K .......... .......... .......... .......... ..........  3%  122M 13s
+    ##   2950K .......... .......... .......... .......... ..........  3% 72.4M 12s
+    ##   3000K .......... .......... .......... .......... ..........  3% 80.0M 12s
+    ##   3050K .......... .......... .......... .......... ..........  3% 74.5M 12s
+    ##   3100K .......... .......... .......... .......... ..........  3% 83.2M 12s
+    ##   3150K .......... .......... .......... .......... ..........  3%  109M 12s
+    ##   3200K .......... .......... .......... .......... ..........  3% 68.5M 12s
+    ##   3250K .......... .......... .......... .......... ..........  3%  128M 11s
+    ##   3300K .......... .......... .......... .......... ..........  3%  110M 11s
+    ##   3350K .......... .......... .......... .......... ..........  3% 99.1M 11s
+    ##   3400K .......... .......... .......... .......... ..........  4%  125M 11s
+    ##   3450K .......... .......... .......... .......... ..........  4% 1.09M 12s
+    ##   3500K .......... .......... .......... .......... ..........  4%  160M 12s
+    ##   3550K .......... .......... .......... .......... ..........  4%  156M 11s
+    ##   3600K .......... .......... .......... .......... ..........  4%  106M 11s
+    ##   3650K .......... .......... .......... .......... ..........  4%  137M 11s
+    ##   3700K .......... .......... .......... .......... ..........  4%  112M 11s
+    ##   3750K .......... .......... .......... .......... ..........  4%  119M 11s
+    ##   3800K .......... .......... .......... .......... ..........  4%  116M 11s
+    ##   3850K .......... .......... .......... .......... ..........  4%  112M 11s
+    ##   3900K .......... .......... .......... .......... ..........  4%  117M 10s
+    ##   3950K .......... .......... .......... .......... ..........  4%  113M 10s
+    ##   4000K .......... .......... .......... .......... ..........  4%  118M 10s
+    ##   4050K .......... .......... .......... .......... ..........  4%  125M 10s
+    ##   4100K .......... .......... .......... .......... ..........  4% 96.9M 10s
+    ##   4150K .......... .......... .......... .......... ..........  4%  120M 10s
+    ##   4200K .......... .......... .......... .......... ..........  4%  102M 10s
+    ##   4250K .......... .......... .......... .......... ..........  5%  127M 10s
+    ##   4300K .......... .......... .......... .......... ..........  5%  128M 10s
+    ##   4350K .......... .......... .......... .......... ..........  5% 87.9M 9s
+    ##   4400K .......... .......... .......... .......... ..........  5%  132M 9s
+    ##   4450K .......... .......... .......... .......... ..........  5%  106M 9s
+    ##   4500K .......... .......... .......... .......... ..........  5%  115M 9s
+    ##   4550K .......... .......... .......... .......... ..........  5%  105M 9s
+    ##   4600K .......... .......... .......... .......... ..........  5%  117M 9s
+    ##   4650K .......... .......... .......... .......... ..........  5%  121M 9s
+    ##   4700K .......... .......... .......... .......... ..........  5% 99.7M 9s
+    ##   4750K .......... .......... .......... .......... ..........  5%  120M 9s
+    ##   4800K .......... .......... .......... .......... ..........  5%  121M 9s
+    ##   4850K .......... .......... .......... .......... ..........  5%  108M 8s
+    ##   4900K .......... .......... .......... .......... ..........  5%  113M 8s
+    ##   4950K .......... .......... .......... .......... ..........  5%  109M 8s
+    ##   5000K .......... .......... .......... .......... ..........  5%  120M 8s
+    ##   5050K .......... .......... .......... .......... ..........  5%  108M 8s
+    ##   5100K .......... .......... .......... .......... ..........  6%  104M 8s
+    ##   5150K .......... .......... .......... .......... ..........  6%  125M 8s
+    ##   5200K .......... .......... .......... .......... ..........  6% 97.5M 8s
+    ##   5250K .......... .......... .......... .......... ..........  6%  116M 8s
+    ##   5300K .......... .......... .......... .......... ..........  6%  119M 8s
+    ##   5350K .......... .......... .......... .......... ..........  6%  102M 8s
+    ##   5400K .......... .......... .......... .......... ..........  6%  129M 8s
+    ##   5450K .......... .......... .......... .......... ..........  6%  106M 8s
+    ##   5500K .......... .......... .......... .......... ..........  6%  110M 8s
+    ##   5550K .......... .......... .......... .......... ..........  6%  123M 7s
+    ##   5600K .......... .......... .......... .......... ..........  6% 92.6M 7s
+    ##   5650K .......... .......... .......... .......... ..........  6%  137M 7s
+    ##   5700K .......... .......... .......... .......... ..........  6%  101M 7s
+    ##   5750K .......... .......... .......... .......... ..........  6%  126M 7s
+    ##   5800K .......... .......... .......... .......... ..........  6%  106M 7s
+    ##   5850K .......... .......... .......... .......... ..........  6%  109M 7s
+    ##   5900K .......... .......... .......... .......... ..........  6%  111M 7s
+    ##   5950K .......... .......... .......... .......... ..........  7%  101M 7s
+    ##   6000K .......... .......... .......... .......... ..........  7%  116M 7s
+    ##   6050K .......... .......... .......... .......... ..........  7%  115M 7s
+    ##   6100K .......... .......... .......... .......... ..........  7% 99.7M 7s
+    ##   6150K .......... .......... .......... .......... ..........  7%  134M 7s
+    ##   6200K .......... .......... .......... .......... ..........  7% 96.8M 7s
+    ##   6250K .......... .......... .......... .......... ..........  7%  135M 7s
+    ##   6300K .......... .......... .......... .......... ..........  7%  117M 7s
+    ##   6350K .......... .......... .......... .......... ..........  7%  109M 7s
+    ##   6400K .......... .......... .......... .......... ..........  7%  107M 6s
+    ##   6450K .......... .......... .......... .......... ..........  7% 1.99M 7s
+    ##   6500K .......... .......... .......... .......... ..........  7% 3.67M 7s
+    ##   6550K .......... .......... .......... .......... ..........  7% 59.9M 7s
+    ##   6600K .......... .......... .......... .......... ..........  7% 51.9M 7s
+    ##   6650K .......... .......... .......... .......... ..........  7% 60.1M 7s
+    ##   6700K .......... .......... .......... .......... ..........  7% 59.3M 7s
+    ##   6750K .......... .......... .......... .......... ..........  7% 58.9M 7s
+    ##   6800K .......... .......... .......... .......... ..........  8% 69.6M 7s
+    ##   6850K .......... .......... .......... .......... ..........  8% 55.5M 7s
+    ##   6900K .......... .......... .......... .......... ..........  8% 60.1M 6s
+    ##   6950K .......... .......... .......... .......... ..........  8% 64.6M 6s
+    ##   7000K .......... .......... .......... .......... ..........  8% 63.3M 6s
+    ##   7050K .......... .......... .......... .......... ..........  8% 61.3M 6s
+    ##   7100K .......... .......... .......... .......... ..........  8% 52.4M 6s
+    ##   7150K .......... .......... .......... .......... ..........  8%  116M 6s
+    ##   7200K .......... .......... .......... .......... ..........  8% 96.2M 6s
+    ##   7250K .......... .......... .......... .......... ..........  8%  116M 6s
+    ##   7300K .......... .......... .......... .......... ..........  8%  134M 6s
+    ##   7350K .......... .......... .......... .......... ..........  8% 94.5M 6s
+    ##   7400K .......... .......... .......... .......... ..........  8%  105M 6s
+    ##   7450K .......... .......... .......... .......... ..........  8%  114M 6s
+    ##   7500K .......... .......... .......... .......... ..........  8%  134M 6s
+    ##   7550K .......... .......... .......... .......... ..........  8%  115M 6s
+    ##   7600K .......... .......... .......... .......... ..........  8%  104M 6s
+    ##   7650K .......... .......... .......... .......... ..........  9%  120M 6s
+    ##   7700K .......... .......... .......... .......... ..........  9% 95.6M 6s
+    ##   7750K .......... .......... .......... .......... ..........  9%  128M 6s
+    ##   7800K .......... .......... .......... .......... ..........  9%  119M 6s
+    ##   7850K .......... .......... .......... .......... ..........  9% 92.2M 6s
+    ##   7900K .......... .......... .......... .......... ..........  9%  133M 6s
+    ##   7950K .......... .......... .......... .......... ..........  9%  107M 6s
+    ##   8000K .......... .......... .......... .......... ..........  9%  110M 6s
+    ##   8050K .......... .......... .......... .......... ..........  9%  117M 6s
+    ##   8100K .......... .......... .......... .......... ..........  9%  106M 6s
+    ##   8150K .......... .......... .......... .......... ..........  9%  131M 6s
+    ##   8200K .......... .......... .......... .......... ..........  9% 92.6M 5s
+    ##   8250K .......... .......... .......... .......... ..........  9%  112M 5s
+    ##   8300K .......... .......... .......... .......... ..........  9%  125M 5s
+    ##   8350K .......... .......... .......... .......... ..........  9%  106M 5s
+    ##   8400K .......... .......... .......... .......... ..........  9%  117M 5s
+    ##   8450K .......... .......... .......... .......... ..........  9%  117M 5s
+    ##   8500K .......... .......... .......... .......... .......... 10%  110M 5s
+    ##   8550K .......... .......... .......... .......... .......... 10%  111M 5s
+    ##   8600K .......... .......... .......... .......... .......... 10%  105M 5s
+    ##   8650K .......... .......... .......... .......... .......... 10%  122M 5s
+    ##   8700K .......... .......... .......... .......... .......... 10% 94.1M 5s
+    ##   8750K .......... .......... .......... .......... .......... 10%  129M 5s
+    ##   8800K .......... .......... .......... .......... .......... 10%  128M 5s
+    ##   8850K .......... .......... .......... .......... .......... 10% 78.1M 5s
+    ##   8900K .......... .......... .......... .......... .......... 10%  125M 5s
+    ##   8950K .......... .......... .......... .......... .......... 10%  114M 5s
+    ##   9000K .......... .......... .......... .......... .......... 10%  133M 5s
+    ##   9050K .......... .......... .......... .......... .......... 10%  129M 5s
+    ##   9100K .......... .......... .......... .......... .......... 10%  100M 5s
+    ##   9150K .......... .......... .......... .......... .......... 10%  128M 5s
+    ##   9200K .......... .......... .......... .......... .......... 10%  100M 5s
+    ##   9250K .......... .......... .......... .......... .......... 10%  119M 5s
+    ##   9300K .......... .......... .......... .......... .......... 10%  115M 5s
+    ##   9350K .......... .......... .......... .......... .......... 11%  109M 5s
+    ##   9400K .......... .......... .......... .......... .......... 11%  109M 5s
+    ##   9450K .......... .......... .......... .......... .......... 11% 2.47M 5s
+    ##   9500K .......... .......... .......... .......... .......... 11% 3.68M 5s
+    ##   9550K .......... .......... .......... .......... .......... 11% 67.0M 5s
+    ##   9600K .......... .......... .......... .......... .......... 11% 86.9M 5s
+    ##   9650K .......... .......... .......... .......... .......... 11% 54.9M 5s
+    ##   9700K .......... .......... .......... .......... .......... 11% 42.6M 5s
+    ##   9750K .......... .......... .......... .......... .......... 11% 71.4M 5s
+    ##   9800K .......... .......... .......... .......... .......... 11% 60.6M 5s
+    ##   9850K .......... .......... .......... .......... .......... 11%  102M 5s
+    ##   9900K .......... .......... .......... .......... .......... 11% 33.3M 5s
+    ##   9950K .......... .......... .......... .......... .......... 11% 53.2M 5s
+    ##  10000K .......... .......... .......... .......... .......... 11% 57.7M 5s
+    ##  10050K .......... .......... .......... .......... .......... 11% 65.0M 5s
+    ##  10100K .......... .......... .......... .......... .......... 11% 99.8M 5s
+    ##  10150K .......... .......... .......... .......... .......... 11% 88.9M 5s
+    ##  10200K .......... .......... .......... .......... .......... 12% 86.1M 5s
+    ##  10250K .......... .......... .......... .......... .......... 12%  111M 5s
+    ##  10300K .......... .......... .......... .......... .......... 12%  127M 5s
+    ##  10350K .......... .......... .......... .......... .......... 12% 93.1M 5s
+    ##  10400K .......... .......... .......... .......... .......... 12%  136M 5s
+    ##  10450K .......... .......... .......... .......... .......... 12% 96.4M 5s
+    ##  10500K .......... .......... .......... .......... .......... 12%  128M 5s
+    ##  10550K .......... .......... .......... .......... .......... 12%  111M 5s
+    ##  10600K .......... .......... .......... .......... .......... 12%  103M 5s
+    ##  10650K .......... .......... .......... .......... .......... 12%  131M 5s
+    ##  10700K .......... .......... .......... .......... .......... 12% 96.7M 4s
+    ##  10750K .......... .......... .......... .......... .......... 12%  112M 4s
+    ##  10800K .......... .......... .......... .......... .......... 12%  126M 4s
+    ##  10850K .......... .......... .......... .......... .......... 12% 95.0M 4s
+    ##  10900K .......... .......... .......... .......... .......... 12%  122M 4s
+    ##  10950K .......... .......... .......... .......... .......... 12% 96.5M 4s
+    ##  11000K .......... .......... .......... .......... .......... 12%  132M 4s
+    ##  11050K .......... .......... .......... .......... .......... 13%  114M 4s
+    ##  11100K .......... .......... .......... .......... .......... 13%  102M 4s
+    ##  11150K .......... .......... .......... .......... .......... 13%  126M 4s
+    ##  11200K .......... .......... .......... .......... .......... 13%  106M 4s
+    ##  11250K .......... .......... .......... .......... .......... 13%  118M 4s
+    ##  11300K .......... .......... .......... .......... .......... 13%  112M 4s
+    ##  11350K .......... .......... .......... .......... .......... 13% 97.2M 4s
+    ##  11400K .......... .......... .......... .......... .......... 13%  107M 4s
+    ##  11450K .......... .......... .......... .......... .......... 13%  124M 4s
+    ##  11500K .......... .......... .......... .......... .......... 13%  117M 4s
+    ##  11550K .......... .......... .......... .......... .......... 13%  112M 4s
+    ##  11600K .......... .......... .......... .......... .......... 13%  110M 4s
+    ##  11650K .......... .......... .......... .......... .......... 13%  107M 4s
+    ##  11700K .......... .......... .......... .......... .......... 13%  109M 4s
+    ##  11750K .......... .......... .......... .......... .......... 13%  124M 4s
+    ##  11800K .......... .......... .......... .......... .......... 13%  126M 4s
+    ##  11850K .......... .......... .......... .......... .......... 13% 82.7M 4s
+    ##  11900K .......... .......... .......... .......... .......... 14%  144M 4s
+    ##  11950K .......... .......... .......... .......... .......... 14%  103M 4s
+    ##  12000K .......... .......... .......... .......... .......... 14%  117M 4s
+    ##  12050K .......... .......... .......... .......... .......... 14%  123M 4s
+    ##  12100K .......... .......... .......... .......... .......... 14% 93.4M 4s
+    ##  12150K .......... .......... .......... .......... .......... 14%  128M 4s
+    ##  12200K .......... .......... .......... .......... .......... 14% 96.3M 4s
+    ##  12250K .......... .......... .......... .......... .......... 14%  109M 4s
+    ##  12300K .......... .......... .......... .......... .......... 14%  116M 4s
+    ##  12350K .......... .......... .......... .......... .......... 14% 98.8M 4s
+    ##  12400K .......... .......... .......... .......... .......... 14%  140M 4s
+    ##  12450K .......... .......... .......... .......... .......... 14% 29.3M 4s
+    ##  12500K .......... .......... .......... .......... .......... 14% 1.57M 4s
+    ##  12550K .......... .......... .......... .......... .......... 14%  146M 4s
+    ##  12600K .......... .......... .......... .......... .......... 14% 60.9M 4s
+    ##  12650K .......... .......... .......... .......... .......... 14% 44.1M 4s
+    ##  12700K .......... .......... .......... .......... .......... 14% 51.6M 4s
+    ##  12750K .......... .......... .......... .......... .......... 15% 73.2M 4s
+    ##  12800K .......... .......... .......... .......... .......... 15%  114M 4s
+    ##  12850K .......... .......... .......... .......... .......... 15% 50.1M 4s
+    ##  12900K .......... .......... .......... .......... .......... 15% 41.1M 4s
+    ##  12950K .......... .......... .......... .......... .......... 15% 50.6M 4s
+    ##  13000K .......... .......... .......... .......... .......... 15% 54.4M 4s
+    ##  13050K .......... .......... .......... .......... .......... 15%  121M 4s
+    ##  13100K .......... .......... .......... .......... .......... 15% 45.1M 4s
+    ##  13150K .......... .......... .......... .......... .......... 15%  109M 4s
+    ##  13200K .......... .......... .......... .......... .......... 15% 80.9M 4s
+    ##  13250K .......... .......... .......... .......... .......... 15% 97.1M 4s
+    ##  13300K .......... .......... .......... .......... .......... 15%  126M 4s
+    ##  13350K .......... .......... .......... .......... .......... 15%  134M 4s
+    ##  13400K .......... .......... .......... .......... .......... 15% 35.9M 4s
+    ##  13450K .......... .......... .......... .......... .......... 15%  170M 4s
+    ##  13500K .......... .......... .......... .......... .......... 15%  252M 4s
+    ##  13550K .......... .......... .......... .......... .......... 15%  169M 4s
+    ##  13600K .......... .......... .......... .......... .......... 16%  178M 4s
+    ##  13650K .......... .......... .......... .......... .......... 16%  142M 4s
+    ##  13700K .......... .......... .......... .......... .......... 16%  102M 4s
+    ##  13750K .......... .......... .......... .......... .......... 16%  123M 4s
+    ##  13800K .......... .......... .......... .......... .......... 16%  120M 4s
+    ##  13850K .......... .......... .......... .......... .......... 16% 97.1M 4s
+    ##  13900K .......... .......... .......... .......... .......... 16% 31.4M 4s
+    ##  13950K .......... .......... .......... .......... .......... 16%  205M 4s
+    ##  14000K .......... .......... .......... .......... .......... 16%  201M 4s
+    ##  14050K .......... .......... .......... .......... .......... 16%  246M 4s
+    ##  14100K .......... .......... .......... .......... .......... 16%  199M 4s
+    ##  14150K .......... .......... .......... .......... .......... 16%  241M 4s
+    ##  14200K .......... .......... .......... .......... .......... 16%  108M 4s
+    ##  14250K .......... .......... .......... .......... .......... 16%  104M 4s
+    ##  14300K .......... .......... .......... .......... .......... 16%  130M 4s
+    ##  14350K .......... .......... .......... .......... .......... 16%  102M 4s
+    ##  14400K .......... .......... .......... .......... .......... 16%  113M 4s
+    ##  14450K .......... .......... .......... .......... .......... 17% 93.8M 3s
+    ##  14500K .......... .......... .......... .......... .......... 17%  139M 3s
+    ##  14550K .......... .......... .......... .......... .......... 17%  115M 3s
+    ##  14600K .......... .......... .......... .......... .......... 17% 98.9M 3s
+    ##  14650K .......... .......... .......... .......... .......... 17%  111M 3s
+    ##  14700K .......... .......... .......... .......... .......... 17%  107M 3s
+    ##  14750K .......... .......... .......... .......... .......... 17%  113M 3s
+    ##  14800K .......... .......... .......... .......... .......... 17%  118M 3s
+    ##  14850K .......... .......... .......... .......... .......... 17% 94.5M 3s
+    ##  14900K .......... .......... .......... .......... .......... 17%  101M 3s
+    ##  14950K .......... .......... .......... .......... .......... 17%  105M 3s
+    ##  15000K .......... .......... .......... .......... .......... 17%  136M 3s
+    ##  15050K .......... .......... .......... .......... .......... 17%  122M 3s
+    ##  15100K .......... .......... .......... .......... .......... 17%  123M 3s
+    ##  15150K .......... .......... .......... .......... .......... 17%  116M 3s
+    ##  15200K .......... .......... .......... .......... .......... 17% 89.2M 3s
+    ##  15250K .......... .......... .......... .......... .......... 17%  137M 3s
+    ##  15300K .......... .......... .......... .......... .......... 18% 95.9M 3s
+    ##  15350K .......... .......... .......... .......... .......... 18%  116M 3s
+    ##  15400K .......... .......... .......... .......... .......... 18%  118M 3s
+    ##  15450K .......... .......... .......... .......... .......... 18% 34.5M 3s
+    ##  15500K .......... .......... .......... .......... .......... 18% 2.73M 3s
+    ##  15550K .......... .......... .......... .......... .......... 18% 3.67M 3s
+    ##  15600K .......... .......... .......... .......... .......... 18% 41.7M 3s
+    ##  15650K .......... .......... .......... .......... .......... 18% 47.1M 3s
+    ##  15700K .......... .......... .......... .......... .......... 18% 47.1M 3s
+    ##  15750K .......... .......... .......... .......... .......... 18% 77.4M 3s
+    ##  15800K .......... .......... .......... .......... .......... 18%  111M 3s
+    ##  15850K .......... .......... .......... .......... .......... 18% 49.3M 3s
+    ##  15900K .......... .......... .......... .......... .......... 18% 40.6M 3s
+    ##  15950K .......... .......... .......... .......... .......... 18% 61.0M 3s
+    ##  16000K .......... .......... .......... .......... .......... 18% 48.1M 3s
+    ##  16050K .......... .......... .......... .......... .......... 18%  116M 3s
+    ##  16100K .......... .......... .......... .......... .......... 18% 47.2M 3s
+    ##  16150K .......... .......... .......... .......... .......... 18% 91.4M 3s
+    ##  16200K .......... .......... .......... .......... .......... 19%  101M 3s
+    ##  16250K .......... .......... .......... .......... .......... 19% 97.3M 3s
+    ##  16300K .......... .......... .......... .......... .......... 19%  110M 3s
+    ##  16350K .......... .......... .......... .......... .......... 19% 85.7M 3s
+    ##  16400K .......... .......... .......... .......... .......... 19% 40.5M 3s
+    ##  16450K .......... .......... .......... .......... .......... 19% 95.8M 3s
+    ##  16500K .......... .......... .......... .......... .......... 19%  119M 3s
+    ##  16550K .......... .......... .......... .......... .......... 19%  105M 3s
+    ##  16600K .......... .......... .......... .......... .......... 19% 92.1M 3s
+    ##  16650K .......... .......... .......... .......... .......... 19%  113M 3s
+    ##  16700K .......... .......... .......... .......... .......... 19%  101M 3s
+    ##  16750K .......... .......... .......... .......... .......... 19%  105M 3s
+    ##  16800K .......... .......... .......... .......... .......... 19%  115M 3s
+    ##  16850K .......... .......... .......... .......... .......... 19%  105M 3s
+    ##  16900K .......... .......... .......... .......... .......... 19%  103M 3s
+    ##  16950K .......... .......... .......... .......... .......... 19%  102M 3s
+    ##  17000K .......... .......... .......... .......... .......... 19%  121M 3s
+    ##  17050K .......... .......... .......... .......... .......... 20%  104M 3s
+    ##  17100K .......... .......... .......... .......... .......... 20% 99.8M 3s
+    ##  17150K .......... .......... .......... .......... .......... 20%  105M 3s
+    ##  17200K .......... .......... .......... .......... .......... 20% 97.8M 3s
+    ##  17250K .......... .......... .......... .......... .......... 20%  116M 3s
+    ##  17300K .......... .......... .......... .......... .......... 20%  142M 3s
+    ##  17350K .......... .......... .......... .......... .......... 20% 98.6M 3s
+    ##  17400K .......... .......... .......... .......... .......... 20%  119M 3s
+    ##  17450K .......... .......... .......... .......... .......... 20%  101M 3s
+    ##  17500K .......... .......... .......... .......... .......... 20%  113M 3s
+    ##  17550K .......... .......... .......... .......... .......... 20%  119M 3s
+    ##  17600K .......... .......... .......... .......... .......... 20%  112M 3s
+    ##  17650K .......... .......... .......... .......... .......... 20%  119M 3s
+    ##  17700K .......... .......... .......... .......... .......... 20% 91.9M 3s
+    ##  17750K .......... .......... .......... .......... .......... 20%  114M 3s
+    ##  17800K .......... .......... .......... .......... .......... 20%  119M 3s
+    ##  17850K .......... .......... .......... .......... .......... 20%  114M 3s
+    ##  17900K .......... .......... .......... .......... .......... 21%  116M 3s
+    ##  17950K .......... .......... .......... .......... .......... 21% 88.5M 3s
+    ##  18000K .......... .......... .......... .......... .......... 21%  101M 3s
+    ##  18050K .......... .......... .......... .......... .......... 21%  132M 3s
+    ##  18100K .......... .......... .......... .......... .......... 21%  117M 3s
+    ##  18150K .......... .......... .......... .......... .......... 21%  130M 3s
+    ##  18200K .......... .......... .......... .......... .......... 21%  122M 3s
+    ##  18250K .......... .......... .......... .......... .......... 21%  115M 3s
+    ##  18300K .......... .......... .......... .......... .......... 21%  146M 3s
+    ##  18350K .......... .......... .......... .......... .......... 21%  128M 3s
+    ##  18400K .......... .......... .......... .......... .......... 21%  144M 3s
+    ##  18450K .......... .......... .......... .......... .......... 21% 59.7M 3s
+    ##  18500K .......... .......... .......... .......... .......... 21% 57.6M 3s
+    ##  18550K .......... .......... .......... .......... .......... 21%  126M 3s
+    ##  18600K .......... .......... .......... .......... .......... 21% 1.60M 3s
+    ##  18650K .......... .......... .......... .......... .......... 21% 36.6M 3s
+    ##  18700K .......... .......... .......... .......... .......... 21% 45.3M 3s
+    ##  18750K .......... .......... .......... .......... .......... 22% 79.6M 3s
+    ##  18800K .......... .......... .......... .......... .......... 22% 99.0M 3s
+    ##  18850K .......... .......... .......... .......... .......... 22% 52.3M 3s
+    ##  18900K .......... .......... .......... .......... .......... 22% 41.5M 3s
+    ##  18950K .......... .......... .......... .......... .......... 22% 55.5M 3s
+    ##  19000K .......... .......... .......... .......... .......... 22% 52.0M 3s
+    ##  19050K .......... .......... .......... .......... .......... 22%  107M 3s
+    ##  19100K .......... .......... .......... .......... .......... 22% 50.2M 3s
+    ##  19150K .......... .......... .......... .......... .......... 22% 78.1M 3s
+    ##  19200K .......... .......... .......... .......... .......... 22% 99.3M 3s
+    ##  19250K .......... .......... .......... .......... .......... 22%  103M 3s
+    ##  19300K .......... .......... .......... .......... .......... 22%  121M 3s
+    ##  19350K .......... .......... .......... .......... .......... 22% 82.4M 3s
+    ##  19400K .......... .......... .......... .......... .......... 22% 36.9M 3s
+    ##  19450K .......... .......... .......... .......... .......... 22%  105M 3s
+    ##  19500K .......... .......... .......... .......... .......... 22%  124M 3s
+    ##  19550K .......... .......... .......... .......... .......... 22%  112M 3s
+    ##  19600K .......... .......... .......... .......... .......... 23% 82.4M 3s
+    ##  19650K .......... .......... .......... .......... .......... 23%  119M 3s
+    ##  19700K .......... .......... .......... .......... .......... 23%  101M 3s
+    ##  19750K .......... .......... .......... .......... .......... 23%  116M 3s
+    ##  19800K .......... .......... .......... .......... .......... 23%  109M 3s
+    ##  19850K .......... .......... .......... .......... .......... 23%  113M 3s
+    ##  19900K .......... .......... .......... .......... .......... 23% 95.1M 3s
+    ##  19950K .......... .......... .......... .......... .......... 23%  103M 3s
+    ##  20000K .......... .......... .......... .......... .......... 23%  135M 3s
+    ##  20050K .......... .......... .......... .......... .......... 23%  105M 3s
+    ##  20100K .......... .......... .......... .......... .......... 23%  111M 3s
+    ##  20150K .......... .......... .......... .......... .......... 23%  108M 3s
+    ##  20200K .......... .......... .......... .......... .......... 23% 91.6M 3s
+    ##  20250K .......... .......... .......... .......... .......... 23%  108M 3s
+    ##  20300K .......... .......... .......... .......... .......... 23%  100M 3s
+    ##  20350K .......... .......... .......... .......... .......... 23% 98.8M 3s
+    ##  20400K .......... .......... .......... .......... .......... 23%  115M 3s
+    ##  20450K .......... .......... .......... .......... .......... 24%  100M 3s
+    ##  20500K .......... .......... .......... .......... .......... 24% 98.2M 3s
+    ##  20550K .......... .......... .......... .......... .......... 24%  104M 3s
+    ##  20600K .......... .......... .......... .......... .......... 24% 94.1M 3s
+    ##  20650K .......... .......... .......... .......... .......... 24%  116M 3s
+    ##  20700K .......... .......... .......... .......... .......... 24% 99.4M 3s
+    ##  20750K .......... .......... .......... .......... .......... 24% 98.2M 3s
+    ##  20800K .......... .......... .......... .......... .......... 24%  118M 3s
+    ##  20850K .......... .......... .......... .......... .......... 24%  104M 3s
+    ##  20900K .......... .......... .......... .......... .......... 24%  126M 3s
+    ##  20950K .......... .......... .......... .......... .......... 24% 86.5M 3s
+    ##  21000K .......... .......... .......... .......... .......... 24% 97.9M 3s
+    ##  21050K .......... .......... .......... .......... .......... 24%  127M 3s
+    ##  21100K .......... .......... .......... .......... .......... 24% 88.3M 3s
+    ##  21150K .......... .......... .......... .......... .......... 24%  125M 3s
+    ##  21200K .......... .......... .......... .......... .......... 24%  104M 3s
+    ##  21250K .......... .......... .......... .......... .......... 24% 95.2M 3s
+    ##  21300K .......... .......... .......... .......... .......... 25%  138M 3s
+    ##  21350K .......... .......... .......... .......... .......... 25%  109M 3s
+    ##  21400K .......... .......... .......... .......... .......... 25%  113M 3s
+    ##  21450K .......... .......... .......... .......... .......... 25%  134M 3s
+    ##  21500K .......... .......... .......... .......... .......... 25% 95.1M 3s
+    ##  21550K .......... .......... .......... .......... .......... 25%  126M 3s
+    ##  21600K .......... .......... .......... .......... .......... 25% 2.88M 3s
+    ##  21650K .......... .......... .......... .......... .......... 25% 3.27M 3s
+    ##  21700K .......... .......... .......... .......... .......... 25% 53.9M 3s
+    ##  21750K .......... .......... .......... .......... .......... 25% 76.4M 3s
+    ##  21800K .......... .......... .......... .......... .......... 25%  102M 3s
+    ##  21850K .......... .......... .......... .......... .......... 25% 46.6M 3s
+    ##  21900K .......... .......... .......... .......... .......... 25% 44.2M 3s
+    ##  21950K .......... .......... .......... .......... .......... 25% 61.8M 3s
+    ##  22000K .......... .......... .......... .......... .......... 25% 49.8M 3s
+    ##  22050K .......... .......... .......... .......... .......... 25% 98.9M 3s
+    ##  22100K .......... .......... .......... .......... .......... 25% 34.7M 3s
+    ##  22150K .......... .......... .......... .......... .......... 26% 63.4M 3s
+    ##  22200K .......... .......... .......... .......... .......... 26% 50.0M 3s
+    ##  22250K .......... .......... .......... .......... .......... 26% 62.4M 3s
+    ##  22300K .......... .......... .......... .......... .......... 26% 59.3M 3s
+    ##  22350K .......... .......... .......... .......... .......... 26% 60.4M 3s
+    ##  22400K .......... .......... .......... .......... .......... 26% 65.2M 3s
+    ##  22450K .......... .......... .......... .......... .......... 26% 52.1M 3s
+    ##  22500K .......... .......... .......... .......... .......... 26% 59.9M 3s
+    ##  22550K .......... .......... .......... .......... .......... 26% 64.8M 2s
+    ##  22600K .......... .......... .......... .......... .......... 26% 71.4M 2s
+    ##  22650K .......... .......... .......... .......... .......... 26%  108M 2s
+    ##  22700K .......... .......... .......... .......... .......... 26% 91.4M 2s
+    ##  22750K .......... .......... .......... .......... .......... 26% 89.2M 2s
+    ##  22800K .......... .......... .......... .......... .......... 26%  124M 2s
+    ##  22850K .......... .......... .......... .......... .......... 26% 93.8M 2s
+    ##  22900K .......... .......... .......... .......... .......... 26%  104M 2s
+    ##  22950K .......... .......... .......... .......... .......... 26% 82.9M 2s
+    ##  23000K .......... .......... .......... .......... .......... 27% 90.8M 2s
+    ##  23050K .......... .......... .......... .......... .......... 27%  108M 2s
+    ##  23100K .......... .......... .......... .......... .......... 27% 88.0M 2s
+    ##  23150K .......... .......... .......... .......... .......... 27% 99.7M 2s
+    ##  23200K .......... .......... .......... .......... .......... 27% 93.5M 2s
+    ##  23250K .......... .......... .......... .......... .......... 27%  109M 2s
+    ##  23300K .......... .......... .......... .......... .......... 27% 99.2M 2s
+    ##  23350K .......... .......... .......... .......... .......... 27% 81.7M 2s
+    ##  23400K .......... .......... .......... .......... .......... 27%  108M 2s
+    ##  23450K .......... .......... .......... .......... .......... 27% 88.9M 2s
+    ##  23500K .......... .......... .......... .......... .......... 27% 97.3M 2s
+    ##  23550K .......... .......... .......... .......... .......... 27% 93.1M 2s
+    ##  23600K .......... .......... .......... .......... .......... 27% 91.1M 2s
+    ##  23650K .......... .......... .......... .......... .......... 27%  112M 2s
+    ##  23700K .......... .......... .......... .......... .......... 27% 96.3M 2s
+    ##  23750K .......... .......... .......... .......... .......... 27%  109M 2s
+    ##  23800K .......... .......... .......... .......... .......... 27% 99.5M 2s
+    ##  23850K .......... .......... .......... .......... .......... 28% 87.6M 2s
+    ##  23900K .......... .......... .......... .......... .......... 28% 97.2M 2s
+    ##  23950K .......... .......... .......... .......... .......... 28% 99.2M 2s
+    ##  24000K .......... .......... .......... .......... .......... 28% 96.0M 2s
+    ##  24050K .......... .......... .......... .......... .......... 28% 93.7M 2s
+    ##  24100K .......... .......... .......... .......... .......... 28% 85.4M 2s
+    ##  24150K .......... .......... .......... .......... .......... 28%  118M 2s
+    ##  24200K .......... .......... .......... .......... .......... 28% 92.9M 2s
+    ##  24250K .......... .......... .......... .......... .......... 28%  107M 2s
+    ##  24300K .......... .......... .......... .......... .......... 28%  113M 2s
+    ##  24350K .......... .......... .......... .......... .......... 28%  162M 2s
+    ##  24400K .......... .......... .......... .......... .......... 28%  252M 2s
+    ##  24450K .......... .......... .......... .......... .......... 28%  224M 2s
+    ##  24500K .......... .......... .......... .......... .......... 28%  254M 2s
+    ##  24550K .......... .......... .......... .......... .......... 28%  251M 2s
+    ##  24600K .......... .......... .......... .......... .......... 28% 3.47M 2s
+    ##  24650K .......... .......... .......... .......... .......... 28% 3.69M 2s
+    ##  24700K .......... .......... .......... .......... .......... 29% 19.8M 2s
+    ##  24750K .......... .......... .......... .......... .......... 29%  125M 2s
+    ##  24800K .......... .......... .......... .......... .......... 29% 64.9M 2s
+    ##  24850K .......... .......... .......... .......... .......... 29% 50.7M 2s
+    ##  24900K .......... .......... .......... .......... .......... 29% 38.3M 2s
+    ##  24950K .......... .......... .......... .......... .......... 29% 72.6M 2s
+    ##  25000K .......... .......... .......... .......... .......... 29%  112M 2s
+    ##  25050K .......... .......... .......... .......... .......... 29% 45.3M 2s
+    ##  25100K .......... .......... .......... .......... .......... 29% 43.7M 2s
+    ##  25150K .......... .......... .......... .......... .......... 29% 58.6M 2s
+    ##  25200K .......... .......... .......... .......... .......... 29% 47.3M 2s
+    ##  25250K .......... .......... .......... .......... .......... 29%  122M 2s
+    ##  25300K .......... .......... .......... .......... .......... 29% 50.6M 2s
+    ##  25350K .......... .......... .......... .......... .......... 29% 44.8M 2s
+    ##  25400K .......... .......... .......... .......... .......... 29% 65.6M 2s
+    ##  25450K .......... .......... .......... .......... .......... 29% 49.4M 2s
+    ##  25500K .......... .......... .......... .......... .......... 29%  106M 2s
+    ##  25550K .......... .......... .......... .......... .......... 30% 50.5M 2s
+    ##  25600K .......... .......... .......... .......... .......... 30% 53.7M 2s
+    ##  25650K .......... .......... .......... .......... .......... 30% 90.0M 2s
+    ##  25700K .......... .......... .......... .......... .......... 30%  109M 2s
+    ##  25750K .......... .......... .......... .......... .......... 30%  122M 2s
+    ##  25800K .......... .......... .......... .......... .......... 30% 75.1M 2s
+    ##  25850K .......... .......... .......... .......... .......... 30%  112M 2s
+    ##  25900K .......... .......... .......... .......... .......... 30%  121M 2s
+    ##  25950K .......... .......... .......... .......... .......... 30%  102M 2s
+    ##  26000K .......... .......... .......... .......... .......... 30%  123M 2s
+    ##  26050K .......... .......... .......... .......... .......... 30% 73.3M 2s
+    ##  26100K .......... .......... .......... .......... .......... 30%  100M 2s
+    ##  26150K .......... .......... .......... .......... .......... 30%  118M 2s
+    ##  26200K .......... .......... .......... .......... .......... 30%  107M 2s
+    ##  26250K .......... .......... .......... .......... .......... 30%  118M 2s
+    ##  26300K .......... .......... .......... .......... .......... 30%  106M 2s
+    ##  26350K .......... .......... .......... .......... .......... 30% 76.1M 2s
+    ##  26400K .......... .......... .......... .......... .......... 31% 85.1M 2s
+    ##  26450K .......... .......... .......... .......... .......... 31%  110M 2s
+    ##  26500K .......... .......... .......... .......... .......... 31%  113M 2s
+    ##  26550K .......... .......... .......... .......... .......... 31%  114M 2s
+    ##  26600K .......... .......... .......... .......... .......... 31% 82.3M 2s
+    ##  26650K .......... .......... .......... .......... .......... 31%  127M 2s
+    ##  26700K .......... .......... .......... .......... .......... 31% 75.4M 2s
+    ##  26750K .......... .......... .......... .......... .......... 31%  123M 2s
+    ##  26800K .......... .......... .......... .......... .......... 31%  119M 2s
+    ##  26850K .......... .......... .......... .......... .......... 31% 94.5M 2s
+    ##  26900K .......... .......... .......... .......... .......... 31%  118M 2s
+    ##  26950K .......... .......... .......... .......... .......... 31% 83.6M 2s
+    ##  27000K .......... .......... .......... .......... .......... 31%  114M 2s
+    ##  27050K .......... .......... .......... .......... .......... 31%  114M 2s
+    ##  27100K .......... .......... .......... .......... .......... 31%  111M 2s
+    ##  27150K .......... .......... .......... .......... .......... 31% 59.7M 2s
+    ##  27200K .......... .......... .......... .......... .......... 31%  104M 2s
+    ##  27250K .......... .......... .......... .......... .......... 32%  113M 2s
+    ##  27300K .......... .......... .......... .......... .......... 32%  121M 2s
+    ##  27350K .......... .......... .......... .......... .......... 32%  106M 2s
+    ##  27400K .......... .......... .......... .......... .......... 32% 65.2M 2s
+    ##  27450K .......... .......... .......... .......... .......... 32% 3.44M 2s
+    ##  27500K .......... .......... .......... .......... .......... 32%  115M 2s
+    ##  27550K .......... .......... .......... .......... .......... 32%  115M 2s
+    ##  27600K .......... .......... .......... .......... .......... 32%  112M 2s
+    ##  27650K .......... .......... .......... .......... .......... 32% 4.00M 2s
+    ##  27700K .......... .......... .......... .......... .......... 32% 38.6M 2s
+    ##  27750K .......... .......... .......... .......... .......... 32% 45.6M 2s
+    ##  27800K .......... .......... .......... .......... .......... 32% 46.1M 2s
+    ##  27850K .......... .......... .......... .......... .......... 32% 43.8M 2s
+    ##  27900K .......... .......... .......... .......... .......... 32% 41.9M 2s
+    ##  27950K .......... .......... .......... .......... .......... 32% 67.8M 2s
+    ##  28000K .......... .......... .......... .......... .......... 32%  112M 2s
+    ##  28050K .......... .......... .......... .......... .......... 32% 40.6M 2s
+    ##  28100K .......... .......... .......... .......... .......... 33% 46.8M 2s
+    ##  28150K .......... .......... .......... .......... .......... 33% 55.8M 2s
+    ##  28200K .......... .......... .......... .......... .......... 33% 51.2M 2s
+    ##  28250K .......... .......... .......... .......... .......... 33%  119M 2s
+    ##  28300K .......... .......... .......... .......... .......... 33% 48.3M 2s
+    ##  28350K .......... .......... .......... .......... .......... 33% 47.9M 2s
+    ##  28400K .......... .......... .......... .......... .......... 33% 60.1M 2s
+    ##  28450K .......... .......... .......... .......... .......... 33% 49.9M 2s
+    ##  28500K .......... .......... .......... .......... .......... 33%  129M 2s
+    ##  28550K .......... .......... .......... .......... .......... 33% 48.2M 2s
+    ##  28600K .......... .......... .......... .......... .......... 33% 51.9M 2s
+    ##  28650K .......... .......... .......... .......... .......... 33% 81.3M 2s
+    ##  28700K .......... .......... .......... .......... .......... 33% 96.1M 2s
+    ##  28750K .......... .......... .......... .......... .......... 33%  110M 2s
+    ##  28800K .......... .......... .......... .......... .......... 33% 86.1M 2s
+    ##  28850K .......... .......... .......... .......... .......... 33% 97.2M 2s
+    ##  28900K .......... .......... .......... .......... .......... 33%  111M 2s
+    ##  28950K .......... .......... .......... .......... .......... 34%  105M 2s
+    ##  29000K .......... .......... .......... .......... .......... 34%  115M 2s
+    ##  29050K .......... .......... .......... .......... .......... 34%  103M 2s
+    ##  29100K .......... .......... .......... .......... .......... 34%  108M 2s
+    ##  29150K .......... .......... .......... .......... .......... 34%  108M 2s
+    ##  29200K .......... .......... .......... .......... .......... 34%  100M 2s
+    ##  29250K .......... .......... .......... .......... .......... 34% 81.3M 2s
+    ##  29300K .......... .......... .......... .......... .......... 34%  132M 2s
+    ##  29350K .......... .......... .......... .......... .......... 34%  105M 2s
+    ##  29400K .......... .......... .......... .......... .......... 34% 96.1M 2s
+    ##  29450K .......... .......... .......... .......... .......... 34% 81.0M 2s
+    ##  29500K .......... .......... .......... .......... .......... 34%  109M 2s
+    ##  29550K .......... .......... .......... .......... .......... 34%  116M 2s
+    ##  29600K .......... .......... .......... .......... .......... 34% 95.8M 2s
+    ##  29650K .......... .......... .......... .......... .......... 34% 86.6M 2s
+    ##  29700K .......... .......... .......... .......... .......... 34%  101M 2s
+    ##  29750K .......... .......... .......... .......... .......... 34%  118M 2s
+    ##  29800K .......... .......... .......... .......... .......... 35%  115M 2s
+    ##  29850K .......... .......... .......... .......... .......... 35% 97.8M 2s
+    ##  29900K .......... .......... .......... .......... .......... 35%  111M 2s
+    ##  29950K .......... .......... .......... .......... .......... 35% 93.9M 2s
+    ##  30000K .......... .......... .......... .......... .......... 35%  106M 2s
+    ##  30050K .......... .......... .......... .......... .......... 35% 95.4M 2s
+    ##  30100K .......... .......... .......... .......... .......... 35%  103M 2s
+    ##  30150K .......... .......... .......... .......... .......... 35% 68.0M 2s
+    ##  30200K .......... .......... .......... .......... .......... 35% 91.4M 2s
+    ##  30250K .......... .......... .......... .......... .......... 35%  102M 2s
+    ##  30300K .......... .......... .......... .......... .......... 35%  121M 2s
+    ##  30350K .......... .......... .......... .......... .......... 35%  105M 2s
+    ##  30400K .......... .......... .......... .......... .......... 35% 78.0M 2s
+    ##  30450K .......... .......... .......... .......... .......... 35% 25.1M 2s
+    ##  30500K .......... .......... .......... .......... .......... 35% 3.94M 2s
+    ##  30550K .......... .......... .......... .......... .......... 35% 69.5M 2s
+    ##  30600K .......... .......... .......... .......... .......... 35%  116M 2s
+    ##  30650K .......... .......... .......... .......... .......... 36% 3.88M 2s
+    ##  30700K .......... .......... .......... .......... .......... 36% 52.0M 2s
+    ##  30750K .......... .......... .......... .......... .......... 36%  123M 2s
+    ##  30800K .......... .......... .......... .......... .......... 36% 28.0M 2s
+    ##  30850K .......... .......... .......... .......... .......... 36% 44.5M 2s
+    ##  30900K .......... .......... .......... .......... .......... 36% 45.4M 2s
+    ##  30950K .......... .......... .......... .......... .......... 36% 62.9M 2s
+    ##  31000K .......... .......... .......... .......... .......... 36%  121M 2s
+    ##  31050K .......... .......... .......... .......... .......... 36% 40.3M 2s
+    ##  31100K .......... .......... .......... .......... .......... 36% 44.5M 2s
+    ##  31150K .......... .......... .......... .......... .......... 36% 58.2M 2s
+    ##  31200K .......... .......... .......... .......... .......... 36% 51.5M 2s
+    ##  31250K .......... .......... .......... .......... .......... 36%  118M 2s
+    ##  31300K .......... .......... .......... .......... .......... 36% 48.4M 2s
+    ##  31350K .......... .......... .......... .......... .......... 36% 48.9M 2s
+    ##  31400K .......... .......... .......... .......... .......... 36% 64.0M 2s
+    ##  31450K .......... .......... .......... .......... .......... 36% 43.9M 2s
+    ##  31500K .......... .......... .......... .......... .......... 37%  136M 2s
+    ##  31550K .......... .......... .......... .......... .......... 37% 53.0M 2s
+    ##  31600K .......... .......... .......... .......... .......... 37% 48.9M 2s
+    ##  31650K .......... .......... .......... .......... .......... 37% 82.3M 2s
+    ##  31700K .......... .......... .......... .......... .......... 37% 76.8M 2s
+    ##  31750K .......... .......... .......... .......... .......... 37%  121M 2s
+    ##  31800K .......... .......... .......... .......... .......... 37%  116M 2s
+    ##  31850K .......... .......... .......... .......... .......... 37% 80.7M 2s
+    ##  31900K .......... .......... .......... .......... .......... 37%  120M 2s
+    ##  31950K .......... .......... .......... .......... .......... 37%  104M 2s
+    ##  32000K .......... .......... .......... .......... .......... 37%  105M 2s
+    ##  32050K .......... .......... .......... .......... .......... 37%  133M 2s
+    ##  32100K .......... .......... .......... .......... .......... 37% 89.3M 2s
+    ##  32150K .......... .......... .......... .......... .......... 37% 86.7M 2s
+    ##  32200K .......... .......... .......... .......... .......... 37% 81.0M 2s
+    ##  32250K .......... .......... .......... .......... .......... 37%  128M 2s
+    ##  32300K .......... .......... .......... .......... .......... 37% 99.8M 2s
+    ##  32350K .......... .......... .......... .......... .......... 37%  104M 2s
+    ##  32400K .......... .......... .......... .......... .......... 38%  116M 2s
+    ##  32450K .......... .......... .......... .......... .......... 38% 75.4M 2s
+    ##  32500K .......... .......... .......... .......... .......... 38% 95.3M 2s
+    ##  32550K .......... .......... .......... .......... .......... 38% 62.0M 2s
+    ##  32600K .......... .......... .......... .......... .......... 38% 49.8M 2s
+    ##  32650K .......... .......... .......... .......... .......... 38% 61.8M 2s
+    ##  32700K .......... .......... .......... .......... .......... 38% 64.9M 2s
+    ##  32750K .......... .......... .......... .......... .......... 38% 67.9M 2s
+    ##  32800K .......... .......... .......... .......... .......... 38% 69.6M 2s
+    ##  32850K .......... .......... .......... .......... .......... 38% 54.3M 2s
+    ##  32900K .......... .......... .......... .......... .......... 38% 63.2M 2s
+    ##  32950K .......... .......... .......... .......... .......... 38% 57.8M 2s
+    ##  33000K .......... .......... .......... .......... .......... 38% 59.8M 2s
+    ##  33050K .......... .......... .......... .......... .......... 38% 64.5M 2s
+    ##  33100K .......... .......... .......... .......... .......... 38% 72.9M 2s
+    ##  33150K .......... .......... .......... .......... .......... 38%  121M 2s
+    ##  33200K .......... .......... .......... .......... .......... 38% 95.9M 2s
+    ##  33250K .......... .......... .......... .......... .......... 39%  122M 2s
+    ##  33300K .......... .......... .......... .......... .......... 39%  137M 2s
+    ##  33350K .......... .......... .......... .......... .......... 39% 99.0M 2s
+    ##  33400K .......... .......... .......... .......... .......... 39%  115M 2s
+    ##  33450K .......... .......... .......... .......... .......... 39%  104M 2s
+    ##  33500K .......... .......... .......... .......... .......... 39%  124M 2s
+    ##  33550K .......... .......... .......... .......... .......... 39%  125M 2s
+    ##  33600K .......... .......... .......... .......... .......... 39% 4.48M 2s
+    ##  33650K .......... .......... .......... .......... .......... 39% 3.82M 2s
+    ##  33700K .......... .......... .......... .......... .......... 39% 67.5M 2s
+    ##  33750K .......... .......... .......... .......... .......... 39%  117M 2s
+    ##  33800K .......... .......... .......... .......... .......... 39% 29.0M 2s
+    ##  33850K .......... .......... .......... .......... .......... 39% 43.0M 2s
+    ##  33900K .......... .......... .......... .......... .......... 39% 42.9M 2s
+    ##  33950K .......... .......... .......... .......... .......... 39% 75.2M 2s
+    ##  34000K .......... .......... .......... .......... .......... 39%  110M 2s
+    ##  34050K .......... .......... .......... .......... .......... 39% 38.3M 2s
+    ##  34100K .......... .......... .......... .......... .......... 40% 45.1M 2s
+    ##  34150K .......... .......... .......... .......... .......... 40% 59.9M 2s
+    ##  34200K .......... .......... .......... .......... .......... 40% 49.1M 2s
+    ##  34250K .......... .......... .......... .......... .......... 40%  113M 2s
+    ##  34300K .......... .......... .......... .......... .......... 40% 49.9M 2s
+    ##  34350K .......... .......... .......... .......... .......... 40% 47.9M 2s
+    ##  34400K .......... .......... .......... .......... .......... 40% 68.1M 2s
+    ##  34450K .......... .......... .......... .......... .......... 40% 45.1M 2s
+    ##  34500K .......... .......... .......... .......... .......... 40%  107M 2s
+    ##  34550K .......... .......... .......... .......... .......... 40% 55.6M 2s
+    ##  34600K .......... .......... .......... .......... .......... 40% 48.6M 2s
+    ##  34650K .......... .......... .......... .......... .......... 40% 99.8M 2s
+    ##  34700K .......... .......... .......... .......... .......... 40% 70.8M 2s
+    ##  34750K .......... .......... .......... .......... .......... 40%  136M 2s
+    ##  34800K .......... .......... .......... .......... .......... 40%  110M 2s
+    ##  34850K .......... .......... .......... .......... .......... 40% 79.4M 2s
+    ##  34900K .......... .......... .......... .......... .......... 40%  103M 2s
+    ##  34950K .......... .......... .......... .......... .......... 41% 99.9M 2s
+    ##  35000K .......... .......... .......... .......... .......... 41%  127M 2s
+    ##  35050K .......... .......... .......... .......... .......... 41%  122M 2s
+    ##  35100K .......... .......... .......... .......... .......... 41% 97.5M 2s
+    ##  35150K .......... .......... .......... .......... .......... 41% 83.1M 2s
+    ##  35200K .......... .......... .......... .......... .......... 41% 96.6M 2s
+    ##  35250K .......... .......... .......... .......... .......... 41% 93.8M 2s
+    ##  35300K .......... .......... .......... .......... .......... 41%  125M 2s
+    ##  35350K .......... .......... .......... .......... .......... 41% 76.7M 2s
+    ##  35400K .......... .......... .......... .......... .......... 41%  120M 2s
+    ##  35450K .......... .......... .......... .......... .......... 41% 96.9M 2s
+    ##  35500K .......... .......... .......... .......... .......... 41%  100M 2s
+    ##  35550K .......... .......... .......... .......... .......... 41% 76.6M 2s
+    ##  35600K .......... .......... .......... .......... .......... 41% 48.9M 2s
+    ##  35650K .......... .......... .......... .......... .......... 41% 54.2M 2s
+    ##  35700K .......... .......... .......... .......... .......... 41% 99.0M 2s
+    ##  35750K .......... .......... .......... .......... .......... 41% 54.9M 2s
+    ##  35800K .......... .......... .......... .......... .......... 42% 69.8M 2s
+    ##  35850K .......... .......... .......... .......... .......... 42% 51.3M 2s
+    ##  35900K .......... .......... .......... .......... .......... 42% 67.8M 2s
+    ##  35950K .......... .......... .......... .......... .......... 42% 99.3M 2s
+    ##  36000K .......... .......... .......... .......... .......... 42% 50.3M 2s
+    ##  36050K .......... .......... .......... .......... .......... 42% 54.6M 2s
+    ##  36100K .......... .......... .......... .......... .......... 42% 46.2M 2s
+    ##  36150K .......... .......... .......... .......... .......... 42%  133M 2s
+    ##  36200K .......... .......... .......... .......... .......... 42% 90.7M 2s
+    ##  36250K .......... .......... .......... .......... .......... 42%  122M 2s
+    ##  36300K .......... .......... .......... .......... .......... 42%  128M 2s
+    ##  36350K .......... .......... .......... .......... .......... 42% 93.9M 2s
+    ##  36400K .......... .......... .......... .......... .......... 42%  127M 2s
+    ##  36450K .......... .......... .......... .......... .......... 42%  115M 2s
+    ##  36500K .......... .......... .......... .......... .......... 42% 95.9M 2s
+    ##  36550K .......... .......... .......... .......... .......... 42%  121M 2s
+    ##  36600K .......... .......... .......... .......... .......... 42% 34.6M 2s
+    ##  36650K .......... .......... .......... .......... .......... 43% 2.20M 2s
+    ##  36700K .......... .......... .......... .......... .......... 43%  126M 2s
+    ##  36750K .......... .......... .......... .......... .......... 43% 70.1M 2s
+    ##  36800K .......... .......... .......... .......... .......... 43% 31.4M 2s
+    ##  36850K .......... .......... .......... .......... .......... 43% 43.9M 2s
+    ##  36900K .......... .......... .......... .......... .......... 43% 41.7M 2s
+    ##  36950K .......... .......... .......... .......... .......... 43%  106M 2s
+    ##  37000K .......... .......... .......... .......... .......... 43% 69.5M 2s
+    ##  37050K .......... .......... .......... .......... .......... 43% 39.3M 2s
+    ##  37100K .......... .......... .......... .......... .......... 43% 44.6M 2s
+    ##  37150K .......... .......... .......... .......... .......... 43% 64.2M 2s
+    ##  37200K .......... .......... .......... .......... .......... 43% 87.9M 2s
+    ##  37250K .......... .......... .......... .......... .......... 43% 53.6M 2s
+    ##  37300K .......... .......... .......... .......... .......... 43% 43.6M 2s
+    ##  37350K .......... .......... .......... .......... .......... 43% 55.1M 2s
+    ##  37400K .......... .......... .......... .......... .......... 43% 67.2M 2s
+    ##  37450K .......... .......... .......... .......... .......... 43% 96.7M 2s
+    ##  37500K .......... .......... .......... .......... .......... 44% 46.1M 2s
+    ##  37550K .......... .......... .......... .......... .......... 44% 52.8M 2s
+    ##  37600K .......... .......... .......... .......... .......... 44% 47.8M 2s
+    ##  37650K .......... .......... .......... .......... .......... 44%  108M 2s
+    ##  37700K .......... .......... .......... .......... .......... 44%  113M 2s
+    ##  37750K .......... .......... .......... .......... .......... 44% 85.2M 2s
+    ##  37800K .......... .......... .......... .......... .......... 44%  114M 2s
+    ##  37850K .......... .......... .......... .......... .......... 44% 89.8M 2s
+    ##  37900K .......... .......... .......... .......... .......... 44%  101M 2s
+    ##  37950K .......... .......... .......... .......... .......... 44% 97.7M 2s
+    ##  38000K .......... .......... .......... .......... .......... 44% 87.6M 2s
+    ##  38050K .......... .......... .......... .......... .......... 44%  120M 2s
+    ##  38100K .......... .......... .......... .......... .......... 44%  105M 2s
+    ##  38150K .......... .......... .......... .......... .......... 44% 85.5M 2s
+    ##  38200K .......... .......... .......... .......... .......... 44% 96.8M 2s
+    ##  38250K .......... .......... .......... .......... .......... 44%  109M 1s
+    ##  38300K .......... .......... .......... .......... .......... 44%  121M 1s
+    ##  38350K .......... .......... .......... .......... .......... 45% 76.8M 1s
+    ##  38400K .......... .......... .......... .......... .......... 45% 98.5M 1s
+    ##  38450K .......... .......... .......... .......... .......... 45% 97.8M 1s
+    ##  38500K .......... .......... .......... .......... .......... 45%  117M 1s
+    ##  38550K .......... .......... .......... .......... .......... 45% 95.5M 1s
+    ##  38600K .......... .......... .......... .......... .......... 45% 41.7M 1s
+    ##  38650K .......... .......... .......... .......... .......... 45% 67.0M 1s
+    ##  38700K .......... .......... .......... .......... .......... 45% 92.3M 1s
+    ##  38750K .......... .......... .......... .......... .......... 45% 52.4M 1s
+    ##  38800K .......... .......... .......... .......... .......... 45% 68.9M 1s
+    ##  38850K .......... .......... .......... .......... .......... 45% 57.9M 1s
+    ##  38900K .......... .......... .......... .......... .......... 45% 57.2M 1s
+    ##  38950K .......... .......... .......... .......... .......... 45% 83.0M 1s
+    ##  39000K .......... .......... .......... .......... .......... 45% 57.9M 1s
+    ##  39050K .......... .......... .......... .......... .......... 45% 55.0M 1s
+    ##  39100K .......... .......... .......... .......... .......... 45% 43.6M 1s
+    ##  39150K .......... .......... .......... .......... .......... 45%  111M 1s
+    ##  39200K .......... .......... .......... .......... .......... 46%  107M 1s
+    ##  39250K .......... .......... .......... .......... .......... 46%  108M 1s
+    ##  39300K .......... .......... .......... .......... .......... 46%  115M 1s
+    ##  39350K .......... .......... .......... .......... .......... 46%  105M 1s
+    ##  39400K .......... .......... .......... .......... .......... 46%  120M 1s
+    ##  39450K .......... .......... .......... .......... .......... 46%  105M 1s
+    ##  39500K .......... .......... .......... .......... .......... 46%  128M 1s
+    ##  39550K .......... .......... .......... .......... .......... 46%  119M 1s
+    ##  39600K .......... .......... .......... .......... .......... 46% 30.6M 1s
+    ##  39650K .......... .......... .......... .......... .......... 46% 53.4M 1s
+    ##  39700K .......... .......... .......... .......... .......... 46% 2.28M 1s
+    ##  39750K .......... .......... .......... .......... .......... 46% 60.7M 1s
+    ##  39800K .......... .......... .......... .......... .......... 46% 32.6M 1s
+    ##  39850K .......... .......... .......... .......... .......... 46% 44.3M 1s
+    ##  39900K .......... .......... .......... .......... .......... 46% 43.3M 1s
+    ##  39950K .......... .......... .......... .......... .......... 46%  107M 1s
+    ##  40000K .......... .......... .......... .......... .......... 46% 73.6M 1s
+    ##  40050K .......... .......... .......... .......... .......... 47% 34.2M 1s
+    ##  40100K .......... .......... .......... .......... .......... 47% 47.3M 1s
+    ##  40150K .......... .......... .......... .......... .......... 47% 66.0M 1s
+    ##  40200K .......... .......... .......... .......... .......... 47% 98.3M 1s
+    ##  40250K .......... .......... .......... .......... .......... 47% 49.3M 1s
+    ##  40300K .......... .......... .......... .......... .......... 47% 44.6M 1s
+    ##  40350K .......... .......... .......... .......... .......... 47% 53.0M 1s
+    ##  40400K .......... .......... .......... .......... .......... 47% 63.6M 1s
+    ##  40450K .......... .......... .......... .......... .......... 47%  110M 1s
+    ##  40500K .......... .......... .......... .......... .......... 47% 47.6M 1s
+    ##  40550K .......... .......... .......... .......... .......... 47% 51.8M 1s
+    ##  40600K .......... .......... .......... .......... .......... 47% 49.7M 1s
+    ##  40650K .......... .......... .......... .......... .......... 47% 93.0M 1s
+    ##  40700K .......... .......... .......... .......... .......... 47%  102M 1s
+    ##  40750K .......... .......... .......... .......... .......... 47%  109M 1s
+    ##  40800K .......... .......... .......... .......... .......... 47%  109M 1s
+    ##  40850K .......... .......... .......... .......... .......... 47% 92.7M 1s
+    ##  40900K .......... .......... .......... .......... .......... 48% 96.1M 1s
+    ##  40950K .......... .......... .......... .......... .......... 48%  107M 1s
+    ##  41000K .......... .......... .......... .......... .......... 48% 82.6M 1s
+    ##  41050K .......... .......... .......... .......... .......... 48%  112M 1s
+    ##  41100K .......... .......... .......... .......... .......... 48% 99.1M 1s
+    ##  41150K .......... .......... .......... .......... .......... 48%  125M 1s
+    ##  41200K .......... .......... .......... .......... .......... 48% 71.5M 1s
+    ##  41250K .......... .......... .......... .......... .......... 48%  119M 1s
+    ##  41300K .......... .......... .......... .......... .......... 48%  115M 1s
+    ##  41350K .......... .......... .......... .......... .......... 48% 70.3M 1s
+    ##  41400K .......... .......... .......... .......... .......... 48%  138M 1s
+    ##  41450K .......... .......... .......... .......... .......... 48%  106M 1s
+    ##  41500K .......... .......... .......... .......... .......... 48%  103M 1s
+    ##  41550K .......... .......... .......... .......... .......... 48% 78.4M 1s
+    ##  41600K .......... .......... .......... .......... .......... 48% 45.9M 1s
+    ##  41650K .......... .......... .......... .......... .......... 48%  123M 1s
+    ##  41700K .......... .......... .......... .......... .......... 48% 55.3M 1s
+    ##  41750K .......... .......... .......... .......... .......... 49% 50.0M 1s
+    ##  41800K .......... .......... .......... .......... .......... 49% 60.7M 1s
+    ##  41850K .......... .......... .......... .......... .......... 49% 66.3M 1s
+    ##  41900K .......... .......... .......... .......... .......... 49%  122M 1s
+    ##  41950K .......... .......... .......... .......... .......... 49% 50.4M 1s
+    ##  42000K .......... .......... .......... .......... .......... 49% 50.3M 1s
+    ##  42050K .......... .......... .......... .......... .......... 49% 63.1M 1s
+    ##  42100K .......... .......... .......... .......... .......... 49% 43.3M 1s
+    ##  42150K .......... .......... .......... .......... .......... 49%  104M 1s
+    ##  42200K .......... .......... .......... .......... .......... 49% 96.3M 1s
+    ##  42250K .......... .......... .......... .......... .......... 49%  123M 1s
+    ##  42300K .......... .......... .......... .......... .......... 49% 95.7M 1s
+    ##  42350K .......... .......... .......... .......... .......... 49% 91.0M 1s
+    ##  42400K .......... .......... .......... .......... .......... 49%  122M 1s
+    ##  42450K .......... .......... .......... .......... .......... 49%  109M 1s
+    ##  42500K .......... .......... .......... .......... .......... 49%  119M 1s
+    ##  42550K .......... .......... .......... .......... .......... 49%  114M 1s
+    ##  42600K .......... .......... .......... .......... .......... 50% 38.7M 1s
+    ##  42650K .......... .......... .......... .......... .......... 50%  121M 1s
+    ##  42700K .......... .......... .......... .......... .......... 50% 44.0M 1s
+    ##  42750K .......... .......... .......... .......... .......... 50% 2.24M 1s
+    ##  42800K .......... .......... .......... .......... .......... 50% 31.0M 1s
+    ##  42850K .......... .......... .......... .......... .......... 50% 45.0M 1s
+    ##  42900K .......... .......... .......... .......... .......... 50%  118M 1s
+    ##  42950K .......... .......... .......... .......... .......... 50% 41.1M 1s
+    ##  43000K .......... .......... .......... .......... .......... 50% 73.1M 1s
+    ##  43050K .......... .......... .......... .......... .......... 50% 37.4M 1s
+    ##  43100K .......... .......... .......... .......... .......... 50% 45.6M 1s
+    ##  43150K .......... .......... .......... .......... .......... 50%  105M 1s
+    ##  43200K .......... .......... .......... .......... .......... 50% 52.1M 1s
+    ##  43250K .......... .......... .......... .......... .......... 50% 58.4M 1s
+    ##  43300K .......... .......... .......... .......... .......... 50% 40.2M 1s
+    ##  43350K .......... .......... .......... .......... .......... 50% 55.5M 1s
+    ##  43400K .......... .......... .......... .......... .......... 50%  116M 1s
+    ##  43450K .......... .......... .......... .......... .......... 51% 57.8M 1s
+    ##  43500K .......... .......... .......... .......... .......... 51% 52.1M 1s
+    ##  43550K .......... .......... .......... .......... .......... 51% 52.7M 1s
+    ##  43600K .......... .......... .......... .......... .......... 51% 44.9M 1s
+    ##  43650K .......... .......... .......... .......... .......... 51%  141M 1s
+    ##  43700K .......... .......... .......... .......... .......... 51% 77.6M 1s
+    ##  43750K .......... .......... .......... .......... .......... 51%  133M 1s
+    ##  43800K .......... .......... .......... .......... .......... 51% 89.8M 1s
+    ##  43850K .......... .......... .......... .......... .......... 51% 90.6M 1s
+    ##  43900K .......... .......... .......... .......... .......... 51%  134M 1s
+    ##  43950K .......... .......... .......... .......... .......... 51% 83.0M 1s
+    ##  44000K .......... .......... .......... .......... .......... 51% 84.2M 1s
+    ##  44050K .......... .......... .......... .......... .......... 51%  140M 1s
+    ##  44100K .......... .......... .......... .......... .......... 51%  104M 1s
+    ##  44150K .......... .......... .......... .......... .......... 51%  107M 1s
+    ##  44200K .......... .......... .......... .......... .......... 51% 82.6M 1s
+    ##  44250K .......... .......... .......... .......... .......... 51% 93.8M 1s
+    ##  44300K .......... .......... .......... .......... .......... 52%  120M 1s
+    ##  44350K .......... .......... .......... .......... .......... 52% 62.6M 1s
+    ##  44400K .......... .......... .......... .......... .......... 52%  116M 1s
+    ##  44450K .......... .......... .......... .......... .......... 52%  118M 1s
+    ##  44500K .......... .......... .......... .......... .......... 52%  104M 1s
+    ##  44550K .......... .......... .......... .......... .......... 52% 98.8M 1s
+    ##  44600K .......... .......... .......... .......... .......... 52% 45.6M 1s
+    ##  44650K .......... .......... .......... .......... .......... 52%  134M 1s
+    ##  44700K .......... .......... .......... .......... .......... 52% 54.6M 1s
+    ##  44750K .......... .......... .......... .......... .......... 52% 49.9M 1s
+    ##  44800K .......... .......... .......... .......... .......... 52% 72.9M 1s
+    ##  44850K .......... .......... .......... .......... .......... 52% 49.4M 1s
+    ##  44900K .......... .......... .......... .......... .......... 52%  154M 1s
+    ##  44950K .......... .......... .......... .......... .......... 52% 53.9M 1s
+    ##  45000K .......... .......... .......... .......... .......... 52% 50.1M 1s
+    ##  45050K .......... .......... .......... .......... .......... 52% 57.1M 1s
+    ##  45100K .......... .......... .......... .......... .......... 52% 41.0M 1s
+    ##  45150K .......... .......... .......... .......... .......... 53%  115M 1s
+    ##  45200K .......... .......... .......... .......... .......... 53%  107M 1s
+    ##  45250K .......... .......... .......... .......... .......... 53% 91.9M 1s
+    ##  45300K .......... .......... .......... .......... .......... 53%  112M 1s
+    ##  45350K .......... .......... .......... .......... .......... 53%  101M 1s
+    ##  45400K .......... .......... .......... .......... .......... 53%  125M 1s
+    ##  45450K .......... .......... .......... .......... .......... 53% 86.2M 1s
+    ##  45500K .......... .......... .......... .......... .......... 53%  114M 1s
+    ##  45550K .......... .......... .......... .......... .......... 53% 91.3M 1s
+    ##  45600K .......... .......... .......... .......... .......... 53% 47.1M 1s
+    ##  45650K .......... .......... .......... .......... .......... 53%  120M 1s
+    ##  45700K .......... .......... .......... .......... .......... 53% 46.4M 1s
+    ##  45750K .......... .......... .......... .......... .......... 53% 25.6M 1s
+    ##  45800K .......... .......... .......... .......... .......... 53% 2.26M 1s
+    ##  45850K .......... .......... .......... .......... .......... 53% 48.6M 1s
+    ##  45900K .......... .......... .......... .......... .......... 53%  142M 1s
+    ##  45950K .......... .......... .......... .......... .......... 53% 38.1M 1s
+    ##  46000K .......... .......... .......... .......... .......... 54% 90.3M 1s
+    ##  46050K .......... .......... .......... .......... .......... 54% 34.4M 1s
+    ##  46100K .......... .......... .......... .......... .......... 54% 48.0M 1s
+    ##  46150K .......... .......... .......... .......... .......... 54%  127M 1s
+    ##  46200K .......... .......... .......... .......... .......... 54% 59.6M 1s
+    ##  46250K .......... .......... .......... .......... .......... 54% 48.9M 1s
+    ##  46300K .......... .......... .......... .......... .......... 54% 43.3M 1s
+    ##  46350K .......... .......... .......... .......... .......... 54% 50.3M 1s
+    ##  46400K .......... .......... .......... .......... .......... 54%  121M 1s
+    ##  46450K .......... .......... .......... .......... .......... 54% 55.2M 1s
+    ##  46500K .......... .......... .......... .......... .......... 54% 50.5M 1s
+    ##  46550K .......... .......... .......... .......... .......... 54% 60.5M 1s
+    ##  46600K .......... .......... .......... .......... .......... 54% 42.1M 1s
+    ##  46650K .......... .......... .......... .......... .......... 54%  110M 1s
+    ##  46700K .......... .......... .......... .......... .......... 54%  101M 1s
+    ##  46750K .......... .......... .......... .......... .......... 54%  101M 1s
+    ##  46800K .......... .......... .......... .......... .......... 54%  114M 1s
+    ##  46850K .......... .......... .......... .......... .......... 55%  100M 1s
+    ##  46900K .......... .......... .......... .......... .......... 55%  112M 1s
+    ##  46950K .......... .......... .......... .......... .......... 55% 75.5M 1s
+    ##  47000K .......... .......... .......... .......... .......... 55% 95.7M 1s
+    ##  47050K .......... .......... .......... .......... .......... 55%  104M 1s
+    ##  47100K .......... .......... .......... .......... .......... 55%  102M 1s
+    ##  47150K .......... .......... .......... .......... .......... 55%  112M 1s
+    ##  47200K .......... .......... .......... .......... .......... 55% 83.5M 1s
+    ##  47250K .......... .......... .......... .......... .......... 55% 91.8M 1s
+    ##  47300K .......... .......... .......... .......... .......... 55%  114M 1s
+    ##  47350K .......... .......... .......... .......... .......... 55% 64.4M 1s
+    ##  47400K .......... .......... .......... .......... .......... 55%  129M 1s
+    ##  47450K .......... .......... .......... .......... .......... 55% 87.0M 1s
+    ##  47500K .......... .......... .......... .......... .......... 55%  120M 1s
+    ##  47550K .......... .......... .......... .......... .......... 55%  118M 1s
+    ##  47600K .......... .......... .......... .......... .......... 55% 48.0M 1s
+    ##  47650K .......... .......... .......... .......... .......... 55%  105M 1s
+    ##  47700K .......... .......... .......... .......... .......... 56% 48.8M 1s
+    ##  47750K .......... .......... .......... .......... .......... 56% 59.5M 1s
+    ##  47800K .......... .......... .......... .......... .......... 56% 70.6M 1s
+    ##  47850K .......... .......... .......... .......... .......... 56% 58.3M 1s
+    ##  47900K .......... .......... .......... .......... .......... 56%  113M 1s
+    ##  47950K .......... .......... .......... .......... .......... 56% 58.1M 1s
+    ##  48000K .......... .......... .......... .......... .......... 56% 51.8M 1s
+    ##  48050K .......... .......... .......... .......... .......... 56% 51.4M 1s
+    ##  48100K .......... .......... .......... .......... .......... 56% 39.5M 1s
+    ##  48150K .......... .......... .......... .......... .......... 56%  114M 1s
+    ##  48200K .......... .......... .......... .......... .......... 56%  106M 1s
+    ##  48250K .......... .......... .......... .......... .......... 56%  102M 1s
+    ##  48300K .......... .......... .......... .......... .......... 56%  111M 1s
+    ##  48350K .......... .......... .......... .......... .......... 56% 77.5M 1s
+    ##  48400K .......... .......... .......... .......... .......... 56%  135M 1s
+    ##  48450K .......... .......... .......... .......... .......... 56%  104M 1s
+    ##  48500K .......... .......... .......... .......... .......... 56%  100M 1s
+    ##  48550K .......... .......... .......... .......... .......... 56%  109M 1s
+    ##  48600K .......... .......... .......... .......... .......... 57% 48.0M 1s
+    ##  48650K .......... .......... .......... .......... .......... 57%  107M 1s
+    ##  48700K .......... .......... .......... .......... .......... 57% 45.3M 1s
+    ##  48750K .......... .......... .......... .......... .......... 57% 27.0M 1s
+    ##  48800K .......... .......... .......... .......... .......... 57% 25.6M 1s
+    ##  48850K .......... .......... .......... .......... .......... 57% 2.35M 1s
+    ##  48900K .......... .......... .......... .......... .......... 57%  127M 1s
+    ##  48950K .......... .......... .......... .......... .......... 57% 41.4M 1s
+    ##  49000K .......... .......... .......... .......... .......... 57% 96.4M 1s
+    ##  49050K .......... .......... .......... .......... .......... 57% 35.1M 1s
+    ##  49100K .......... .......... .......... .......... .......... 57% 48.5M 1s
+    ##  49150K .......... .......... .......... .......... .......... 57%  123M 1s
+    ##  49200K .......... .......... .......... .......... .......... 57% 56.5M 1s
+    ##  49250K .......... .......... .......... .......... .......... 57% 45.2M 1s
+    ##  49300K .......... .......... .......... .......... .......... 57% 40.9M 1s
+    ##  49350K .......... .......... .......... .......... .......... 57% 57.2M 1s
+    ##  49400K .......... .......... .......... .......... .......... 57%  111M 1s
+    ##  49450K .......... .......... .......... .......... .......... 58% 63.8M 1s
+    ##  49500K .......... .......... .......... .......... .......... 58% 46.5M 1s
+    ##  49550K .......... .......... .......... .......... .......... 58% 62.1M 1s
+    ##  49600K .......... .......... .......... .......... .......... 58% 41.9M 1s
+    ##  49650K .......... .......... .......... .......... .......... 58%  100M 1s
+    ##  49700K .......... .......... .......... .......... .......... 58%  105M 1s
+    ##  49750K .......... .......... .......... .......... .......... 58%  100M 1s
+    ##  49800K .......... .......... .......... .......... .......... 58%  116M 1s
+    ##  49850K .......... .......... .......... .......... .......... 58%  106M 1s
+    ##  49900K .......... .......... .......... .......... .......... 58%  123M 1s
+    ##  49950K .......... .......... .......... .......... .......... 58% 79.8M 1s
+    ##  50000K .......... .......... .......... .......... .......... 58% 89.9M 1s
+    ##  50050K .......... .......... .......... .......... .......... 58% 96.5M 1s
+    ##  50100K .......... .......... .......... .......... .......... 58%  101M 1s
+    ##  50150K .......... .......... .......... .......... .......... 58%  107M 1s
+    ##  50200K .......... .......... .......... .......... .......... 58% 89.8M 1s
+    ##  50250K .......... .......... .......... .......... .......... 58% 89.0M 1s
+    ##  50300K .......... .......... .......... .......... .......... 59% 75.4M 1s
+    ##  50350K .......... .......... .......... .......... .......... 59%  109M 1s
+    ##  50400K .......... .......... .......... .......... .......... 59%  103M 1s
+    ##  50450K .......... .......... .......... .......... .......... 59%  109M 1s
+    ##  50500K .......... .......... .......... .......... .......... 59% 84.7M 1s
+    ##  50550K .......... .......... .......... .......... .......... 59%  101M 1s
+    ##  50600K .......... .......... .......... .......... .......... 59% 55.4M 1s
+    ##  50650K .......... .......... .......... .......... .......... 59%  108M 1s
+    ##  50700K .......... .......... .......... .......... .......... 59% 55.1M 1s
+    ##  50750K .......... .......... .......... .......... .......... 59% 51.7M 1s
+    ##  50800K .......... .......... .......... .......... .......... 59% 69.9M 1s
+    ##  50850K .......... .......... .......... .......... .......... 59% 64.2M 1s
+    ##  50900K .......... .......... .......... .......... .......... 59%  128M 1s
+    ##  50950K .......... .......... .......... .......... .......... 59% 55.1M 1s
+    ##  51000K .......... .......... .......... .......... .......... 59% 44.9M 1s
+    ##  51050K .......... .......... .......... .......... .......... 59% 50.6M 1s
+    ##  51100K .......... .......... .......... .......... .......... 59% 44.1M 1s
+    ##  51150K .......... .......... .......... .......... .......... 60%  105M 1s
+    ##  51200K .......... .......... .......... .......... .......... 60% 74.7M 1s
+    ##  51250K .......... .......... .......... .......... .......... 60%  125M 1s
+    ##  51300K .......... .......... .......... .......... .......... 60%  130M 1s
+    ##  51350K .......... .......... .......... .......... .......... 60% 98.5M 1s
+    ##  51400K .......... .......... .......... .......... .......... 60%  117M 1s
+    ##  51450K .......... .......... .......... .......... .......... 60% 69.0M 1s
+    ##  51500K .......... .......... .......... .......... .......... 60%  128M 1s
+    ##  51550K .......... .......... .......... .......... .......... 60%  131M 1s
+    ##  51600K .......... .......... .......... .......... .......... 60% 46.6M 1s
+    ##  51650K .......... .......... .......... .......... .......... 60%  122M 1s
+    ##  51700K .......... .......... .......... .......... .......... 60% 41.7M 1s
+    ##  51750K .......... .......... .......... .......... .......... 60% 28.4M 1s
+    ##  51800K .......... .......... .......... .......... .......... 60% 45.5M 1s
+    ##  51850K .......... .......... .......... .......... .......... 60% 26.5M 1s
+    ##  51900K .......... .......... .......... .......... .......... 60% 2.45M 1s
+    ##  51950K .......... .......... .......... .......... .......... 60% 32.5M 1s
+    ##  52000K .......... .......... .......... .......... .......... 61%  100M 1s
+    ##  52050K .......... .......... .......... .......... .......... 61% 35.4M 1s
+    ##  52100K .......... .......... .......... .......... .......... 61% 52.1M 1s
+    ##  52150K .......... .......... .......... .......... .......... 61%  116M 1s
+    ##  52200K .......... .......... .......... .......... .......... 61% 52.7M 1s
+    ##  52250K .......... .......... .......... .......... .......... 61% 45.9M 1s
+    ##  52300K .......... .......... .......... .......... .......... 61% 39.2M 1s
+    ##  52350K .......... .......... .......... .......... .......... 61% 58.3M 1s
+    ##  52400K .......... .......... .......... .......... .......... 61%  111M 1s
+    ##  52450K .......... .......... .......... .......... .......... 61% 73.1M 1s
+    ##  52500K .......... .......... .......... .......... .......... 61% 44.7M 1s
+    ##  52550K .......... .......... .......... .......... .......... 61% 65.1M 1s
+    ##  52600K .......... .......... .......... .......... .......... 61% 38.9M 1s
+    ##  52650K .......... .......... .......... .......... .......... 61%  103M 1s
+    ##  52700K .......... .......... .......... .......... .......... 61%  100M 1s
+    ##  52750K .......... .......... .......... .......... .......... 61%  102M 1s
+    ##  52800K .......... .......... .......... .......... .......... 61%  104M 1s
+    ##  52850K .......... .......... .......... .......... .......... 62%  103M 1s
+    ##  52900K .......... .......... .......... .......... .......... 62%  128M 1s
+    ##  52950K .......... .......... .......... .......... .......... 62% 86.3M 1s
+    ##  53000K .......... .......... .......... .......... .......... 62%  109M 1s
+    ##  53050K .......... .......... .......... .......... .......... 62%  103M 1s
+    ##  53100K .......... .......... .......... .......... .......... 62%  105M 1s
+    ##  53150K .......... .......... .......... .......... .......... 62% 77.6M 1s
+    ##  53200K .......... .......... .......... .......... .......... 62%  114M 1s
+    ##  53250K .......... .......... .......... .......... .......... 62% 83.0M 1s
+    ##  53300K .......... .......... .......... .......... .......... 62% 57.9M 1s
+    ##  53350K .......... .......... .......... .......... .......... 62%  127M 1s
+    ##  53400K .......... .......... .......... .......... .......... 62%  111M 1s
+    ##  53450K .......... .......... .......... .......... .......... 62%  117M 1s
+    ##  53500K .......... .......... .......... .......... .......... 62%  106M 1s
+    ##  53550K .......... .......... .......... .......... .......... 62% 71.6M 1s
+    ##  53600K .......... .......... .......... .......... .......... 62%  107M 1s
+    ##  53650K .......... .......... .......... .......... .......... 62% 67.9M 1s
+    ##  53700K .......... .......... .......... .......... .......... 63% 54.9M 1s
+    ##  53750K .......... .......... .......... .......... .......... 63% 48.5M 1s
+    ##  53800K .......... .......... .......... .......... .......... 63% 76.5M 1s
+    ##  53850K .......... .......... .......... .......... .......... 63% 99.7M 1s
+    ##  53900K .......... .......... .......... .......... .......... 63% 69.3M 1s
+    ##  53950K .......... .......... .......... .......... .......... 63% 56.8M 1s
+    ##  54000K .......... .......... .......... .......... .......... 63% 49.1M 1s
+    ##  54050K .......... .......... .......... .......... .......... 63% 50.3M 1s
+    ##  54100K .......... .......... .......... .......... .......... 63%  114M 1s
+    ##  54150K .......... .......... .......... .......... .......... 63% 40.8M 1s
+    ##  54200K .......... .......... .......... .......... .......... 63% 73.3M 1s
+    ##  54250K .......... .......... .......... .......... .......... 63%  111M 1s
+    ##  54300K .......... .......... .......... .......... .......... 63%  112M 1s
+    ##  54350K .......... .......... .......... .......... .......... 63%  115M 1s
+    ##  54400K .......... .......... .......... .......... .......... 63%  123M 1s
+    ##  54450K .......... .......... .......... .......... .......... 63% 72.1M 1s
+    ##  54500K .......... .......... .......... .......... .......... 63% 83.7M 1s
+    ##  54550K .......... .......... .......... .......... .......... 64%  124M 1s
+    ##  54600K .......... .......... .......... .......... .......... 64%  108M 1s
+    ##  54650K .......... .......... .......... .......... .......... 64% 59.3M 1s
+    ##  54700K .......... .......... .......... .......... .......... 64% 42.5M 1s
+    ##  54750K .......... .......... .......... .......... .......... 64% 27.8M 1s
+    ##  54800K .......... .......... .......... .......... .......... 64% 52.7M 1s
+    ##  54850K .......... .......... .......... .......... .......... 64%  108M 1s
+    ##  54900K .......... .......... .......... .......... .......... 64% 51.6M 1s
+    ##  54950K .......... .......... .......... .......... .......... 64% 2.22M 1s
+    ##  55000K .......... .......... .......... .......... .......... 64% 99.0M 1s
+    ##  55050K .......... .......... .......... .......... .......... 64% 39.3M 1s
+    ##  55100K .......... .......... .......... .......... .......... 64% 94.8M 1s
+    ##  55150K .......... .......... .......... .......... .......... 64% 53.6M 1s
+    ##  55200K .......... .......... .......... .......... .......... 64% 48.6M 1s
+    ##  55250K .......... .......... .......... .......... .......... 64% 49.6M 1s
+    ##  55300K .......... .......... .......... .......... .......... 64% 40.0M 1s
+    ##  55350K .......... .......... .......... .......... .......... 64% 97.7M 1s
+    ##  55400K .......... .......... .......... .......... .......... 65% 57.7M 1s
+    ##  55450K .......... .......... .......... .......... .......... 65% 75.0M 1s
+    ##  55500K .......... .......... .......... .......... .......... 65% 43.3M 1s
+    ##  55550K .......... .......... .......... .......... .......... 65% 65.5M 1s
+    ##  55600K .......... .......... .......... .......... .......... 65%  104M 1s
+    ##  55650K .......... .......... .......... .......... .......... 65% 41.6M 1s
+    ##  55700K .......... .......... .......... .......... .......... 65% 83.9M 1s
+    ##  55750K .......... .......... .......... .......... .......... 65%  113M 1s
+    ##  55800K .......... .......... .......... .......... .......... 65%  106M 1s
+    ##  55850K .......... .......... .......... .......... .......... 65% 98.0M 1s
+    ##  55900K .......... .......... .......... .......... .......... 65%  111M 1s
+    ##  55950K .......... .......... .......... .......... .......... 65%  107M 1s
+    ##  56000K .......... .......... .......... .......... .......... 65%  111M 1s
+    ##  56050K .......... .......... .......... .......... .......... 65%  113M 1s
+    ##  56100K .......... .......... .......... .......... .......... 65% 99.6M 1s
+    ##  56150K .......... .......... .......... .......... .......... 65% 93.9M 1s
+    ##  56200K .......... .......... .......... .......... .......... 65% 74.8M 1s
+    ##  56250K .......... .......... .......... .......... .......... 66%  102M 1s
+    ##  56300K .......... .......... .......... .......... .......... 66% 57.5M 1s
+    ##  56350K .......... .......... .......... .......... .......... 66%  104M 1s
+    ##  56400K .......... .......... .......... .......... .......... 66%  122M 1s
+    ##  56450K .......... .......... .......... .......... .......... 66%  102M 1s
+    ##  56500K .......... .......... .......... .......... .......... 66%  111M 1s
+    ##  56550K .......... .......... .......... .......... .......... 66% 91.7M 1s
+    ##  56600K .......... .......... .......... .......... .......... 66%  108M 1s
+    ##  56650K .......... .......... .......... .......... .......... 66% 60.0M 1s
+    ##  56700K .......... .......... .......... .......... .......... 66% 53.9M 1s
+    ##  56750K .......... .......... .......... .......... .......... 66% 51.3M 1s
+    ##  56800K .......... .......... .......... .......... .......... 66% 73.4M 1s
+    ##  56850K .......... .......... .......... .......... .......... 66% 98.2M 1s
+    ##  56900K .......... .......... .......... .......... .......... 66% 72.1M 1s
+    ##  56950K .......... .......... .......... .......... .......... 66% 50.3M 1s
+    ##  57000K .......... .......... .......... .......... .......... 66% 54.6M 1s
+    ##  57050K .......... .......... .......... .......... .......... 66% 52.8M 1s
+    ##  57100K .......... .......... .......... .......... .......... 67%  113M 1s
+    ##  57150K .......... .......... .......... .......... .......... 67% 40.2M 1s
+    ##  57200K .......... .......... .......... .......... .......... 67% 71.3M 1s
+    ##  57250K .......... .......... .......... .......... .......... 67%  105M 1s
+    ##  57300K .......... .......... .......... .......... .......... 67%  119M 1s
+    ##  57350K .......... .......... .......... .......... .......... 67%  103M 1s
+    ##  57400K .......... .......... .......... .......... .......... 67%  106M 1s
+    ##  57450K .......... .......... .......... .......... .......... 67%  101M 1s
+    ##  57500K .......... .......... .......... .......... .......... 67% 76.5M 1s
+    ##  57550K .......... .......... .......... .......... .......... 67%  101M 1s
+    ##  57600K .......... .......... .......... .......... .......... 67%  109M 1s
+    ##  57650K .......... .......... .......... .......... .......... 67% 64.9M 1s
+    ##  57700K .......... .......... .......... .......... .......... 67% 41.3M 1s
+    ##  57750K .......... .......... .......... .......... .......... 67% 27.2M 1s
+    ##  57800K .......... .......... .......... .......... .......... 67% 53.4M 1s
+    ##  57850K .......... .......... .......... .......... .......... 67% 98.3M 1s
+    ##  57900K .......... .......... .......... .......... .......... 67% 53.9M 1s
+    ##  57950K .......... .......... .......... .......... .......... 68% 54.1M 1s
+    ##  58000K .......... .......... .......... .......... .......... 68% 2.30M 1s
+    ##  58050K .......... .......... .......... .......... .......... 68% 31.0M 1s
+    ##  58100K .......... .......... .......... .......... .......... 68%  103M 1s
+    ##  58150K .......... .......... .......... .......... .......... 68% 54.6M 1s
+    ##  58200K .......... .......... .......... .......... .......... 68% 55.8M 1s
+    ##  58250K .......... .......... .......... .......... .......... 68% 47.6M 1s
+    ##  58300K .......... .......... .......... .......... .......... 68% 34.2M 1s
+    ##  58350K .......... .......... .......... .......... .......... 68%  113M 1s
+    ##  58400K .......... .......... .......... .......... .......... 68% 63.3M 1s
+    ##  58450K .......... .......... .......... .......... .......... 68% 69.4M 1s
+    ##  58500K .......... .......... .......... .......... .......... 68% 48.3M 1s
+    ##  58550K .......... .......... .......... .......... .......... 68% 60.7M 1s
+    ##  58600K .......... .......... .......... .......... .......... 68%  104M 1s
+    ##  58650K .......... .......... .......... .......... .......... 68% 38.4M 1s
+    ##  58700K .......... .......... .......... .......... .......... 68% 90.7M 1s
+    ##  58750K .......... .......... .......... .......... .......... 68%  115M 1s
+    ##  58800K .......... .......... .......... .......... .......... 69% 99.2M 1s
+    ##  58850K .......... .......... .......... .......... .......... 69%  104M 1s
+    ##  58900K .......... .......... .......... .......... .......... 69%  111M 1s
+    ##  58950K .......... .......... .......... .......... .......... 69%  107M 1s
+    ##  59000K .......... .......... .......... .......... .......... 69% 83.7M 1s
+    ##  59050K .......... .......... .......... .......... .......... 69%  140M 1s
+    ##  59100K .......... .......... .......... .......... .......... 69% 95.0M 1s
+    ##  59150K .......... .......... .......... .......... .......... 69% 84.2M 1s
+    ##  59200K .......... .......... .......... .......... .......... 69%  108M 1s
+    ##  59250K .......... .......... .......... .......... .......... 69% 85.9M 1s
+    ##  59300K .......... .......... .......... .......... .......... 69%  121M 1s
+    ##  59350K .......... .......... .......... .......... .......... 69% 54.9M 1s
+    ##  59400K .......... .......... .......... .......... .......... 69%  111M 1s
+    ##  59450K .......... .......... .......... .......... .......... 69%  105M 1s
+    ##  59500K .......... .......... .......... .......... .......... 69%  119M 1s
+    ##  59550K .......... .......... .......... .......... .......... 69%  123M 1s
+    ##  59600K .......... .......... .......... .......... .......... 69% 85.9M 1s
+    ##  59650K .......... .......... .......... .......... .......... 70% 52.6M 1s
+    ##  59700K .......... .......... .......... .......... .......... 70% 60.5M 1s
+    ##  59750K .......... .......... .......... .......... .......... 70% 47.1M 1s
+    ##  59800K .......... .......... .......... .......... .......... 70%  138M 1s
+    ##  59850K .......... .......... .......... .......... .......... 70% 74.7M 1s
+    ##  59900K .......... .......... .......... .......... .......... 70% 66.6M 1s
+    ##  59950K .......... .......... .......... .......... .......... 70% 45.5M 1s
+    ##  60000K .......... .......... .......... .......... .......... 70% 57.2M 1s
+    ##  60050K .......... .......... .......... .......... .......... 70%  144M 1s
+    ##  60100K .......... .......... .......... .......... .......... 70% 48.9M 1s
+    ##  60150K .......... .......... .......... .......... .......... 70% 40.2M 1s
+    ##  60200K .......... .......... .......... .......... .......... 70% 68.9M 1s
+    ##  60250K .......... .......... .......... .......... .......... 70%  109M 1s
+    ##  60300K .......... .......... .......... .......... .......... 70%  120M 1s
+    ##  60350K .......... .......... .......... .......... .......... 70% 93.9M 1s
+    ##  60400K .......... .......... .......... .......... .......... 70%  111M 1s
+    ##  60450K .......... .......... .......... .......... .......... 70% 94.0M 1s
+    ##  60500K .......... .......... .......... .......... .......... 71% 82.5M 1s
+    ##  60550K .......... .......... .......... .......... .......... 71%  116M 1s
+    ##  60600K .......... .......... .......... .......... .......... 71% 94.0M 1s
+    ##  60650K .......... .......... .......... .......... .......... 71% 70.4M 1s
+    ##  60700K .......... .......... .......... .......... .......... 71% 39.0M 1s
+    ##  60750K .......... .......... .......... .......... .......... 71% 51.2M 1s
+    ##  60800K .......... .......... .......... .......... .......... 71% 80.0M 1s
+    ##  60850K .......... .......... .......... .......... .......... 71% 31.8M 1s
+    ##  60900K .......... .......... .......... .......... .......... 71% 51.5M 1s
+    ##  60950K .......... .......... .......... .......... .......... 71% 51.2M 1s
+    ##  61000K .......... .......... .......... .......... .......... 71% 53.4M 1s
+    ##  61050K .......... .......... .......... .......... .......... 71% 2.38M 1s
+    ##  61100K .......... .......... .......... .......... .......... 71% 26.0M 1s
+    ##  61150K .......... .......... .......... .......... .......... 71% 59.5M 1s
+    ##  61200K .......... .......... .......... .......... .......... 71% 52.2M 1s
+    ##  61250K .......... .......... .......... .......... .......... 71% 44.9M 1s
+    ##  61300K .......... .......... .......... .......... .......... 71%  155M 1s
+    ##  61350K .......... .......... .......... .......... .......... 72% 31.1M 1s
+    ##  61400K .......... .......... .......... .......... .......... 72% 66.7M 1s
+    ##  61450K .......... .......... .......... .......... .......... 72% 70.1M 1s
+    ##  61500K .......... .......... .......... .......... .......... 72% 52.8M 1s
+    ##  61550K .......... .......... .......... .......... .......... 72%  115M 1s
+    ##  61600K .......... .......... .......... .......... .......... 72% 52.8M 1s
+    ##  61650K .......... .......... .......... .......... .......... 72% 37.9M 1s
+    ##  61700K .......... .......... .......... .......... .......... 72% 95.1M 1s
+    ##  61750K .......... .......... .......... .......... .......... 72%  118M 1s
+    ##  61800K .......... .......... .......... .......... .......... 72%  129M 1s
+    ##  61850K .......... .......... .......... .......... .......... 72% 99.1M 1s
+    ##  61900K .......... .......... .......... .......... .......... 72%  103M 1s
+    ##  61950K .......... .......... .......... .......... .......... 72%  103M 1s
+    ##  62000K .......... .......... .......... .......... .......... 72%  102M 1s
+    ##  62050K .......... .......... .......... .......... .......... 72%  115M 1s
+    ##  62100K .......... .......... .......... .......... .......... 72%  105M 1s
+    ##  62150K .......... .......... .......... .......... .......... 72% 85.5M 1s
+    ##  62200K .......... .......... .......... .......... .......... 73% 92.5M 1s
+    ##  62250K .......... .......... .......... .......... .......... 73% 82.9M 1s
+    ##  62300K .......... .......... .......... .......... .......... 73%  128M 1s
+    ##  62350K .......... .......... .......... .......... .......... 73% 55.2M 1s
+    ##  62400K .......... .......... .......... .......... .......... 73%  111M 1s
+    ##  62450K .......... .......... .......... .......... .......... 73%  101M 1s
+    ##  62500K .......... .......... .......... .......... .......... 73%  113M 1s
+    ##  62550K .......... .......... .......... .......... .......... 73%  124M 1s
+    ##  62600K .......... .......... .......... .......... .......... 73% 98.3M 1s
+    ##  62650K .......... .......... .......... .......... .......... 73% 48.5M 1s
+    ##  62700K .......... .......... .......... .......... .......... 73% 56.7M 1s
+    ##  62750K .......... .......... .......... .......... .......... 73% 53.3M 1s
+    ##  62800K .......... .......... .......... .......... .......... 73%  125M 1s
+    ##  62850K .......... .......... .......... .......... .......... 73% 79.5M 1s
+    ##  62900K .......... .......... .......... .......... .......... 73% 62.6M 1s
+    ##  62950K .......... .......... .......... .......... .......... 73% 48.5M 1s
+    ##  63000K .......... .......... .......... .......... .......... 73% 48.0M 1s
+    ##  63050K .......... .......... .......... .......... .......... 74%  130M 1s
+    ##  63100K .......... .......... .......... .......... .......... 74% 47.3M 1s
+    ##  63150K .......... .......... .......... .......... .......... 74% 41.1M 1s
+    ##  63200K .......... .......... .......... .......... .......... 74% 99.6M 1s
+    ##  63250K .......... .......... .......... .......... .......... 74% 92.1M 1s
+    ##  63300K .......... .......... .......... .......... .......... 74%  125M 1s
+    ##  63350K .......... .......... .......... .......... .......... 74% 97.2M 1s
+    ##  63400K .......... .......... .......... .......... .......... 74%  113M 1s
+    ##  63450K .......... .......... .......... .......... .......... 74% 83.9M 1s
+    ##  63500K .......... .......... .......... .......... .......... 74% 85.7M 1s
+    ##  63550K .......... .......... .......... .......... .......... 74%  114M 1s
+    ##  63600K .......... .......... .......... .......... .......... 74% 97.9M 1s
+    ##  63650K .......... .......... .......... .......... .......... 74% 75.6M 1s
+    ##  63700K .......... .......... .......... .......... .......... 74% 36.7M 1s
+    ##  63750K .......... .......... .......... .......... .......... 74% 54.3M 1s
+    ##  63800K .......... .......... .......... .......... .......... 74%  118M 1s
+    ##  63850K .......... .......... .......... .......... .......... 74% 45.4M 1s
+    ##  63900K .......... .......... .......... .......... .......... 75% 28.6M 1s
+    ##  63950K .......... .......... .......... .......... .......... 75% 57.3M 1s
+    ##  64000K .......... .......... .......... .......... .......... 75% 47.1M 1s
+    ##  64050K .......... .......... .......... .......... .......... 75%  130M 1s
+    ##  64100K .......... .......... .......... .......... .......... 75% 2.38M 1s
+    ##  64150K .......... .......... .......... .......... .......... 75% 22.5M 1s
+    ##  64200K .......... .......... .......... .......... .......... 75% 46.7M 1s
+    ##  64250K .......... .......... .......... .......... .......... 75% 46.6M 1s
+    ##  64300K .......... .......... .......... .......... .......... 75%  137M 1s
+    ##  64350K .......... .......... .......... .......... .......... 75% 31.1M 1s
+    ##  64400K .......... .......... .......... .......... .......... 75% 77.6M 1s
+    ##  64450K .......... .......... .......... .......... .......... 75% 64.5M 1s
+    ##  64500K .......... .......... .......... .......... .......... 75% 54.4M 1s
+    ##  64550K .......... .......... .......... .......... .......... 75%  111M 1s
+    ##  64600K .......... .......... .......... .......... .......... 75% 52.3M 1s
+    ##  64650K .......... .......... .......... .......... .......... 75% 36.5M 1s
+    ##  64700K .......... .......... .......... .......... .......... 75% 98.9M 1s
+    ##  64750K .......... .......... .......... .......... .......... 75%  118M 1s
+    ##  64800K .......... .......... .......... .......... .......... 76%  122M 1s
+    ##  64850K .......... .......... .......... .......... .......... 76% 90.2M 1s
+    ##  64900K .......... .......... .......... .......... .......... 76%  134M 1s
+    ##  64950K .......... .......... .......... .......... .......... 76% 81.0M 1s
+    ##  65000K .......... .......... .......... .......... .......... 76%  110M 1s
+    ##  65050K .......... .......... .......... .......... .......... 76%  124M 1s
+    ##  65100K .......... .......... .......... .......... .......... 76%  101M 1s
+    ##  65150K .......... .......... .......... .......... .......... 76% 88.5M 1s
+    ##  65200K .......... .......... .......... .......... .......... 76% 91.1M 1s
+    ##  65250K .......... .......... .......... .......... .......... 76%  107M 1s
+    ##  65300K .......... .......... .......... .......... .......... 76%  109M 1s
+    ##  65350K .......... .......... .......... .......... .......... 76% 49.8M 1s
+    ##  65400K .......... .......... .......... .......... .......... 76%  113M 1s
+    ##  65450K .......... .......... .......... .......... .......... 76%  113M 1s
+    ##  65500K .......... .......... .......... .......... .......... 76%  120M 1s
+    ##  65550K .......... .......... .......... .......... .......... 76%  103M 1s
+    ##  65600K .......... .......... .......... .......... .......... 76%  101M 1s
+    ##  65650K .......... .......... .......... .......... .......... 77% 49.6M 1s
+    ##  65700K .......... .......... .......... .......... .......... 77% 62.3M 1s
+    ##  65750K .......... .......... .......... .......... .......... 77% 52.8M 1s
+    ##  65800K .......... .......... .......... .......... .......... 77%  106M 1s
+    ##  65850K .......... .......... .......... .......... .......... 77% 75.8M 1s
+    ##  65900K .......... .......... .......... .......... .......... 77% 50.7M 1s
+    ##  65950K .......... .......... .......... .......... .......... 77% 39.3M 1s
+    ##  66000K .......... .......... .......... .......... .......... 77%  109M 1s
+    ##  66050K .......... .......... .......... .......... .......... 77%  110M 1s
+    ##  66100K .......... .......... .......... .......... .......... 77% 45.2M 1s
+    ##  66150K .......... .......... .......... .......... .......... 77% 43.0M 1s
+    ##  66200K .......... .......... .......... .......... .......... 77% 86.4M 1s
+    ##  66250K .......... .......... .......... .......... .......... 77% 96.9M 1s
+    ##  66300K .......... .......... .......... .......... .......... 77%  116M 1s
+    ##  66350K .......... .......... .......... .......... .......... 77% 88.6M 1s
+    ##  66400K .......... .......... .......... .......... .......... 77%  112M 1s
+    ##  66450K .......... .......... .......... .......... .......... 77% 83.1M 1s
+    ##  66500K .......... .......... .......... .......... .......... 78%  114M 1s
+    ##  66550K .......... .......... .......... .......... .......... 78%  113M 1s
+    ##  66600K .......... .......... .......... .......... .......... 78% 87.9M 1s
+    ##  66650K .......... .......... .......... .......... .......... 78% 81.2M 1s
+    ##  66700K .......... .......... .......... .......... .......... 78% 32.7M 1s
+    ##  66750K .......... .......... .......... .......... .......... 78% 60.9M 1s
+    ##  66800K .......... .......... .......... .......... .......... 78%  112M 0s
+    ##  66850K .......... .......... .......... .......... .......... 78% 48.2M 0s
+    ##  66900K .......... .......... .......... .......... .......... 78% 27.7M 0s
+    ##  66950K .......... .......... .......... .......... .......... 78% 54.1M 0s
+    ##  67000K .......... .......... .......... .......... .......... 78% 51.4M 0s
+    ##  67050K .......... .......... .......... .......... .......... 78%  116M 0s
+    ##  67100K .......... .......... .......... .......... .......... 78% 2.35M 0s
+    ##  67150K .......... .......... .......... .......... .......... 78% 45.0M 0s
+    ##  67200K .......... .......... .......... .......... .......... 78% 27.0M 0s
+    ##  67250K .......... .......... .......... .......... .......... 78% 46.6M 0s
+    ##  67300K .......... .......... .......... .......... .......... 78%  110M 0s
+    ##  67350K .......... .......... .......... .......... .......... 79% 33.2M 0s
+    ##  67400K .......... .......... .......... .......... .......... 79% 72.5M 0s
+    ##  67450K .......... .......... .......... .......... .......... 79% 70.5M 0s
+    ##  67500K .......... .......... .......... .......... .......... 79% 53.6M 0s
+    ##  67550K .......... .......... .......... .......... .......... 79%  121M 0s
+    ##  67600K .......... .......... .......... .......... .......... 79% 52.1M 0s
+    ##  67650K .......... .......... .......... .......... .......... 79% 36.2M 0s
+    ##  67700K .......... .......... .......... .......... .......... 79% 75.7M 0s
+    ##  67750K .......... .......... .......... .......... .......... 79%  121M 0s
+    ##  67800K .......... .......... .......... .......... .......... 79%  113M 0s
+    ##  67850K .......... .......... .......... .......... .......... 79% 98.5M 0s
+    ##  67900K .......... .......... .......... .......... .......... 79%  111M 0s
+    ##  67950K .......... .......... .......... .......... .......... 79% 90.2M 0s
+    ##  68000K .......... .......... .......... .......... .......... 79%  114M 0s
+    ##  68050K .......... .......... .......... .......... .......... 79%  113M 0s
+    ##  68100K .......... .......... .......... .......... .......... 79%  107M 0s
+    ##  68150K .......... .......... .......... .......... .......... 79%  102M 0s
+    ##  68200K .......... .......... .......... .......... .......... 80% 99.2M 0s
+    ##  68250K .......... .......... .......... .......... .......... 80% 88.8M 0s
+    ##  68300K .......... .......... .......... .......... .......... 80%  117M 0s
+    ##  68350K .......... .......... .......... .......... .......... 80% 56.9M 0s
+    ##  68400K .......... .......... .......... .......... .......... 80% 77.4M 0s
+    ##  68450K .......... .......... .......... .......... .......... 80%  107M 0s
+    ##  68500K .......... .......... .......... .......... .......... 80%  108M 0s
+    ##  68550K .......... .......... .......... .......... .......... 80%  116M 0s
+    ##  68600K .......... .......... .......... .......... .......... 80% 97.9M 0s
+    ##  68650K .......... .......... .......... .......... .......... 80% 58.8M 0s
+    ##  68700K .......... .......... .......... .......... .......... 80% 66.0M 0s
+    ##  68750K .......... .......... .......... .......... .......... 80% 53.2M 0s
+    ##  68800K .......... .......... .......... .......... .......... 80%  118M 0s
+    ##  68850K .......... .......... .......... .......... .......... 80% 69.2M 0s
+    ##  68900K .......... .......... .......... .......... .......... 80% 56.8M 0s
+    ##  68950K .......... .......... .......... .......... .......... 80% 38.1M 0s
+    ##  69000K .......... .......... .......... .......... .......... 80%  100M 0s
+    ##  69050K .......... .......... .......... .......... .......... 81%  105M 0s
+    ##  69100K .......... .......... .......... .......... .......... 81% 45.0M 0s
+    ##  69150K .......... .......... .......... .......... .......... 81% 46.0M 0s
+    ##  69200K .......... .......... .......... .......... .......... 81% 78.0M 0s
+    ##  69250K .......... .......... .......... .......... .......... 81%  110M 0s
+    ##  69300K .......... .......... .......... .......... .......... 81% 91.0M 0s
+    ##  69350K .......... .......... .......... .......... .......... 81% 91.0M 0s
+    ##  69400K .......... .......... .......... .......... .......... 81%  104M 0s
+    ##  69450K .......... .......... .......... .......... .......... 81% 89.1M 0s
+    ##  69500K .......... .......... .......... .......... .......... 81% 87.4M 0s
+    ##  69550K .......... .......... .......... .......... .......... 81%  112M 0s
+    ##  69600K .......... .......... .......... .......... .......... 81%  104M 0s
+    ##  69650K .......... .......... .......... .......... .......... 81% 83.0M 0s
+    ##  69700K .......... .......... .......... .......... .......... 81% 34.2M 0s
+    ##  69750K .......... .......... .......... .......... .......... 81% 52.1M 0s
+    ##  69800K .......... .......... .......... .......... .......... 81%  128M 0s
+    ##  69850K .......... .......... .......... .......... .......... 81% 46.1M 0s
+    ##  69900K .......... .......... .......... .......... .......... 82% 29.9M 0s
+    ##  69950K .......... .......... .......... .......... .......... 82% 55.4M 0s
+    ##  70000K .......... .......... .......... .......... .......... 82% 46.5M 0s
+    ##  70050K .......... .......... .......... .......... .......... 82%  112M 0s
+    ##  70100K .......... .......... .......... .......... .......... 82% 24.7M 0s
+    ##  70150K .......... .......... .......... .......... .......... 82% 2.46M 0s
+    ##  70200K .......... .......... .......... .......... .......... 82% 28.9M 0s
+    ##  70250K .......... .......... .......... .......... .......... 82% 46.8M 0s
+    ##  70300K .......... .......... .......... .......... .......... 82%  120M 0s
+    ##  70350K .......... .......... .......... .......... .......... 82% 31.0M 0s
+    ##  70400K .......... .......... .......... .......... .......... 82% 80.8M 0s
+    ##  70450K .......... .......... .......... .......... .......... 82% 59.9M 0s
+    ##  70500K .......... .......... .......... .......... .......... 82% 57.3M 0s
+    ##  70550K .......... .......... .......... .......... .......... 82%  117M 0s
+    ##  70600K .......... .......... .......... .......... .......... 82% 49.9M 0s
+    ##  70650K .......... .......... .......... .......... .......... 82% 34.7M 0s
+    ##  70700K .......... .......... .......... .......... .......... 82% 93.1M 0s
+    ##  70750K .......... .......... .......... .......... .......... 83%  107M 0s
+    ##  70800K .......... .......... .......... .......... .......... 83%  113M 0s
+    ##  70850K .......... .......... .......... .......... .......... 83% 85.8M 0s
+    ##  70900K .......... .......... .......... .......... .......... 83%  117M 0s
+    ##  70950K .......... .......... .......... .......... .......... 83% 96.4M 0s
+    ##  71000K .......... .......... .......... .......... .......... 83% 99.6M 0s
+    ##  71050K .......... .......... .......... .......... .......... 83%  122M 0s
+    ##  71100K .......... .......... .......... .......... .......... 83%  111M 0s
+    ##  71150K .......... .......... .......... .......... .......... 83%  112M 0s
+    ##  71200K .......... .......... .......... .......... .......... 83%  104M 0s
+    ##  71250K .......... .......... .......... .......... .......... 83%  115M 0s
+    ##  71300K .......... .......... .......... .......... .......... 83% 87.9M 0s
+    ##  71350K .......... .......... .......... .......... .......... 83% 57.2M 0s
+    ##  71400K .......... .......... .......... .......... .......... 83% 82.6M 0s
+    ##  71450K .......... .......... .......... .......... .......... 83% 92.3M 0s
+    ##  71500K .......... .......... .......... .......... .......... 83%  118M 0s
+    ##  71550K .......... .......... .......... .......... .......... 83%  109M 0s
+    ##  71600K .......... .......... .......... .......... .......... 84%  107M 0s
+    ##  71650K .......... .......... .......... .......... .......... 84% 54.7M 0s
+    ##  71700K .......... .......... .......... .......... .......... 84% 72.5M 0s
+    ##  71750K .......... .......... .......... .......... .......... 84%  121M 0s
+    ##  71800K .......... .......... .......... .......... .......... 84% 49.6M 0s
+    ##  71850K .......... .......... .......... .......... .......... 84% 70.0M 0s
+    ##  71900K .......... .......... .......... .......... .......... 84% 60.1M 0s
+    ##  71950K .......... .......... .......... .......... .......... 84% 39.8M 0s
+    ##  72000K .......... .......... .......... .......... .......... 84%  109M 0s
+    ##  72050K .......... .......... .......... .......... .......... 84% 80.0M 0s
+    ##  72100K .......... .......... .......... .......... .......... 84% 49.3M 0s
+    ##  72150K .......... .......... .......... .......... .......... 84% 44.2M 0s
+    ##  72200K .......... .......... .......... .......... .......... 84% 73.0M 0s
+    ##  72250K .......... .......... .......... .......... .......... 84%  129M 0s
+    ##  72300K .......... .......... .......... .......... .......... 84%  107M 0s
+    ##  72350K .......... .......... .......... .......... .......... 84% 70.1M 0s
+    ##  72400K .......... .......... .......... .......... .......... 84%  114M 0s
+    ##  72450K .......... .......... .......... .......... .......... 85%  103M 0s
+    ##  72500K .......... .......... .......... .......... .......... 85%  117M 0s
+    ##  72550K .......... .......... .......... .......... .......... 85% 66.8M 0s
+    ##  72600K .......... .......... .......... .......... .......... 85% 83.3M 0s
+    ##  72650K .......... .......... .......... .......... .......... 85%  127M 0s
+    ##  72700K .......... .......... .......... .......... .......... 85% 34.5M 0s
+    ##  72750K .......... .......... .......... .......... .......... 85%  113M 0s
+    ##  72800K .......... .......... .......... .......... .......... 85% 57.6M 0s
+    ##  72850K .......... .......... .......... .......... .......... 85% 47.8M 0s
+    ##  72900K .......... .......... .......... .......... .......... 85% 52.1M 0s
+    ##  72950K .......... .......... .......... .......... .......... 85% 28.9M 0s
+    ##  73000K .......... .......... .......... .......... .......... 85%  120M 0s
+    ##  73050K .......... .......... .......... .......... .......... 85% 46.5M 0s
+    ##  73100K .......... .......... .......... .......... .......... 85% 46.8M 0s
+    ##  73150K .......... .......... .......... .......... .......... 85% 2.44M 0s
+    ##  73200K .......... .......... .......... .......... .......... 85% 19.3M 0s
+    ##  73250K .......... .......... .......... .......... .......... 85%  126M 0s
+    ##  73300K .......... .......... .......... .......... .......... 86% 45.4M 0s
+    ##  73350K .......... .......... .......... .......... .......... 86% 31.6M 0s
+    ##  73400K .......... .......... .......... .......... .......... 86% 84.6M 0s
+    ##  73450K .......... .......... .......... .......... .......... 86% 64.8M 0s
+    ##  73500K .......... .......... .......... .......... .......... 86%  113M 0s
+    ##  73550K .......... .......... .......... .......... .......... 86% 56.2M 0s
+    ##  73600K .......... .......... .......... .......... .......... 86% 51.0M 0s
+    ##  73650K .......... .......... .......... .......... .......... 86% 33.4M 0s
+    ##  73700K .......... .......... .......... .......... .......... 86% 92.4M 0s
+    ##  73750K .......... .......... .......... .......... .......... 86%  117M 0s
+    ##  73800K .......... .......... .......... .......... .......... 86%  106M 0s
+    ##  73850K .......... .......... .......... .......... .......... 86% 91.5M 0s
+    ##  73900K .......... .......... .......... .......... .......... 86% 89.8M 0s
+    ##  73950K .......... .......... .......... .......... .......... 86% 94.9M 0s
+    ##  74000K .......... .......... .......... .......... .......... 86%  120M 0s
+    ##  74050K .......... .......... .......... .......... .......... 86% 97.3M 0s
+    ##  74100K .......... .......... .......... .......... .......... 86% 94.4M 0s
+    ##  74150K .......... .......... .......... .......... .......... 87%  129M 0s
+    ##  74200K .......... .......... .......... .......... .......... 87%  105M 0s
+    ##  74250K .......... .......... .......... .......... .......... 87% 97.7M 0s
+    ##  74300K .......... .......... .......... .......... .......... 87%  112M 0s
+    ##  74350K .......... .......... .......... .......... .......... 87% 66.3M 0s
+    ##  74400K .......... .......... .......... .......... .......... 87% 86.1M 0s
+    ##  74450K .......... .......... .......... .......... .......... 87% 87.6M 0s
+    ##  74500K .......... .......... .......... .......... .......... 87%  127M 0s
+    ##  74550K .......... .......... .......... .......... .......... 87%  103M 0s
+    ##  74600K .......... .......... .......... .......... .......... 87%  101M 0s
+    ##  74650K .......... .......... .......... .......... .......... 87% 59.0M 0s
+    ##  74700K .......... .......... .......... .......... .......... 87% 66.2M 0s
+    ##  74750K .......... .......... .......... .......... .......... 87%  117M 0s
+    ##  74800K .......... .......... .......... .......... .......... 87% 53.9M 0s
+    ##  74850K .......... .......... .......... .......... .......... 87% 67.5M 0s
+    ##  74900K .......... .......... .......... .......... .......... 87% 56.7M 0s
+    ##  74950K .......... .......... .......... .......... .......... 87% 41.4M 0s
+    ##  75000K .......... .......... .......... .......... .......... 88%  119M 0s
+    ##  75050K .......... .......... .......... .......... .......... 88% 66.5M 0s
+    ##  75100K .......... .......... .......... .......... .......... 88% 49.9M 0s
+    ##  75150K .......... .......... .......... .......... .......... 88% 42.9M 0s
+    ##  75200K .......... .......... .......... .......... .......... 88% 93.1M 0s
+    ##  75250K .......... .......... .......... .......... .......... 88%  126M 0s
+    ##  75300K .......... .......... .......... .......... .......... 88% 92.1M 0s
+    ##  75350K .......... .......... .......... .......... .......... 88% 73.8M 0s
+    ##  75400K .......... .......... .......... .......... .......... 88%  120M 0s
+    ##  75450K .......... .......... .......... .......... .......... 88% 79.4M 0s
+    ##  75500K .......... .......... .......... .......... .......... 88%  121M 0s
+    ##  75550K .......... .......... .......... .......... .......... 88% 83.5M 0s
+    ##  75600K .......... .......... .......... .......... .......... 88% 78.0M 0s
+    ##  75650K .......... .......... .......... .......... .......... 88%  108M 0s
+    ##  75700K .......... .......... .......... .......... .......... 88% 35.2M 0s
+    ##  75750K .......... .......... .......... .......... .......... 88%  114M 0s
+    ##  75800K .......... .......... .......... .......... .......... 88% 56.9M 0s
+    ##  75850K .......... .......... .......... .......... .......... 89% 46.6M 0s
+    ##  75900K .......... .......... .......... .......... .......... 89% 50.9M 0s
+    ##  75950K .......... .......... .......... .......... .......... 89% 29.8M 0s
+    ##  76000K .......... .......... .......... .......... .......... 89%  133M 0s
+    ##  76050K .......... .......... .......... .......... .......... 89% 45.0M 0s
+    ##  76100K .......... .......... .......... .......... .......... 89% 48.4M 0s
+    ##  76150K .......... .......... .......... .......... .......... 89% 25.4M 0s
+    ##  76200K .......... .......... .......... .......... .......... 89% 2.37M 0s
+    ##  76250K .......... .......... .......... .......... .......... 89%  120M 0s
+    ##  76300K .......... .......... .......... .......... .......... 89% 46.1M 0s
+    ##  76350K .......... .......... .......... .......... .......... 89% 28.9M 0s
+    ##  76400K .......... .......... .......... .......... .......... 89%  125M 0s
+    ##  76450K .......... .......... .......... .......... .......... 89% 57.5M 0s
+    ##  76500K .......... .......... .......... .......... .......... 89%  109M 0s
+    ##  76550K .......... .......... .......... .......... .......... 89% 58.9M 0s
+    ##  76600K .......... .......... .......... .......... .......... 89% 45.2M 0s
+    ##  76650K .......... .......... .......... .......... .......... 89% 39.6M 0s
+    ##  76700K .......... .......... .......... .......... .......... 90% 84.7M 0s
+    ##  76750K .......... .......... .......... .......... .......... 90%  115M 0s
+    ##  76800K .......... .......... .......... .......... .......... 90% 95.2M 0s
+    ##  76850K .......... .......... .......... .......... .......... 90%  103M 0s
+    ##  76900K .......... .......... .......... .......... .......... 90% 88.3M 0s
+    ##  76950K .......... .......... .......... .......... .......... 90% 72.9M 0s
+    ##  77000K .......... .......... .......... .......... .......... 90%  133M 0s
+    ##  77050K .......... .......... .......... .......... .......... 90%  118M 0s
+    ##  77100K .......... .......... .......... .......... .......... 90% 97.1M 0s
+    ##  77150K .......... .......... .......... .......... .......... 90%  114M 0s
+    ##  77200K .......... .......... .......... .......... .......... 90% 88.7M 0s
+    ##  77250K .......... .......... .......... .......... .......... 90%  132M 0s
+    ##  77300K .......... .......... .......... .......... .......... 90% 90.0M 0s
+    ##  77350K .......... .......... .......... .......... .......... 90% 90.5M 0s
+    ##  77400K .......... .......... .......... .......... .......... 90% 76.7M 0s
+    ##  77450K .......... .......... .......... .......... .......... 90% 95.5M 0s
+    ##  77500K .......... .......... .......... .......... .......... 90%  121M 0s
+    ##  77550K .......... .......... .......... .......... .......... 91%  101M 0s
+    ##  77600K .......... .......... .......... .......... .......... 91% 97.3M 0s
+    ##  77650K .......... .......... .......... .......... .......... 91% 53.9M 0s
+    ##  77700K .......... .......... .......... .......... .......... 91% 78.3M 0s
+    ##  77750K .......... .......... .......... .......... .......... 91%  100M 0s
+    ##  77800K .......... .......... .......... .......... .......... 91% 56.6M 0s
+    ##  77850K .......... .......... .......... .......... .......... 91% 65.6M 0s
+    ##  77900K .......... .......... .......... .......... .......... 91% 52.1M 0s
+    ##  77950K .......... .......... .......... .......... .......... 91% 41.1M 0s
+    ##  78000K .......... .......... .......... .......... .......... 91%  129M 0s
+    ##  78050K .......... .......... .......... .......... .......... 91% 75.0M 0s
+    ##  78100K .......... .......... .......... .......... .......... 91% 49.4M 0s
+    ##  78150K .......... .......... .......... .......... .......... 91% 42.3M 0s
+    ##  78200K .......... .......... .......... .......... .......... 91% 84.1M 0s
+    ##  78250K .......... .......... .......... .......... .......... 91%  128M 0s
+    ##  78300K .......... .......... .......... .......... .......... 91%  117M 0s
+    ##  78350K .......... .......... .......... .......... .......... 91% 70.8M 0s
+    ##  78400K .......... .......... .......... .......... .......... 92%  104M 0s
+    ##  78450K .......... .......... .......... .......... .......... 92% 65.5M 0s
+    ##  78500K .......... .......... .......... .......... .......... 92%  122M 0s
+    ##  78550K .......... .......... .......... .......... .......... 92% 90.3M 0s
+    ##  78600K .......... .......... .......... .......... .......... 92% 84.6M 0s
+    ##  78650K .......... .......... .......... .......... .......... 92%  116M 0s
+    ##  78700K .......... .......... .......... .......... .......... 92% 36.2M 0s
+    ##  78750K .......... .......... .......... .......... .......... 92%  111M 0s
+    ##  78800K .......... .......... .......... .......... .......... 92% 49.4M 0s
+    ##  78850K .......... .......... .......... .......... .......... 92% 53.0M 0s
+    ##  78900K .......... .......... .......... .......... .......... 92% 47.1M 0s
+    ##  78950K .......... .......... .......... .......... .......... 92% 31.2M 0s
+    ##  79000K .......... .......... .......... .......... .......... 92%  127M 0s
+    ##  79050K .......... .......... .......... .......... .......... 92% 43.4M 0s
+    ##  79100K .......... .......... .......... .......... .......... 92% 48.6M 0s
+    ##  79150K .......... .......... .......... .......... .......... 92% 26.3M 0s
+    ##  79200K .......... .......... .......... .......... .......... 92% 24.1M 0s
+    ##  79250K .......... .......... .......... .......... .......... 93% 2.58M 0s
+    ##  79300K .......... .......... .......... .......... .......... 93% 37.8M 0s
+    ##  79350K .......... .......... .......... .......... .......... 93% 33.0M 0s
+    ##  79400K .......... .......... .......... .......... .......... 93% 97.2M 0s
+    ##  79450K .......... .......... .......... .......... .......... 93% 56.9M 0s
+    ##  79500K .......... .......... .......... .......... .......... 93%  120M 0s
+    ##  79550K .......... .......... .......... .......... .......... 93% 53.8M 0s
+    ##  79600K .......... .......... .......... .......... .......... 93% 50.9M 0s
+    ##  79650K .......... .......... .......... .......... .......... 93% 38.4M 0s
+    ##  79700K .......... .......... .......... .......... .......... 93% 76.7M 0s
+    ##  79750K .......... .......... .......... .......... .......... 93%  112M 0s
+    ##  79800K .......... .......... .......... .......... .......... 93%  104M 0s
+    ##  79850K .......... .......... .......... .......... .......... 93%  102M 0s
+    ##  79900K .......... .......... .......... .......... .......... 93% 91.3M 0s
+    ##  79950K .......... .......... .......... .......... .......... 93% 65.8M 0s
+    ##  80000K .......... .......... .......... .......... .......... 93%  121M 0s
+    ##  80050K .......... .......... .......... .......... .......... 93%  112M 0s
+    ##  80100K .......... .......... .......... .......... .......... 94%  106M 0s
+    ##  80150K .......... .......... .......... .......... .......... 94%  137M 0s
+    ##  80200K .......... .......... .......... .......... .......... 94%  105M 0s
+    ##  80250K .......... .......... .......... .......... .......... 94%  110M 0s
+    ##  80300K .......... .......... .......... .......... .......... 94%  100M 0s
+    ##  80350K .......... .......... .......... .......... .......... 94%  102M 0s
+    ##  80400K .......... .......... .......... .......... .......... 94% 68.8M 0s
+    ##  80450K .......... .......... .......... .......... .......... 94% 75.8M 0s
+    ##  80500K .......... .......... .......... .......... .......... 94% 85.6M 0s
+    ##  80550K .......... .......... .......... .......... .......... 94% 63.8M 0s
+    ##  80600K .......... .......... .......... .......... .......... 94% 51.3M 0s
+    ##  80650K .......... .......... .......... .......... .......... 94% 84.4M 0s
+    ##  80700K .......... .......... .......... .......... .......... 94%  108M 0s
+    ##  80750K .......... .......... .......... .......... .......... 94%  106M 0s
+    ##  80800K .......... .......... .......... .......... .......... 94%  115M 0s
+    ##  80850K .......... .......... .......... .......... .......... 94% 74.3M 0s
+    ##  80900K .......... .......... .......... .......... .......... 94% 52.9M 0s
+    ##  80950K .......... .......... .......... .......... .......... 94% 38.5M 0s
+    ##  81000K .......... .......... .......... .......... .......... 95% 98.3M 0s
+    ##  81050K .......... .......... .......... .......... .......... 95% 87.0M 0s
+    ##  81100K .......... .......... .......... .......... .......... 95% 54.7M 0s
+    ##  81150K .......... .......... .......... .......... .......... 95% 39.6M 0s
+    ##  81200K .......... .......... .......... .......... .......... 95% 96.2M 0s
+    ##  81250K .......... .......... .......... .......... .......... 95%  119M 0s
+    ##  81300K .......... .......... .......... .......... .......... 95%  110M 0s
+    ##  81350K .......... .......... .......... .......... .......... 95% 81.4M 0s
+    ##  81400K .......... .......... .......... .......... .......... 95%  115M 0s
+    ##  81450K .......... .......... .......... .......... .......... 95% 56.7M 0s
+    ##  81500K .......... .......... .......... .......... .......... 95%  138M 0s
+    ##  81550K .......... .......... .......... .......... .......... 95%  104M 0s
+    ##  81600K .......... .......... .......... .......... .......... 95% 74.8M 0s
+    ##  81650K .......... .......... .......... .......... .......... 95% 95.9M 0s
+    ##  81700K .......... .......... .......... .......... .......... 95% 36.1M 0s
+    ##  81750K .......... .......... .......... .......... .......... 95%  126M 0s
+    ##  81800K .......... .......... .......... .......... .......... 95% 53.0M 0s
+    ##  81850K .......... .......... .......... .......... .......... 96% 47.0M 0s
+    ##  81900K .......... .......... .......... .......... .......... 96% 49.4M 0s
+    ##  81950K .......... .......... .......... .......... .......... 96% 31.7M 0s
+    ##  82000K .......... .......... .......... .......... .......... 96%  100M 0s
+    ##  82050K .......... .......... .......... .......... .......... 96% 39.8M 0s
+    ##  82100K .......... .......... .......... .......... .......... 96% 60.7M 0s
+    ##  82150K .......... .......... .......... .......... .......... 96% 25.8M 0s
+    ##  82200K .......... .......... .......... .......... .......... 96% 23.3M 0s
+    ##  82250K .......... .......... .......... .......... .......... 96%  143M 0s
+    ##  82300K .......... .......... .......... .......... .......... 96% 2.57M 0s
+    ##  82350K .......... .......... .......... .......... .......... 96% 22.8M 0s
+    ##  82400K .......... .......... .......... .......... .......... 96% 78.4M 0s
+    ##  82450K .......... .......... .......... .......... .......... 96% 55.3M 0s
+    ##  82500K .......... .......... .......... .......... .......... 96%  134M 0s
+    ##  82550K .......... .......... .......... .......... .......... 96% 56.8M 0s
+    ##  82600K .......... .......... .......... .......... .......... 96% 46.9M 0s
+    ##  82650K .......... .......... .......... .......... .......... 96% 40.6M 0s
+    ##  82700K .......... .......... .......... .......... .......... 97% 62.9M 0s
+    ##  82750K .......... .......... .......... .......... .......... 97%  130M 0s
+    ##  82800K .......... .......... .......... .......... .......... 97%  108M 0s
+    ##  82850K .......... .......... .......... .......... .......... 97% 94.8M 0s
+    ##  82900K .......... .......... .......... .......... .......... 97%  114M 0s
+    ##  82950K .......... .......... .......... .......... .......... 97%  102M 0s
+    ##  83000K .......... .......... .......... .......... .......... 97% 70.5M 0s
+    ##  83050K .......... .......... .......... .......... .......... 97% 94.3M 0s
+    ##  83100K .......... .......... .......... .......... .......... 97%  104M 0s
+    ##  83150K .......... .......... .......... .......... .......... 97%  112M 0s
+    ##  83200K .......... .......... .......... .......... .......... 97%  103M 0s
+    ##  83250K .......... .......... .......... .......... .......... 97%  117M 0s
+    ##  83300K .......... .......... .......... .......... .......... 97%  117M 0s
+    ##  83350K .......... .......... .......... .......... .......... 97% 94.4M 0s
+    ##  83400K .......... .......... .......... .......... .......... 97% 83.2M 0s
+    ##  83450K .......... .......... .......... .......... .......... 97% 95.9M 0s
+    ##  83500K .......... .......... .......... .......... .......... 97% 80.4M 0s
+    ##  83550K .......... .......... .......... .......... .......... 98% 71.4M 0s
+    ##  83600K .......... .......... .......... .......... .......... 98% 52.6M 0s
+    ##  83650K .......... .......... .......... .......... .......... 98% 54.7M 0s
+    ##  83700K .......... .......... .......... .......... .......... 98%  104M 0s
+    ##  83750K .......... .......... .......... .......... .......... 98%  108M 0s
+    ##  83800K .......... .......... .......... .......... .......... 98%  132M 0s
+    ##  83850K .......... .......... .......... .......... .......... 98% 72.5M 0s
+    ##  83900K .......... .......... .......... .......... .......... 98% 55.9M 0s
+    ##  83950K .......... .......... .......... .......... .......... 98% 74.3M 0s
+    ##  84000K .......... .......... .......... .......... .......... 98% 34.4M 0s
+    ##  84050K .......... .......... .......... .......... .......... 98% 71.4M 0s
+    ##  84100K .......... .......... .......... .......... .......... 98% 56.0M 0s
+    ##  84150K .......... .......... .......... .......... .......... 98% 54.0M 0s
+    ##  84200K .......... .......... .......... .......... .......... 98% 77.2M 0s
+    ##  84250K .......... .......... .......... .......... .......... 98% 83.4M 0s
+    ##  84300K .......... .......... .......... .......... .......... 98% 80.9M 0s
+    ##  84350K .......... .......... .......... .......... .......... 98% 67.1M 0s
+    ##  84400K .......... .......... .......... .......... .......... 99%  127M 0s
+    ##  84450K .......... .......... .......... .......... .......... 99%  101M 0s
+    ##  84500K .......... .......... .......... .......... .......... 99% 97.5M 0s
+    ##  84550K .......... .......... .......... .......... .......... 99%  138M 0s
+    ##  84600K .......... .......... .......... .......... .......... 99%  108M 0s
+    ##  84650K .......... .......... .......... .......... .......... 99%  119M 0s
+    ##  84700K .......... .......... .......... .......... .......... 99%  101M 0s
+    ##  84750K .......... .......... .......... .......... .......... 99% 38.7M 0s
+    ##  84800K .......... .......... .......... .......... .......... 99% 52.9M 0s
+    ##  84850K .......... .......... .......... .......... .......... 99% 46.6M 0s
+    ##  84900K .......... .......... .......... .......... .......... 99% 49.3M 0s
+    ##  84950K .......... .......... .......... .......... .......... 99% 99.8M 0s
+    ##  85000K .......... .......... .......... .......... .......... 99% 34.5M 0s
+    ##  85050K .......... .......... .......... .......... .......... 99% 39.0M 0s
+    ##  85100K .......... .......... .......... .......... .......... 99% 55.3M 0s
+    ##  85150K .......... .......... .......... .......... .......... 99% 25.9M 0s
+    ##  85200K .......... .......... .......... .......... .......... 99%  106M 0s
+    ##  85250K .......... ....                                       100% 8.48M=2.2s
+    ## 
+    ## 2022-01-31 06:37:47 (37.9 MB/s) - ‘eg/1kgp.vcf.gz’ saved [87310933/87310933]
 
-The `view` subcommand lets you select specific types of variants.
+VCF to compressed BCF.
 
-## SNPs
-
-```bash
-bcftools view -v snps aln_consensus.bcf | grep -v "^#" | head
-1000000 336     .       A       G       221.999 .       DP=112;VDB=0.756462;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,102,0;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
-1000000 378     .       T       C       221.999 .       DP=101;VDB=0.704379;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,99,0;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
-1000000 1009    .       G       C       221.999 .       DP=203;VDB=0.259231;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,101;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
-1000000 1207    .       T       G       221.999 .       DP=177;VDB=0.628515;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,94,79;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
-1000000 1281    .       C       A       221.999 .       DP=154;VDB=0.286069;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,66,80;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
-1000000 1405    .       A       T       221.999 .       DP=203;VDB=0.0898873;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,104,89;MQ=60;FQ=-281.989   GT:PL   1/1:255,255,0
-1000000 1669    .       G       C       221.999 .       DP=191;VDB=0.656207;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,108,73;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
-1000000 1775    .       C       A       221.999 .       DP=225;VDB=0.413906;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,101,115;MQ=60;FQ=-281.989   GT:PL   1/1:255,255,0
-1000000 2036    .       T       A       221.999 .       DP=193;VDB=0.227246;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,83,98;MQ=60;FQ=-281.989     GT:PL   1/1:255,255,0
-1000000 2180    .       G       C       221.999 .       DP=211;VDB=0.123382;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,105;MQ=60;FQ=-281.989    GT:PL   1/1:255,255,0
+``` bash
+time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
-## INDELs
+    ## 
+    ## real 0m17.258s
+    ## user 0m30.044s
+    ## sys  0m1.907s
 
-```bash
-bcftools view -v indels aln_consensus.bcf | grep -v "^#" | head
-1000000 58      .       AT      A       77.4563 .       INDEL;IDV=57;IMF=1;DP=57;VDB=1.20228e-08;SGB=-0.693136;MQ0F=0;AF1=1;AC1=2;DP4=0,0,35,0;MQ=60;FQ=-139.526        GT:PL   1/1:118,105,0
-1000000 68      .       CTTTT   CTTT    70.4562 .       INDEL;IDV=68;IMF=1;DP=68;VDB=7.54492e-06;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,51,0;MQ=60;FQ=-188.527        GT:PL   1/1:111,154,0
-1000000 225     .       CTT     CT      169.457 .       INDEL;IDV=78;IMF=0.928571;DP=84;VDB=0.0449154;SGB=-0.693147;MQ0F=0;AF1=1;AC1=2;DP4=0,0,79,0;MQ=60;FQ=-272.528   GT:PL   1/1:210,238,0
-1000000 451     .       AGG     AGGG    214.458 .       INDEL;IDV=127;IMF=0.969466;DP=131;VDB=0.0478427;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,87,42;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
-1000000 915     .       G       GC      214.458 .       INDEL;IDV=179;IMF=0.913265;DP=196;VDB=0.929034;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,89,101;MQ=60;FQ=-289.528 GT:PL   1/1:255,255,0
-1000000 1062    .       ATT     AT      214.458 .       INDEL;IDV=187;IMF=0.958974;DP=195;VDB=0.244824;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,97,92;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
-1000000 1278    .       TA      TAA     214.458 .       INDEL;IDV=144;IMF=0.929032;DP=155;VDB=0.252598;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,65,80;MQ=60;FQ=-289.528  GT:PL   1/1:255,255,0
-1000000 1328    .       AT      A       129.457 .       INDEL;IDV=177;IMF=0.988827;DP=179;VDB=1.83715e-25;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,36,18;MQ=60;FQ=-197.527       GT:PL   1/1:170,163,0
-1000000 1380    .       TA      TAA     214.458 .       INDEL;IDV=180;IMF=0.957447;DP=188;VDB=5.28227e-08;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,80,68;MQ=60;FQ=-289.528       GT:PL   1/1:255,255,0
-1000000 1449    .       GT      G       214.458 .       INDEL;IDV=210;IMF=0.972222;DP=216;VDB=0.783773;SGB=-0.693147;MQSB=1;MQ0F=0;AF1=1;AC1=2;DP4=0,0,101,109;MQ=60;FQ=-289.528        GT:PL   1/1:255,255,0
+VCF to uncompressed BCF.
+
+``` bash
+time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
-# VCF to PED
+    ## 
+    ## real 0m16.280s
+    ## user 0m30.434s
+    ## sys  0m1.600s
+
+VCF to compressed VCF.
+
+``` bash
+time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
+```
+
+    ## 
+    ## real 0m24.553s
+    ## user 0m42.169s
+    ## sys  0m2.592s
+
+File sizes
+
+``` bash
+du -h eg/1kgp.*
+```
+
+    ## 85M  eg/1kgp.bcf
+    ## 85M  eg/1kgp.un.bcf
+    ## 1.5G eg/1kgp.vcf
+    ## 84M  eg/1kgp.vcf.gz
+
+## Filtering for different types of mutations
+
+Use the `bcftools view` subcommand to subset specific types of variants.
+
+    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
+
+SNPs.
+
+``` bash
+bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+    ## 1    10505   .   A   T   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
+    ## 1    10506   .   C   G   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
+
+Indels.
+
+``` bash
+bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+    ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=62;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0
+
+[Multiple Nucleotide
+Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions):
+The reference and alternate sequences are of the same length and have to
+be greater than 1 and all nucleotides in the sequences differ from one
+another.
+
+``` bash
+bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
+```
+
+    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+
+Not sure what `ref` refers to but possibly structural variants. `INS:ME`
+refers to an insertion of a mobile element relative to the reference and
+the `<CN#>` refers to `Copy number allele: # copies` according to the
+VCF header.
+
+``` bash
+bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
+    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
+    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
+
+Breakends (no variants of this class).
+
+``` bash
+bcftools view -H -v bnd eg/1kgp.bcf
+```
+
+Others.
+
+``` bash
+bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
+    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
+    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
+
+## VCF to PED
 
 See my [blog post](http://davetang.org/muse/2016/07/28/vcf-to-ped/).
 
-# VCF to BED
+## VCF to BED
 
-VCF to [Browser Extensible Data](https://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) format and not [Binary PED](http://zzz.bwh.harvard.edu/plink/data.shtml#bed) format; for Binary PED, see the `plink` directory in this repo. For Browser Extensible Data use [BEDOPS](https://bedops.readthedocs.io/en/latest/index.html), specifically the [vcf2bed](https://bedops.readthedocs.io/en/latest/content/reference/file-management/conversion/vcf2bed.html) tool.
+VCF to [Browser Extensible
+Data](https://www.genome.ucsc.edu/FAQ/FAQformat.html#format1) format and
+not [Binary PED](http://zzz.bwh.harvard.edu/plink/data.shtml#bed)
+format; for Binary PED, see the `plink` directory in this repo. For
+Browser Extensible Data use
+[BEDOPS](https://bedops.readthedocs.io/en/latest/index.html),
+specifically the
+[vcf2bed](https://bedops.readthedocs.io/en/latest/content/reference/file-management/conversion/vcf2bed.html)
+tool.
 
-Install using Conda from [Bioconda](https://anaconda.org/bioconda/bedops).
+Install using Conda from
+[Bioconda](https://anaconda.org/bioconda/bedops).
 
-```bash
-conda create -c bioconda -n bedops bedops
-
-conda activate bedops
+``` bash
+conda install -c bioconda bedops
 ```
 
-Simple usage.
+Check out example file.
 
-```bash
-# check out our example VCF file
+``` bash
 cat eg/ex.vcf | grep -v "^#" | cut -f1-6
-1  866511   rs60722469  C  CCCCT 258.62
-1  884091   rs7522415   C  G  65.46
-1  897730   rs7549631   C  T  225.34
-1  1158562  rs57524763  AAC   A  220.99
+```
 
-# convert to BED
+    ## 1    866511  rs60722469  C   CCCCT   258.62
+    ## 1    884091  rs7522415   C   G   65.46
+    ## 1    897730  rs7549631   C   T   225.34
+    ## 1    1158562 rs57524763  AAC A   220.99
+    ## 1    25563113    .   CC  GG  .
+
+## Convert to BED
+
+``` bash
 vcf2bed < eg/ex.vcf | cut -f1-3
-1  866510   866511
-1  884090   884091
-1  897729   897730
-1  1158561  1158562
 ```
 
-Note that the deletion (rs57524763) only has 1 bp but the reference should be 3 bp long. Use `--deletions` to have the coordinates reflect the length of the reference sequence (and to only report deletions).
+    ## 1    866510  866511
+    ## 1    884090  884091
+    ## 1    897729  897730
+    ## 1    1158561 1158562
+    ## 1    25563112    25563113
 
-```bash
+Note above that the deletion (rs57524763) only has 1 nucleotide but the
+reference should be 3 nucleotides long. Use `--deletions` to have the
+coordinates reflect the length of the reference sequence (and to only
+report deletions).
+
+``` bash
 vcf2bed --deletions < eg/ex.vcf | cut -f1-3
-1  1158561  1158564
+```
 
-# there is also the insertions option to report only insertions
+    ## 1    1158561 1158564
+
+There is also the insertions option to report only insertions
+
+``` bash
 vcf2bed --insertions < eg/ex.vcf | cut -f1-3
+```
 
-# and snvs
+    ## 1    866510  866511
+
+To report SNVs use `snvs` but note the tool reports the MNP as a SNV and
+the reference length is not 2 nucleotides long.
+
+``` bash
 vcf2bed --snvs < eg/ex.vcf | cut -f1-3
-1  884090   884091
-1  897729   897730
 ```
 
-# Extracting INFO field/s
+    ## 1    884090  884091
+    ## 1    897729  897730
+    ## 1    25563112    25563113
 
-The VCF has various information fields; use the `query` subcommand to extract specific field/s.
+## Extracting INFO field/s
 
-```bash
-bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' aln_consensus.bcf | head
-DP=57   AF1=1   AC1=2   MQ=60
-DP=68   AF1=1   AC1=2   MQ=60
-DP=84   AF1=1   AC1=2   MQ=60
-DP=112  AF1=1   AC1=2   MQ=60
-DP=101  AF1=1   AC1=2   MQ=60
-DP=131  AF1=1   AC1=2   MQ=60
-DP=196  AF1=1   AC1=2   MQ=60
-DP=203  AF1=1   AC1=2   MQ=60
-DP=195  AF1=1   AC1=2   MQ=60
-DP=177  AF1=1   AC1=2   MQ=60
+The VCF has various information fields; use the `query` subcommand to
+extract specific field/s.
+
+``` bash
+bcftools query -f 'DP=%DP\tAN=%AN\tAC=%AC\tMQ=%MQ\n' eg/aln.bt.vcf.gz | head -3
 ```
+
+    ## DP=92    AN=2    AC=2    MQ=60
+    ## DP=82    AN=2    AC=2    MQ=60
+    ## DP=109   AN=2    AC=2    MQ=60
 
 Combining with the `view` subcommand:
 
-```bash
-bcftools view -v snps aln_consensus.bcf | bcftools query -f 'DP=%DP\tAF1=%AF1\tAC1=%AC1\tMQ=%MQ\n' - | head
-DP=112  AF1=1   AC1=2   MQ=60
-DP=101  AF1=1   AC1=2   MQ=60
-DP=203  AF1=1   AC1=2   MQ=60
-DP=177  AF1=1   AC1=2   MQ=60
-DP=154  AF1=1   AC1=2   MQ=60
-DP=203  AF1=1   AC1=2   MQ=60
-DP=191  AF1=1   AC1=2   MQ=60
-DP=225  AF1=1   AC1=2   MQ=60
-DP=193  AF1=1   AC1=2   MQ=60
-DP=211  AF1=1   AC1=2   MQ=60
+``` bash
+bcftools view -v snps eg/aln.bt.vcf.gz | bcftools query -f 'DP=%DP\tAN=%AN\tAC=%AC\tMQ=%MQ\n' - | head -3
 ```
 
-# Filtering VCF on the FILTER column
+    ## DP=92    AN=2    AC=2    MQ=60
+    ## DP=109   AN=2    AC=2    MQ=60
+    ## DP=102   AN=2    AC=2    MQ=60
 
-Use `bcftools view` to keep variants that have a "PASS" in the FILTER column.
+## Filtering VCF on the FILTER column
 
-```bash
-# -f,   --apply-filters <list> require at least one of the listed FILTER strings (e.g. "PASS,.")
-bcftools view -f PASS my.vcf > my_passed.vcf
+Use `bcftools view` to keep variants that have a “PASS” in the FILTER
+column.
+
+    -f,   --apply-filters <list> require at least one of the listed FILTER strings (e.g. "PASS,.")
+
+``` bash
+bcftools view -H -f PASS eg/1kgp.bcf | head -3
 ```
 
-# Filtering VCF file using the INFO field/s
+    ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363 GT  0|1 0|0 0|0 0|0 1|0 0|0 1|0 0|1 0|0 0|0 0|0 0|0 0|1 0|0 0|1 0|1 1|0 0|1 0|1 0|0 0|0 0|1 0|0 1|0 0|1 1|0 0|0 1|1 1|1 0|0 0|1
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=62;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0   GT  0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0
+    ## 1    10352   .   T   TA  100 PASS    AC=28;AN=62;NS=31;AF=0.4375;SAS_AF=0.4192;EUR_AF=0.4264;AFR_AF=0.4788;AMR_AF=0.4107;EAS_AF=0.4306   GT  1|0 0|1 1|1 0|0 1|0 1|0 1|0 1|0 0|0 1|0 1|0 1|0 0|0 0|1 1|0 0|0 1|0 1|1 0|1 0|0 1|0 0|1 1|0 1|0 1|0 0|1 0|1 1|0 0|1 1|0 1|0
 
-Use `vcffilter` from [vcflib](https://github.com/vcflib/vcflib), which is a C++ library for parsing and manipulating VCF files.
+## Filtering VCF file using the INFO field/s
 
-```bash
-git clone --recursive https://github.com/vcflib/vcflib.git
-cd vcflib
-make
-cd ..
+Use `bcftools filter`.
 
-# create VCF from BCF using
-# bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
-# filter variants based on depth (DP)
-vcflib/bin/vcffilter -f "DP > 200" aln_consensus.vcf | grep -v "^#" | head
-1000000 1009    .       G       C       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,94,101;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.259231    GT:PL   1/1:255,255,0
-1000000 1405    .       A       T       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,104,89;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.0898873   GT:PL   1/1:255,255,0
-1000000 1449    .       GT      G       214.458 .       AC1=2;AF1=1;DP=216;DP4=0,0,101,109;FQ=-289.528;IDV=210;IMF=0.972222;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.783773;INDEL        GT:PL   1/1:255,255,0
-1000000 1775    .       C       A       221.999 .       AC1=2;AF1=1;DP=225;DP4=0,0,101,115;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.413906   GT:PL   1/1:255,255,0
-1000000 2180    .       G       C       221.999 .       AC1=2;AF1=1;DP=211;DP4=0,0,97,105;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.123382    GT:PL   1/1:255,255,0
-1000000 2340    .       TGGGGG  TGGGG   214.458 .       AC1=2;AF1=1;DP=201;DP4=0,0,100,98;FQ=-289.528;IDV=195;IMF=0.970149;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.064618;INDEL GT:PL   1/1:255,255,0
-1000000 2717    .       CAAAA   CAAA    214.458 .       AC1=2;AF1=1;DP=211;DP4=0,0,99,105;FQ=-289.528;IDV=202;IMF=0.957346;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.251202;INDEL GT:PL   1/1:255,255,0
-1000000 3059    .       T       C       221.999 .       AC1=2;AF1=1;DP=206;DP4=0,0,97,100;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.697352    GT:PL   1/1:255,255,0
-1000000 3114    .       TC      T       214.458 .       AC1=2;AF1=1;DP=209;DP4=0,0,76,77;FQ=-289.528;IDV=203;IMF=0.971292;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=2.55116e-09;INDEL       GT:PL   1/1:255,255,0
-1000000 3148    .       CGGG    CGG     94.4565 .       AC1=2;AF1=1;DP=211;DP4=0,0,19,18;FQ=-145.526;IDV=196;IMF=0.92891;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693141;VDB=0.603852;INDEL   GT:PL   1/1:135,111,0
-
-# filter on two INFO fields
-vcflib/bin/vcffilter -f "DP > 200 & VDB > 0.5" aln_consensus.vcf | grep -v "^#" | head
-1000000 1449    .       GT      G       214.458 .       AC1=2;AF1=1;DP=216;DP4=0,0,101,109;FQ=-289.528;IDV=210;IMF=0.972222;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.783773;INDEL        GT:PL   1/1:255,255,0
-1000000 3059    .       T       C       221.999 .       AC1=2;AF1=1;DP=206;DP4=0,0,97,100;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.697352    GT:PL   1/1:255,255,0
-1000000 3148    .       CGGG    CGG     94.4565 .       AC1=2;AF1=1;DP=211;DP4=0,0,19,18;FQ=-145.526;IDV=196;IMF=0.92891;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693141;VDB=0.603852;INDEL   GT:PL   1/1:135,111,0
-1000000 3876    .       C       T       221.999 .       AC1=2;AF1=1;DP=223;DP4=0,0,98,112;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.839919    GT:PL   1/1:255,255,0
-1000000 4079    .       C       T       221.999 .       AC1=2;AF1=1;DP=212;DP4=0,0,92,109;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.579433    GT:PL   1/1:255,255,0
-1000000 4173    .       CT      C       214.458 .       AC1=2;AF1=1;DP=207;DP4=0,0,106,91;FQ=-289.528;IDV=197;IMF=0.951691;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.874655;INDEL GT:PL   1/1:255,255,0
-1000000 4642    .       C       T       221.999 .       AC1=2;AF1=1;DP=205;DP4=0,0,94,105;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.523597    GT:PL   1/1:255,255,0
-1000000 4676    .       T       C       221.999 .       AC1=2;AF1=1;DP=203;DP4=0,0,96,102;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.611013    GT:PL   1/1:255,255,0
-1000000 4689    .       T       C       221.999 .       AC1=2;AF1=1;DP=216;DP4=0,0,98,109;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.879521    GT:PL   1/1:255,255,0
-1000000 5121    .       A       T       221.999 .       AC1=2;AF1=1;DP=213;DP4=0,0,105,104;FQ=-281.989;MQ=60;MQ0F=0;MQSB=1;SGB=-0.693147;VDB=0.743159   GT:PL   1/1:255,255,0
+``` bash
+bcftools filter -s "Depth200" -e "DP<200" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
 ```
 
-# Summarise SNPs and INDELs per sample
+    ## 1000000  151 .   T   A   225.417 Depth200    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 Depth200    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
+    ## 1000000  336 .   A   G   225.417 Depth200    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
 
-Use `bcftools stats` with the `-s -` parameter. The example VCF file `eg/ex.vcf` has four variants across three samples (one, two, and three).
+``` bash
+bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.5" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
+```
 
-* Sample one has two SNPs (both het) and one deletion (het)
-* Sample two has two SNPs (one het and one hom alt) and insertion (het)
-* Sample three has one SNP (het) and one insertion (hom alt) and one deletion (hom alt)
+    ## 1000000  151 .   T   A   225.417 PASS    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 PASS    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
+    ## 1000000  336 .   A   G   225.417 PASS    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
+
+## Summarise SNPs and INDELs per sample
+
+Use `bcftools stats` with the `-s -` parameter. The example VCF file
+`eg/ex.vcf` has four variants across three samples (one, two, and
+three).
+
+  - Sample one has two SNPs (both het) and one deletion (het)
+  - Sample two has two SNPs (one het and one hom alt) and insertion
+    (het)
+  - Sample three has one SNP (het) and one insertion (hom alt) and one
+    deletion (hom alt)
 
 You can confirm the numbers from the stats output.
 
-```bash
+``` bash
 cat eg/ex.vcf | grep -v "^#"
-1       866511  rs60722469      C       CCCCT   258.62  PASS    AC=2;AF=1.00;AN=2;DB;DP=11;FS=0.000;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant   GT:AD:DP:GQ:PL  0/0:6,5:11:14.79:300,15,0       0/1:6,5:11:14.79:300,15,0     1/1:6,5:11:14.79:300,15,0
-1       884091  rs7522415       C       G       65.46   PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-0.259;DB;DP=12;Dels=0.00;FS=0.000;HRun=1;HaplotypeScore=0.0000;MQ0=0;MQ=53.22;MQRankSum=0.779;QD=5.45;ReadPosRankSum=2.047;set=variant2 GT:AD:DP:GQ:PL        0/1:6,6:12:95.45:95,0,123       1/1:6,6:12:95.45:95,0,123       0/0:6,6:12:95.45:95,0,123
-1       897730  rs7549631       C       T       225.34  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-2.218;DB;DP=21;Dels=0.00;FS=6.419;HRun=1;HaplotypeScore=1.8410;MQ0=0;MQ=58.89;MQRankSum=-0.387;QD=10.73;ReadPosRankSum=-0.880;set=variant2   GT:AD:DP:GQ:PL   0/1:11,10:21:99:255,0,348       0/1:11,10:21:99:255,0,348       0/1:11,10:21:99:255,0,348
-1       1158562 rs57524763      AAC     A       220.99  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0.000;HRun=0;HaplotypeScore=101.7487;MQ0=0;MQ=55.80;MQRankSum=-1.910;QD=11.05;ReadPosRankSum=0.400;set=variant GT:AD:DP:GQ:PL
-        0/1:14,6:20:99:260,0,486        0/0:14,6:20:99:260,0,486        1/1:14,6:20:99:260,0,486
+```
 
+    ## 1    866511  rs60722469  C   CCCCT   258.62  PASS    AC=2;AF=1.00;AN=2;DB;DP=11;FS=0.000;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant   GT:AD:DP:GQ:PL  0/0:6,5:11:14.79:300,15,0   0/1:6,5:11:14.79:300,15,0   1/1:6,5:11:14.79:300,15,0
+    ## 1    884091  rs7522415   C   G   65.46   PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-0.259;DB;DP=12;Dels=0.00;FS=0.000;HRun=1;HaplotypeScore=0.0000;MQ0=0;MQ=53.22;MQRankSum=0.779;QD=5.45;ReadPosRankSum=2.047;set=variant2 GT:AD:DP:GQ:PL  0/1:6,6:12:95.45:95,0,123   1/1:6,6:12:95.45:95,0,123   0/0:6,6:12:95.45:95,0,123
+    ## 1    897730  rs7549631   C   T   225.34  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=-2.218;DB;DP=21;Dels=0.00;FS=6.419;HRun=1;HaplotypeScore=1.8410;MQ0=0;MQ=58.89;MQRankSum=-0.387;QD=10.73;ReadPosRankSum=-0.880;set=variant2  GT:AD:DP:GQ:PL  0/1:11,10:21:99:255,0,348   0/1:11,10:21:99:255,0,348   0/1:11,10:21:99:255,0,348
+    ## 1    1158562 rs57524763  AAC A   220.99  PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0.000;HRun=0;HaplotypeScore=101.7487;MQ0=0;MQ=55.80;MQRankSum=-1.910;QD=11.05;ReadPosRankSum=0.400;set=variant GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.50;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0.000;HRun=0;HaplotypeScore=101.7487;MQ0=0;MQ=55.80;MQRankSum=-1.910;QD=11.05;ReadPosRankSum=0.400;set=variant GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+
+``` bash
 bcftools stats -s - eg/ex.vcf | grep -A 4 "Per-sample counts"
-# PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
-# PSC   [2]id   [3]sample       [4]nRefHom      [5]nNonRefHom   [6]nHets        [7]nTransitions [8]nTransversions       [9]nIndels      [10]average depth       [11]nSingletons [12]nHapRef     [13]nHapAlt     [14]nMissing
-PSC     0       one     1       0       2       1       1       1       16.0    0       0       0       0
-PSC     0       two     1       1       1       1       1       1       16.0    0       0       0       0
-PSC     0       three   1       0       1       1       0       2       16.0    0       0       0       0
+```
 
+    ## # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+    ## # PSC    [2]id   [3]sample   [4]nRefHom  [5]nNonRefHom   [6]nHets    [7]nTransitions [8]nTransversions   [9]nIndels  [10]average depth   [11]nSingletons [12]nHapRef [13]nHapAlt [14]nMissing
+    ## PSC  0   one 1   0   2   1   1   1   16.8    0   0   0   0
+    ## PSC  0   two 2   1   1   1   1   1   16.8    0   0   0   0
+    ## PSC  0   three   1   0   1   1   0   2   16.8    0   0   0   0
+
+``` bash
 bcftools stats -s - eg/ex.vcf | grep -A 4 "Per-Sample Indels"
-# PSI, Per-Sample Indels
-# PSI   [2]id   [3]sample       [4]in-frame     [5]out-frame    [6]not applicable       [7]out/(in+out) ratio   [8]nHets        [9]nAA
-PSI     0       one     0       0       0       0.00    1       0
-PSI     0       two     0       0       0       0.00    1       0
-PSI     0       three   0       0       0       0.00    0       2
 ```
 
-# Summarise genotypes in a VCF file
+    ## # PSI, Per-Sample Indels. Note that alt-het genotypes with both ins and del allele are counted twice, in both nInsHets and nDelHets.
+    ## # PSI    [2]id   [3]sample   [4]in-frame [5]out-frame    [6]not applicable   [7]out/(in+out) ratio   [8]nInsHets [9]nDelHets [10]nInsAltHoms [11]nDelAltHoms
+    ## PSI  0   one 0   0   0   0.00    0   1   0   0
+    ## PSI  0   two 0   0   0   0.00    1   0   0   0
+    ## PSI  0   three   0   0   0   0.00    0   0   1   1
 
-Use the `vcffixup` tool from [vcflib](https://github.com/vcflib/vcflib), which can count the allele frequencies across alleles present in each sample.
+## Add AF tag to a VCF file
 
-```bash
-cat output.vcf | grep -v "^#" | head -1
-chr21   9889293 rs28676788 G    A       .       .       .       GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0     1/0     0/0     0/0    ./.      0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
+The allele frequency tag (AF) is missing from the VCF file generated by
+`BCFtools call`.
 
-vcffixup output.vcf | grep -v "^#" | head -1
-chr21   9889293 rs28676788 G    A       0       .       AC=16;AF=0.101266;AN=158;NS=83  GT      0/0     ./.     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0    0/0      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     0/0     0/0     0/0     ./.     0/0     0/0     0/0     0/0     1/0    1/0      0/0     0/0     ./.     0/0     0/0     ./.     1/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     1/0     0/0     0/0     0/0     1/0     1/0     1/0     0/0     0/0     1/0     1/0
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | head -1
 ```
 
-NS refers to the number of calls, i.e. the number of samples. 4 samples had no genotype, i.e. ./., therefore AN is 79*2 = 158. AC is the alternate allele count and AF is the alternate allele frequency. I asked the question of [how I can summarise genotypes in a VCF file](https://www.biostars.org/p/157407/) on Biostars in 2015 and ended up answering my own question 17 months later.
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
 
-Using the example bgzipped VCF file I have in the `plink` folder.
+The `fill-tags` plugin can additional tags to a VCF file including the
+AF tag.
 
-```bash
-gunzip -c plink/ex2.vcf.gz 
-##fileformat=VCFv4.0
-#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  NA00001 NA00002 NA00003 NA00004 NA00005 NA00006 NA00007 NA00008 NA00009 NA00010
-1       10000   .       C  T    99      PASS    DP=14   GT      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0
-2       20000   .       G  A    99      PASS    DP=14   GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
-2       25000   .       G  A    99      PASS    DP=14   GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
-3       30000   .       T  A    99      PASS    DP=11   GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
-4       40000   .       A  G    99      PASS    DP=10   GT      1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0
-5       50000   .       T  G    99      PASS    DP=13   GT      0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1
-6       60000   .       T  C    99      PASS    DP=13   GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
-7       70000   .       C  G    99      PASS    DP=9    GT      1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1
-8       80000   .       C  G    99      PASS    DP=9    GT      1/1     1/1     1/1     1/1     1/1     0/0     0/0     0/0     0/0     0/0
-
-../vcflib/bin/vcffixup plink/ex2.vcf.gz
-##fileformat=VCFv4.0
-##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
-##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1]">
-##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
-##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
-#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  NA00001 NA00002 NA00003 NA00004 NA00005 NA00006 NA00007 NA00008 NA00009 NA00010
-1       10000   .       C  T    99      PASS    AC=0;AF=0;AN=20;DP=14;NS=10     GT      0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0     0/0
-2       20000   .       G  A    99      PASS    AC=5;AF=0.25;AN=20;DP=14;NS=10  GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
-2       25000   .       G  A    99      PASS    AC=5;AF=0.25;AN=20;DP=14;NS=10  GT      0/1     0/1     0/1     0/1     0/1     0/0     0/0     0/0     0/0     0/0
-3       30000   .       T  A    99      PASS    AC=5;AF=0.25;AN=20;DP=11;NS=10  GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
-4       40000   .       A  G    99      PASS    AC=10;AF=0.5;AN=20;DP=10;NS=10  GT      1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0
-5       50000   .       T  G    99      PASS    AC=10;AF=0.5;AN=20;DP=13;NS=10  GT      0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1     0/0     1/1
-6       60000   .       T  C    99      PASS    AC=5;AF=0.25;AN=20;DP=13;NS=10  GT      0/0     0/0     0/0     0/0     0/0     0/1     0/1     0/1     0/1     0/1
-7       70000   .       C  G    99      PASS    AC=20;AF=1;AN=20;DP=9;NS=10     GT      1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1     1/1
-8       80000   .       C  G    99      PASS    AC=10;AF=0.5;AN=20;DP=9;NS=10   GT      1/1     1/1     1/1     1/1     1/1     0/0     0/0     0/0     0/0     0/0
+``` bash
+bin/bcftools plugin fill-tags eg/aln.bt.vcf.gz | grep -v "^#" | head -1
 ```
 
-# Check whether the REF sequence is correct
+    ## bash: bin/bcftools: No such file or directory
 
-Use `vcfcheck` from [vcflib](https://github.com/vcflib/vcflib).
+## Check whether the REF sequence is correct
 
-```bash
-# make another copy of the VCF file
-cp aln_consensus.vcf blah.vcf
+Change the reference sequence of variant at position 151 to G.
 
-# manually change REF sequence at pos 336
-# vcfcheck identifies the mismatch and reports it
-vcflib/bin/vcfcheck -f test_31.fa blah.vcf
-mismatched reference T should be A at 1000000:336
-
-rm blah.vcf
+``` bash
+zcat eg/aln.bt.vcf.gz | perl -lane 'if($F[1] == 151){ $F[3] = G; print join("\t", @F) } else { print }' > eg/incorrect.vcf
 ```
 
-Otherwise you can use the simple Perl script that I wrote in the `script` directory. The script obtains the sequence from a fasta file based on the position reported in the VCF file and compares it to the reported reference base.
+Use `bcftools norm` with `-c` to check whether the REF sequence is
+correct.
 
-```bash
-script/check_ref.pl 
-Usage: script/check_ref.pl <genome.fa> <infile.vcf>
+``` bash
+bcftools norm -f eg/test_31.fa -c w eg/incorrect.vcf > /dev/null
 ```
 
-# Random subset of variants
+    ## REF_MISMATCH 1000000 151 G   T
+    ## Lines   total/split/realigned/skipped:   10022/0/851/0
 
-Use `vcfrandomsample` from [vcflib](https://github.com/vcflib/vcflib). Below is the usage:
+## Random subset of variants
 
-```bash
-vcflib/bin/vcfrandomsample 
-usage: vcfrandomsample [options] [<vcf file>]
+Total number of variants.
 
-options:
-    -r, --rate RATE          base sampling probability per locus
-    -s, --scale-by KEY       scale sampling likelihood by this Float info field
-    -p, --random-seed N      use this random seed (by default read from /dev/random)
-    -q, --pseudorandom-seed  use a pseudorandom seed (by default read from /dev/random)
-
-Randomly sample sites from an input VCF file, which may be provided as stdin.
-Scale the sampling probability by the field specified in KEY.  This may be
-used to provide uniform sampling across allele frequencies, for instance.
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | wc -l
 ```
 
-`vcfrandomsample` can read from STDOUT.
+    ## 10022
 
-```bash
-bcftools view aln_consensus.bcf | grep -v "^#" | wc -l
-9704
+A random sample can be achieved by using a Perl one-liner. In the
+example below, the `srand` function sets the seed (for reproducibility)
+and the float controls how many variants are outputted (1%). (Note that
+the use of `grep -v "^#"` is only line counting purposes.)
 
-# ~1%
-bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.01 | grep -v "^#" | wc -l
-90
-
-# ~10%
-bcftools view aln_consensus.bcf | vcflib/bin/vcfrandomsample -p 31 -r 0.1 | grep -v "^#" | wc -l
-948
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | grep -v "^#" | wc -l
 ```
 
-# Subset variants within a specific genomic region
+    ## 106
 
-Use `vcfintersect` from [vcflib](https://github.com/vcflib/vcflib) by creating a BED file with your region of interest, for example where your gene is located.
+Sub-sample 1% and save as BCF file.
 
-```bash
-vcfintersect -b my_file.bed my_file.vcf > my_subsetted_file.vcf
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | bcftools view -O b - -o eg/aln.bt.ss.bcf
 ```
 
-Another option is to use `bcftools view` but you can only subset one region manually.
+Sample 10%.
 
-```bash
-# -t, --targets chr|chr:pos|chr:from-to|chr:from-[,...]
-bcftools view -t 1:866511-882000 eg/Pfeiffer.vcf
-
-# VCF header not shown
-#CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  manuel
-1       866511  rs60722469      C       CCCCT   258.62  PASS    AC=2;AF=1;AN=2;DB;DP=11;FS=0;HRun=0;HaplotypeScore=41.3338;MQ0=0;MQ=61.94;QD=23.51;set=variant  GT:AD:DP:GQ:PL  1/1:6,5:11:14.79:300,15,0
-1       879317  rs7523549       C       T       150.77  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.455;DB;DP=21;Dels=0;FS=1.984;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.037;QD=7.18;ReadPosRankSum=0.112;set=variant2     GT:AD:DP:GQ:PL  0/1:14,7:21:99:181,0,367
-1       879482  .       G       C       484.52  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.934;DP=48;Dels=0;FS=4.452;HRun=0;HaplotypeScore=0.5784;MQ0=0;MQ=59.13;MQRankSum=-0.24;QD=10.09;ReadPosRankSum=1.537;set=variant2        GT:AD:DP:GQ:PL  0/1:28,20:48:99:515,0,794
-1       880390  rs3748593       C       A       288.44  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.517;DB;DP=29;Dels=0;FS=1.485;HRun=0;HaplotypeScore=0;MQ0=0;MQ=56.93;MQRankSum=-0.065;QD=9.95;ReadPosRankSum=0.196;set=variant2 GT:AD:DP:GQ:PL  0/1:14,15:29:99:318,0,399
-1       881627  rs2272757       G       A       486.24  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.199;DB;DP=33;Dels=0;FS=0;HRun=1;HaplotypeScore=1.8893;MQ0=0;MQ=60;MQRankSum=0.777;QD=14.73;ReadPosRankSum=-0.669;set=variant2   GT:AD:DP:GQ:PL  0/1:15,18:33:99:516,0,420
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
 ```
 
-# Subset a single sample from a multi-sample VCF file
+    ## 1019
 
-Use [SelectVariants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants) from GATK to subset a sample from a multi-sample VCF file. Required arguments are `--output` and `--variant`, which specify the path to which variants should be written and the input VCF file, respectively. To use GATK, you need Java version 8. The script `broad_tools.sh` in `bin` will download GATK (and two other Broad Institute tools called Cromwell and Womtools as well).
+## Subset variants within a specific genomic region
 
-Subset `sample1` from `joint_call.vcf.gz`.
+Use `bcftools view` with `-r` or `-R`, which requires an index file. You
+can use `bcftools view` with `-t` or `-T`, which does not require an
+index file, but is much slower because the entire file is streamed.
 
-```bash
-gatk SelectVariants \
-  --variant joint_call.vcf.gz \
-  --sample-name sample1 \
-  --output sample1.vcf.gz
+``` bash
+bin/tabix -f eg/1kgp.bcf
+time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 ```
 
-The [exclude-non-variants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants#--exclude-non-variants) argument is useful to remove sites that are not variants.
+    ## bash: bin/tabix: No such file or directory
+    ## [E::idx_find_and_load] Could not retrieve index file for 'eg/1kgp.bcf'
+    ## Failed to read from eg/1kgp.bcf: could not load index
+    ## 0
+    ## 
+    ## real 0m0.007s
+    ## user 0m0.005s
+    ## sys  0m0.003s
 
-```bash
-gatk SelectVariants \
-  --variant joint_call.vcf.gz \
-  --sample-name sample1 \
-  --exclude-non-variants true \
-  --output sample1.vcf.gz
+`bcftools view` with `-t` streams the entire file, so is much slower.
+
+``` bash
+time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 ```
 
-Refer to the [SelectVariants](https://gatk.broadinstitute.org/hc/en-us/articles/360057439291-SelectVariants) documentation page for more examples.
+    ## 31036
+    ## 
+    ## real 0m3.980s
+    ## user 0m3.943s
+    ## sys  0m0.059s
 
-# Merging VCF files
+Use commas to list more than one loci.
 
-The [NHLBI Exome Sequencing Project](http://evs.gs.washington.edu/EVS/) (ESP) provides their variants in the VCF but per chromsome.
-
-```bash
-wget -c http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
-tar -xzf ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
-
-ls -1
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr10.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr11.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr12.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr13.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr14.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr15.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr16.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr17.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr18.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr19.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr1.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr20.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr21.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr22.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr2.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr3.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr4.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr5.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr6.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr7.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr8.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chr9.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chrX.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.chrY.snps_indels.vcf
-ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz
+``` bash
+bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
 ```
 
-We can use `bcftools merge` to merge the VCF files together. The VCF files need to be compressed with `bgzip` and `tabix` indexed in order for `bcftools merge` to work.
+    ## [E::idx_find_and_load] Could not retrieve index file for 'eg/1kgp.bcf'
+    ## Failed to read from eg/1kgp.bcf: could not load index
+    ## 0
 
-```bash
-# I make use of GNU parallel to speed things up
-# assuming that only the ESP VCF files are in the directory
-parallel bgzip ::: *.vcf
-parallel tabix -p vcf ::: *.vcf.gz
+Or use a BED file to store regions of interest.
 
-# -O z for compressed VCF
-bcftools merge -o ESP6500SI-V2-SSA137.all.vcf.gz -O z *.vcf.gz
-
-# sanity check
-# number of variants from the separate VCF files
-gunzip -c *indels.vcf.gz | grep -v "^#" | wc -l
-1986331
-
-# number of variants in the merged VCF file
-gunzip -c ESP6500SI-V2-SSA137.all.vcf.gz | grep -v "^#" | wc -l
-1986331
-
-# finally tabix index
-tabix -p vcf ESP6500SI-V2-SSA137.all.vcf.gz
+``` bash
+echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
+bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
 ```
 
-# Creating a test file
+    ## [E::idx_find_and_load] Could not retrieve index file for 'eg/1kgp.bcf'
+    ## Failed to read from eg/1kgp.bcf: could not load index
+    ## 0
 
-The `aln_consensus.bcf` file was created from a simple pipeline. Firstly a random reference sequence was generated; genetic variants are created by modifying the reference sequence, i.e. introducing mutations, into a mutated copy and sequence reads were derived from the mutated reference sequence. Lastly, the reads were mapped back to the original non-mutated reference sequence. The `pipeline.groovy` file contains the pipeline, which is written in [Groovy](http://www.groovy-lang.org/) and processed by Bpipe. I have a [blog post](http://davetang.org/muse/2015/06/04/paired-end-alignment-using-bpipe/) that provides more information.
+## Output sample names
 
-To create `aln_consensus.bcf`, simply clone this repository and type `make`. This will download and install all the necessary programs from online and run the pipeline.
+Use `bcftools query`.
 
-```bash
-git clone https://github.com/davetang/learning_vcf_file.git
-make
+``` bash
+bcftools query -l eg/1kgp.vcf.gz | head -5
 ```
 
-Alternatively, use Conda to install all the necessary tools and use `analysis/run.sh`.
+    ## HG00124
+    ## HG00501
+    ## HG00635
+    ## HG00702
+    ## HG00733
 
-```bash
-conda env create -f environment.yml
-cd analysis
-wget https://github.com/broadinstitute/gatk/releases/download/4.1.1.0/gatk-4.1.1.0.zip
-unzip gatk-4.1.1.0.zip
-rm gatk-4.1.1.0.zip
-./run.sh
+## Subset sample/s from a multi-sample VCF file
+
+Subset HG00733.
+
+``` bash
+bcftools view -s HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
 ```
 
-## Adjusting parameters
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00733
+    ## 1    10177   .   A   AC  100 PASS    AC=1;AN=2;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363   GT  1|0
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=2;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0    GT  0|0
 
-All the variables are defined in ```pipeline.groovy```, which can be adjusted.
+Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
 
-```java
-SEED=31
-REF_SIZE=1000000
-REF="test_" + "$SEED" + ".fa"
-REF_MUT="test_mutated.fa"
-REF_MUT_LOG="test_mutated.log"
-MUT_PC=0.01
-//READ_NO=300000
-READ_NO=1000000
-READ_LEN=100
-INNER_DIST=400
+``` bash
+bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
 ```
 
-## Consensus caller
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00124 HG00501 HG00635 HG00702 HG00733
+    ## 1    10177   .   A   AC  100 PASS    AC=2;AN=10;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363  GT  0|1 0|0 0|0 0|0 1|0
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=10;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0   GT  0|0 0|0 0|0 0|0 0|0
 
-```bash
-bcftools call -c -o aln_consensus.bcf -O b aln.bcf
+## Merging VCF files
+
+Use `bcftools merge` to merge VCF files. [In this
+workflow](https://github.com/davetang/sars_cov_2/blob/master/.github/workflows/omicron_variants.yml),
+`bcftools merge` was used to create a multi-sample VCF file from
+individual VCF files.
+
+``` bash
+bcftools merge -o PRJNA784038_illumina.vcf -O v SRR*.vcf.gz
 ```
 
-# Using GATK for calling variants
+## Decomposing and normalising variants
 
-We'll use another variant caller to call variants and compare them to the variants called by BCFtools. The [HaplotypeCaller](https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php) is capable of calling SNPs and indels simultaneously via local de-novo assembly of haplotypes in an active region. Firstly, [download](https://www.broadinstitute.org/gatk/download/) and extract GATK; you'll need to register an account and to agree to the terms and conditions.
+Decomposing can refer to the splitting of multi-allelic variants; we can
+use `bcftools norm -m` for this.
 
-```bash
-tar -xjf GenomeAnalysisTK-3.5.tar.bz2 
+``` bash
+bcftools view -H eg/PRJNA784038_illumina.vcf.gz | head -2 | cut -f-5
 ```
 
-Then we need to setup Picard to prepare our reference fasta file:
+    ## NC_045512.2  4   .   A   T
+    ## NC_045512.2  16  .   C   A,G
 
-```bash
-git clone https://github.com/broadinstitute/picard.git
-cd picard
-git clone https://github.com/samtools/htsjdk.git
-cd htsjdk
-# install ant on Debian/Ubuntu
-# sudo apt-get install ant
-ant htsjdk-jar
-cd ..
-ant -lib lib/ant package-commands
-cd ..
+Splitting.
+
+``` bash
+bcftools norm -m- eg/PRJNA784038_illumina.vcf.gz | grep -v "^#" | head -3
 ```
 
-Some necessary steps before running HaplotypeCaller:
+    ## NC_045512.2  4   .   A   T   15.265  .   VDB=0.02;SGB=-0.453602;RPBZ=1.63951;MQBZ=0;MQSBZ=0;BQBZ=-1.38042;SCBZ=-0.632456;FS=0;MQ0F=0;MQ=60;DP=8;DP4=2,3,1,1;AN=2;AC=1    GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:49,0,168    ./.:.
+    ## NC_045512.2  16  .   C   A   19.8245 .   VDB=0.02;SGB=-0.453602;RPBZ=-1.41421;MQBZ=0;MQSBZ=0;BQBZ=-1.22474;SCBZ=-1.41421;FS=0;MQ0F=0;MQ=60;DP=22;DP4=7,7,3,3;AN=6;AC=1   GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:36,0,51 ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:53,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:39,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.
+    ## NC_045512.2  16  .   C   G   19.8245 .   VDB=0.02;SGB=-0.453602;RPBZ=-1.41421;MQBZ=0;MQSBZ=0;BQBZ=-1.22474;SCBZ=-1.41421;FS=0;MQ0F=0;MQ=60;DP=22;DP4=7,7,3,3;AN=6;AC=2   GT:PL   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/0:36,.,.  ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:53,0,122    ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   0/1:39,0,243    ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.   ./.:.
 
-```bash
-java -jar picard/dist/picard.jar CreateSequenceDictionary R=test_31.fa O=test_31.dict
-samtools faidx test_31.fa
+Decomposing can also refer to converting MNVs into consecutive SNVs;
+this is achieved with `bcftools norm -a`.
 
-# add read groups to the BAM file
-java -jar picard/dist/picard.jar AddOrReplaceReadGroups \
-INPUT=aln.bam \
-OUTPUT=aln_rg.bam \
-RGLB=test \
-RGPL=illumina \
-RGPU=test \
-RGSM=test
-
-# check out the header
-# to see the read groups we added
-./samtools view -H aln_rg.bam 
-@HD     VN:1.5  SO:coordinate
-@SQ     SN:1000000      LN:1000000
-@RG     ID:1    LB:test PL:illumina     SM:test PU:test
-@PG     ID:bwa  PN:bwa  VN:0.7.13-r1126 CL:bwa/bwa mem test_31.fa l100_n1000000_d400_31_1.fq l100_n1000000_d400_31_2.fq
-
-# index
-./samtools index aln_rg.bam
+``` bash
+bcftools view -H eg/ex.vcf  | tail -1
 ```
 
-Now to call variants:
+    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
 
-```bash
-java -Xmx4G -jar GenomeAnalysisTK.jar -R test_31.fa -T HaplotypeCaller -I aln_rg.bam -o aln_rg.vcf
+Convert MNV into SNVs.
+
+``` bash
+bcftools norm -a eg/ex.vcf | tail -2
 ```
 
-# Comparing VCF files
+    ## Lines   total/split/realigned/skipped:   6/0/0/0
+    ## 1    25563113    .   C   G   .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+    ## 1    25563114    .   C   G   .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
 
-How many variants were called using BCFtools?
+Finally, there is also left-aligning, which will be clear by viewing an
+example.
 
-```bash
-# convert BCF to VCF
-bcftools convert -O v -o aln_consensus.vcf aln_consensus.bcf
-
-# count
-cat aln_consensus.vcf | grep -v "^#" | wc -l
-9704
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | head -2
 ```
 
-How many variants using HaplotypeCaller?
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-```bash
-cat aln_rg.vcf | grep -v "^#" | wc -l
-9875
+Left-align.
+
+``` bash
+bcftools norm -f eg/test_31.fa eg/aln.bt.vcf.gz | grep -v "^#" | head -2
 ```
 
-My `mutate_fasta.pl` script outputs a log of the insertions, deletions, and substitutions made to a reference sequence. The pipeline stores this in the file `test_mutated.log`. In total there were 10,000 variants, since the mutation percent was set to 1% for a reference sequence of 1,000,000 bp.
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TA  T   142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 
-```bash
-tail test_mutated.log
-999272  point: G -> C
-999502  point: G -> A
-999579  point: G -> T
-999704  insert: G
-999907  point: T -> A
-999981  delete: C
-Point: 3319
-Delete: 3341
-Insert: 3340
-Total: 10000
+Decomposing and normalising variants are very important steps when
+comparing VCF files.
+
+## Comparing VCF files
+
+BCFtools has an intersect tool (`bcftools isec`) that is useful for
+comparing VCF files; the tool requires an index.
+
+``` bash
+tabix -f eg/aln.bt.vcf.gz
+tabix -f eg/aln.hc.vcf.gz
+
+bcftools isec eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz -p comp
 ```
 
-HaplotypeCaller was able to call 98.8% of the variants.
+Four VCF files are produced and `README.txt` explains the contents of
+each VCF file.
 
-## Decompose and normalise
+Records private to `eg/aln.bt.vcf.gz`.
 
-Despite the VCF being a standard, there are still differences between VCF files. To ensure the VCF files are unified, we'll use the ```vt``` program to decompose and normalise the variants. For more information, refer to this [blog post](http://davetang.org/muse/2015/12/16/getting-acquainted-analysing-dna-sequencing-data/).
-
-```bash
-# download and compile
-git clone https://github.com/atks/vt.git
-cd vt
-make
-make test
-cd ..
-
-# decompose and normalise
-vt/vt decompose -s aln_consensus.vcf | vt normalize -r test_31.fa - > aln_consensus.vt.vcf
-
-# this step doesn't do anything because
-# the GATK variant file is already decomposed and normalised
-vt/vt decompose -s aln_rg.vcf | vt normalize -r test_31.fa - > aln_rg.vt.vcf
+``` bash
+bcftools view -H comp/0000.vcf | wc -l
 ```
 
-## SnpSift
+    ## 915
 
-We can use [SnpSift](http://snpeff.sourceforge.net/SnpSift.html) to compare VCF files; I have a [blog post](http://davetang.org/muse/2015/08/26/vcf-concordance/) with more information.
+Records private to `eg/aln.hc.vcf.gz`.
 
-```bash
-# download
-wget http://downloads.sourceforge.net/project/snpeff/snpEff_latest_core.zip
-unzip snpEff_latest_core.zip
+``` bash
+bcftools view -H comp/0001.vcf | wc -l
 ```
 
-SnpSift will only compare samples with the same name, so we need to rename the sample name in one of the files to match the other. The GATK sample name was based on the read group information we added with Picard, which was `test`. We can use `sed` to change the sample name to test in the VCF file created using BCFtools.
+    ## 868
 
-```bash
-# rename sample name to test
-cat aln_consensus.vt.vcf | sed 's/\taln.bam/\ttest/' > aln_consensus.vt.renamed.vcf
+Number of overlap.
 
-# run SnpSift
-java -Xmx1g -jar \
-snpEff/SnpSift.jar concordance \
--v aln_consensus.vt.renamed vcf aln_rg.vt.vcf \
-> concordance_by_variant.txt
+``` bash
+bcftools view -H comp/0002.vcf | wc -l
 ```
 
-SnpSift will create three summary files; the `concordance_aln_consensus_aln_rg.by_sample.txt` file will give a sample level summary of the concordance between the two VCF files. The file is more easily viewed with the columns transposed to rows.
+    ## 9107
 
-```bash
-cat concordance_aln_consensus_aln_rg.by_sample.txt | script/transpose.pl | column -t
-sample                                            test
-MISSING_ENTRY_aln_consensus/MISSING_ENTRY_aln_rg  0
-MISSING_ENTRY_aln_consensus/MISSING_GT_aln_rg     0
-MISSING_ENTRY_aln_consensus/REF                   0
-MISSING_ENTRY_aln_consensus/ALT_1                 0
-MISSING_ENTRY_aln_consensus/ALT_2                 302
-MISSING_GT_aln_consensus/MISSING_ENTRY_aln_rg     2
-MISSING_GT_aln_consensus/MISSING_GT_aln_rg        0
-MISSING_GT_aln_consensus/REF                      0
-MISSING_GT_aln_consensus/ALT_1                    0
-MISSING_GT_aln_consensus/ALT_2                    0
-REF/MISSING_ENTRY_aln_rg                          0
-REF/MISSING_GT_aln_rg                             0
-REF/REF                                           0
-REF/ALT_1                                         0
-REF/ALT_2                                         0
-ALT_1/MISSING_ENTRY_aln_rg                        13
-ALT_1/MISSING_GT_aln_rg                           0
-ALT_1/REF                                         0
-ALT_1/ALT_1                                       0
-ALT_1/ALT_2                                       7
-ALT_2/MISSING_ENTRY_aln_rg                        118
-ALT_2/MISSING_GT_aln_rg                           0
-ALT_2/REF                                         0
-ALT_2/ALT_1                                       0
-ALT_2/ALT_2                                       9518
-ERROR                                             48
-```
+[SnpSift](http://snpeff.sourceforge.net/SnpSift.html) is also useful for
+comparing VCF files for checking their
+[concordance](http://davetang.org/muse/2015/08/26/vcf-concordance/).
 
-There are five categories: MISSING_ENTRY, MISSING_GT, REF, ALT_1, and ALT_2. For each variant in each file, the genotypes are compared. (ERROR refers to incompatible variants; the REF and ALT are different) If a variant was homozygous ALT in both files, ALT_2/ALT_2 will be incremented by 1. In the table above, we see that 9,518 variants were called homozygous ALT by both variant callers. 118 variants were called homozygous ALT by BCFtools but were missing, i.e. not called by GATK. 7 variants were (mistakenly) called heterozygous by BCFtools and homozygous ALT by GATK.  13 variants were (mistakenly) called heterozygous by BCFtools and missing in the GATK VCF file. 302 variants were not called by BCFtools but were called homozygous ALT by GATK.
+## Visualisation
 
-The `concordance_by_variant.txt` file will give a variant level summary. To get the column numbers of this file we can use a combination of command line tools.
+The [vcfR](https://cran.r-project.org/web/packages/vcfR/index.html)
+package produces some nice plots.
 
-```bash
-cat concordance_by_variant.txt | head -1 | script/transpose.pl | nl
-     1  chr
-     2  pos
-     3  ref
-     4  alt
-     5  MISSING_ENTRY_aln_consensus/MISSING_ENTRY_aln_rg
-     6  MISSING_ENTRY_aln_consensus/MISSING_GT_aln_rg
-     7  MISSING_ENTRY_aln_consensus/REF
-     8  MISSING_ENTRY_aln_consensus/ALT_1
-     9  MISSING_ENTRY_aln_consensus/ALT_2
-    10  MISSING_GT_aln_consensus/MISSING_ENTRY_aln_rg
-    11  MISSING_GT_aln_consensus/MISSING_GT_aln_rg
-    12  MISSING_GT_aln_consensus/REF
-    13  MISSING_GT_aln_consensus/ALT_1
-    14  MISSING_GT_aln_consensus/ALT_2
-    15  REF/MISSING_ENTRY_aln_rg
-    16  REF/MISSING_GT_aln_rg
-    17  REF/REF
-    18  REF/ALT_1
-    19  REF/ALT_2
-    20  ALT_1/MISSING_ENTRY_aln_rg
-    21  ALT_1/MISSING_GT_aln_rg
-    22  ALT_1/REF
-    23  ALT_1/ALT_1
-    24  ALT_1/ALT_2
-    25  ALT_2/MISSING_ENTRY_aln_rg
-    26  ALT_2/MISSING_GT_aln_rg
-    27  ALT_2/REF
-    28  ALT_2/ALT_1
-    29  ALT_2/ALT_2
-    30  ERROR
-```
-
-First 10 variants missing by GATK but called by BCFtools (column 25).
-
-```bash
-cat concordance_by_variant.txt | awk '$25 == 1 {print}' | column -t | head
-1000000  13250   A    AT    0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  36565   T    TTA   0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  37667   A    C     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  37668   T    A     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  37670   C    T     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  46727   A    C     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  46729   C    T     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  46730   T    TC    0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  48289   C    G     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-1000000  48291   A    G     0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  0  0  0  0  0
-```
-
-First 10 variants missing by BCFtools but called by GATK (column 9).
-
-```bash
-cat concordance_by_variant.txt | awk '$9 == 1 {print}' | column -t | head
-1000000  1356    TG    T     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  1379    A     G     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  10452   T     G     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  35454   G     GT    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  36563   A     AT    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  37669   TC    T     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  48288   A     AG    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  48876   C     CA    0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  52138   AT    A     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-1000000  52141   CTA   C     0  0  0  0  1  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-```
-
-Check my mutation log.
-
-```bash
-cat test_mutated.log | awk '$1>37500 {print}' | head
-37535   insert: A
-37585   delete: T
-37670   insert: C
-37675   delete: C
-37850   point: A -> C
-37851   point: G -> T
-37940   point: A -> G
-37996   insert: T
-38094   insert: A
-38474   insert: T
-```
-
-Both tools have difficulty calling the variants (INDELs) that occur in close proximity to each other. The positions in the mutation log are slightly off because insertions and deletions were added sequentially and the positions of variants will be affected by INDEL variants added afterwards.
-
-# Visualisation
-
-The [vcfR](https://cran.r-project.org/web/packages/vcfR/index.html) package produces some nice plots.
-
-```r
+``` r
 install.packages("vcfR")
 library(vcfR)
 
@@ -1008,19 +2581,26 @@ plot(chrom)
 
 ![Plot chromR object](img/chrom_plot.png)
 
-```r
+``` r
 chromoqc(chrom, xlim=c(860000, 900000))
 ```
 
 ![QC plot](img/chromoqc.png)
 
-# Useful links
+## Useful links
 
-* A very useful thread on SEQanswers on learning about the VCF format: <http://seqanswers.com/forums/showthread.php?t=9345>
-* Useful tutorial on VCFs files from the 1000 Genomes Project Page: <http://www.1000genomes.org/node/101>
-* The author of ANNOVAR writes about VCF files: <http://annovar.openbioinformatics.org/en/latest/articles/VCF/>
-* [Encoding Structural Variants in VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/VCF%20(Variant%20Call%20Format)%20version%204.0/encoding-structural-variants) version 4.0
+  - A very useful thread on SEQanswers on learning about the VCF format:
+    <http://seqanswers.com/forums/showthread.php?t=9345>
+  - Useful tutorial on VCFs files from the 1000 Genomes Project Page:
+    <http://www.1000genomes.org/node/101>
+  - The author of ANNOVAR writes about VCF files:
+    <http://annovar.openbioinformatics.org/en/latest/articles/VCF/>
+  - [Encoding Structural Variants in
+    VCF](http://www.1000genomes.org/wiki/Analysis/Variant%20Call%20Format/VCF%20\(Variant%20Call%20Format\)%20version%204.0/encoding-structural-variants)
+    version 4.0
+  - <https://gist.github.com/elowy01/93922762e131d7abd3c7e8e166a74a0b>
 
-# Stargazers over time
+## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/davetang/learning_vcf_file.svg)](https://starchart.cc/davetang/learning_vcf_file)
+[![Stargazers over
+time](https://starchart.cc/davetang/learning_vcf_file.svg)](https://starchart.cc/davetang/learning_vcf_file)
