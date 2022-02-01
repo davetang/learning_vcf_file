@@ -33,7 +33,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Mon 31 Jan 2022 07:54:39 AM UTC
+Tue 01 Feb 2022 12:34:19 AM UTC
 
 Learning the VCF format
 ================
@@ -287,9 +287,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m20.325s
-    ## user 0m35.787s
-    ## sys  0m2.009s
+    ## real 0m17.213s
+    ## user 0m28.668s
+    ## sys  0m1.630s
 
 VCF to uncompressed BCF.
 
@@ -298,9 +298,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m19.331s
-    ## user 0m35.712s
-    ## sys  0m2.050s
+    ## real 0m15.500s
+    ## user 0m28.514s
+    ## sys  0m1.760s
 
 VCF to compressed VCF.
 
@@ -309,9 +309,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m28.506s
-    ## user 0m49.036s
-    ## sys  0m2.739s
+    ## real 0m22.925s
+    ## user 0m39.163s
+    ## sys  0m2.369s
 
 File sizes
 
@@ -689,9 +689,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.091s
-    ## user 0m0.080s
-    ## sys  0m0.037s
+    ## real 0m0.075s
+    ## user 0m0.059s
+    ## sys  0m0.036s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -701,9 +701,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m4.650s
-    ## user 0m4.603s
-    ## sys  0m0.064s
+    ## real 0m3.715s
+    ## user 0m3.707s
+    ## sys  0m0.028s
 
 Use commas to list more than one loci.
 
