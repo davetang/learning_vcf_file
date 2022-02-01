@@ -341,25 +341,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m19.833s
-## user 0m34.235s
-## sys  0m2.046s
+## real 0m17.213s
+## user 0m28.668s
+## sys  0m1.630s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m18.539s
-## user 0m34.218s
-## sys  0m1.964s
+## real 0m15.500s
+## user 0m28.514s
+## sys  0m1.760s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m27.290s
-## user 0m47.421s
-## sys  0m2.708s
+## real 0m22.925s
+## user 0m39.163s
+## sys  0m2.369s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -599,19 +599,25 @@ either <code>bcftools index</code> or <code>tabix</code> seems to be fine, altho
 generate indexes with different suffixes.</p>
 <p>Using <code>bcftools index</code> to generate a <code>csi</code> index.</p>
 <pre><code class="language-bash">bcftools index eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.csi
 </code></pre>
-<pre><code>## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
-## Failed to read from aln.hc.vcf.gz: No such file or directory
+<pre><code>## 1000000  151 .   T   A   4111.06 .   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+## 1000000  172 .   TA  T   3122.03 .   AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+## 1000000  336 .   A   G   4884.06 .   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
+## 1000000  415 .   C   A   4569.06 .   AC=2;AF=1;AN=2;DP=106;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=27.24;SOR=3.442 GT:AD:DP:GQ:PL  1/1:0,102:102:99:4583,307,0
+## 1000000  733 .   G   T   9279.06 .   AC=2;AF=1;AN=2;DP=215;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.2;SOR=0.814  GT:AD:DP:GQ:PL  1/1:0,208:208:99:9293,626,0
 </code></pre>
 <p>Using <code>tabix</code> to generate a <code>tbi</code> index.</p>
 <pre><code class="language-bash">tabix eg/aln.hc.vcf.gz
-bcftools view -H -r 1000000:100-1000 aln.hc.vcf.gz
+bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.tbi
 </code></pre>
-<pre><code>## [E::hts_open_format] Failed to open file "aln.hc.vcf.gz" : No such file or directory
-## Failed to read from aln.hc.vcf.gz: No such file or directory
+<pre><code>## 1000000  151 .   T   A   4111.06 .   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+## 1000000  172 .   TA  T   3122.03 .   AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+## 1000000  336 .   A   G   4884.06 .   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
+## 1000000  415 .   C   A   4569.06 .   AC=2;AF=1;AN=2;DP=106;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=27.24;SOR=3.442 GT:AD:DP:GQ:PL  1/1:0,102:102:99:4583,307,0
+## 1000000  733 .   G   T   9279.06 .   AC=2;AF=1;AN=2;DP=215;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.2;SOR=0.814  GT:AD:DP:GQ:PL  1/1:0,208:208:99:9293,626,0
 </code></pre>
 <h2 id="subset-variants-within-a-specific-genomic-region">Subset variants within a specific genomic region</h2>
 <p>Use <code>bcftools view</code> with <code>-r</code> or <code>-R</code>, which requires an index file. You
@@ -622,18 +628,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.090s
-## user 0m0.078s
-## sys  0m0.038s
+## real 0m0.075s
+## user 0m0.059s
+## sys  0m0.036s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m4.467s
-## user 0m4.473s
-## sys  0m0.027s
+## real 0m3.715s
+## user 0m3.707s
+## sys  0m0.028s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -827,5 +833,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-01-31 07:54:41.694225+00:00
+Build Date UTC : 2022-02-01 00:34:23.313872+00:00
 -->
