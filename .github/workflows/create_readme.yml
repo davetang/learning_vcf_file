@@ -9,6 +9,7 @@ on:
       - 'create_readme.sh'
       - 'readme.Rmd'
       - '.github/workflows/create_readme.yml'
+      - 'script/tools_for_readme.sh'
 
 # a list of the jobs that run as part of the workflow
 jobs:
