@@ -33,7 +33,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Tue 01 Feb 2022 12:34:19 AM UTC
+Mon 21 Feb 2022 11:48:42 PM UTC
 
 Learning the VCF format
 ================
@@ -166,7 +166,7 @@ bcftools --help
 
     ## 
     ## Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
-    ## Version: 1.14 (using htslib 1.14)
+    ## Version: 1.15 (using htslib 1.15)
     ## 
     ## Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
     ## 
@@ -179,6 +179,7 @@ bcftools --help
     ##     annotate     annotate and edit VCF/BCF files
     ##     concat       concatenate VCF/BCF files from the same set of samples
     ##     convert      convert VCF/BCF files to different formats and back
+    ##     head         view VCF/BCF file headers
     ##     isec         intersections of VCF/BCF files
     ##     merge        merge VCF/BCF files files from non-overlapping sample sets
     ##     norm         left-align and normalize indels
@@ -198,6 +199,9 @@ bcftools --help
     ##     mpileup      multi-way pileup producing genotype likelihoods
     ##     roh          identify runs of autozygosity (HMM)
     ##     stats        produce VCF/BCF stats
+    ## 
+    ##  -- Plugins (collection of programs for calling, file manipulation & analysis)
+    ##     38 plugins available, run "bcftools plugin -lv" to see a complete list
     ## 
     ##  Most commands accept VCF, bgzipped VCF, and BCF with the file type detected
     ##  automatically even when streaming from a pipe. Indexed VCF and BCF will work
@@ -287,9 +291,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m17.213s
-    ## user 0m28.668s
-    ## sys  0m1.630s
+    ## real 0m18.811s
+    ## user 0m30.255s
+    ## sys  0m2.099s
 
 VCF to uncompressed BCF.
 
@@ -298,9 +302,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m15.500s
-    ## user 0m28.514s
-    ## sys  0m1.760s
+    ## real 0m17.118s
+    ## user 0m30.510s
+    ## sys  0m2.039s
 
 VCF to compressed VCF.
 
@@ -309,9 +313,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m22.925s
-    ## user 0m39.163s
-    ## sys  0m2.369s
+    ## real 0m25.595s
+    ## user 0m41.674s
+    ## sys  0m2.947s
 
 File sizes
 
@@ -689,9 +693,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.075s
-    ## user 0m0.059s
-    ## sys  0m0.036s
+    ## real 0m0.089s
+    ## user 0m0.077s
+    ## sys  0m0.037s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -701,9 +705,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.715s
-    ## user 0m3.707s
-    ## sys  0m0.028s
+    ## real 0m3.792s
+    ## user 0m3.777s
+    ## sys  0m0.040s
 
 Use commas to list more than one loci.
 
