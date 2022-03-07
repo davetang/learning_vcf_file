@@ -345,25 +345,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m18.811s
-## user 0m30.255s
-## sys  0m2.099s
+## real 0m16.842s
+## user 0m28.403s
+## sys  0m1.680s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m17.118s
-## user 0m30.510s
-## sys  0m2.039s
+## real 0m44.606s
+## user 1m1.622s
+## sys  0m3.248s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m25.595s
-## user 0m41.674s
-## sys  0m2.947s
+## real 1m6.957s
+## user 1m25.202s
+## sys  0m3.987s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -632,18 +632,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.089s
-## user 0m0.077s
-## sys  0m0.037s
+## real 0m0.076s
+## user 0m0.056s
+## sys  0m0.040s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m3.792s
-## user 0m3.777s
-## sys  0m0.040s
+## real 0m3.724s
+## user 0m3.700s
+## sys  0m0.044s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -837,5 +837,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-02-21 23:48:45.869006+00:00
+Build Date UTC : 2022-03-07 07:04:08.384940+00:00
 -->
