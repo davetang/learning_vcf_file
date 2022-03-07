@@ -41,7 +41,7 @@ jobs:
           git config --global user.email 'davetingpongtang@gmail.com'
           git add eg/aln*.vcf.gz eg/*[0-9].fa
           git commit -m "Workflow files"
-          git push origin master
+          git push origin main
 
       - run: echo "This job's status is ${{ job.status }}."
 

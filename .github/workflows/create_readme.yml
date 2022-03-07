@@ -44,7 +44,7 @@ jobs:
           git config --global user.email 'davetingpongtang@gmail.com'
           git add "README.md"
           git commit -m "Build README.md"
-          git push origin master
+          git push origin main
 
       - name: Build MkDocs site
         run: |
