@@ -39,6 +39,8 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'davetingpongtang@gmail.com'
+          # need to pull when another workflow updates main before this workflow
+          git pull
           git add eg/aln*.vcf.gz eg/*[0-9].fa
           git commit -m "Workflow files"
           git push origin main
