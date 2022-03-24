@@ -345,25 +345,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m16.842s
-## user 0m28.403s
-## sys  0m1.680s
+## real 0m16.857s
+## user 0m28.199s
+## sys  0m1.879s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m44.606s
-## user 1m1.622s
-## sys  0m3.248s
+## real 0m15.803s
+## user 0m28.453s
+## sys  0m1.665s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 1m6.957s
-## user 1m25.202s
-## sys  0m3.987s
+## real 0m22.462s
+## user 0m38.715s
+## sys  0m2.505s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -501,18 +501,39 @@ column.</p>
 ## 1    10352   .   T   TA  100 PASS    AC=28;AN=62;NS=31;AF=0.4375;SAS_AF=0.4192;EUR_AF=0.4264;AFR_AF=0.4788;AMR_AF=0.4107;EAS_AF=0.4306   GT  1|0 0|1 1|1 0|0 1|0 1|0 1|0 1|0 0|0 1|0 1|0 1|0 0|0 0|1 1|0 0|0 1|0 1|1 0|1 0|0 1|0 0|1 1|0 1|0 1|0 0|1 0|1 1|0 0|1 1|0 1|0
 </code></pre>
 <h2 id="filtering-vcf-file-using-the-info-fields">Filtering VCF file using the INFO field/s</h2>
-<p>Use <code>bcftools filter</code>.</p>
-<pre><code class="language-bash">bcftools filter -s &quot;Depth200&quot; -e &quot;DP&lt;200&quot; eg/aln.bt.vcf.gz | grep -v &quot;^#&quot; | head -3
+<p>Use <code>bcftools filter</code> to filter out (<code>-e</code> or <code>--exclude</code>) variants. In
+the example below we are filtering out variants that have a depth of
+less than 200. We also use the <code>-s</code> parameter to name our filter and
+this name will be displayed in the <code>FILTER</code> column.</p>
+<pre><code class="language-bash">bcftools filter -s &quot;Depth200&quot; -e &quot;DP&lt;200&quot; eg/aln.bt.vcf.gz | grep -v &quot;^##&quot; | head -4
 </code></pre>
-<pre><code>## 1000000  151 .   T   A   225.417 Depth200    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+<pre><code>## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+## 1000000  151 .   T   A   225.417 Depth200    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
 ## 1000000  172 .   TAA TA  142.185 Depth200    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 ## 1000000  336 .   A   G   225.417 Depth200    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
 </code></pre>
-<pre><code class="language-bash">bcftools filter -s &quot;Depth200&amp;VDB&quot; -e &quot;DP&lt;200 &amp; VDB&lt;0.9&quot; eg/aln.bt.vcf.gz | grep -v &quot;^#&quot; | head -3
+<p>Use <code>&amp;</code> to combine several other criteria.</p>
+<pre><code class="language-bash">bcftools filter -s &quot;Depth200&amp;VDB&quot; -e &quot;DP&lt;200 &amp; VDB&lt;0.9&quot; eg/aln.bt.vcf.gz | grep -v &quot;^##&quot; | head -4
 </code></pre>
-<pre><code>## 1000000  151 .   T   A   225.417 Depth200&amp;VDB    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
+<pre><code>## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+## 1000000  151 .   T   A   225.417 Depth200&amp;VDB    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
 ## 1000000  172 .   TAA TA  142.185 Depth200&amp;VDB    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
 ## 1000000  336 .   A   G   225.417 PASS    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
+</code></pre>
+<p>The <code>-e</code> or <code>-i</code> parameters accept an expression and we can use it to
+perform calculations. In the example below, variants with a QD divided
+by DP ratio of less than 0.3 are labelled with <code>QD/DP</code>; this ratio was
+created for illustrative purposes only. Note that <code>QD</code> and <code>DP</code> are
+prefixed with <code>INFO/</code>; this was done to explicitly state that we want
+the QD and DP values from the INFO field, since there is also a DP value
+in the FORMAT field. (This VCF file is different from the first
+filtering example, which only had one DP value.)</p>
+<pre><code class="language-bash">bcftools filter -s &quot;QD/DP&quot; -e &quot;INFO/QD / INFO/DP &lt; 0.3&quot; eg/aln.hc.vcf.gz | grep -v &quot;^##&quot; | head -4
+</code></pre>
+<pre><code>## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+## 1000000  151 .   T   A   4111.06 QD/DP   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+## 1000000  172 .   TA  T   3122.03 PASS    AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+## 1000000  336 .   A   G   4884.06 QD/DP   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
 </code></pre>
 <h2 id="summarise-snps-and-indels-per-sample">Summarise SNPs and INDELs per sample</h2>
 <p>Use <code>bcftools stats</code> with the <code>-s -</code> parameter. The example VCF file
@@ -632,18 +653,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.076s
-## user 0m0.056s
-## sys  0m0.040s
+## real 0m0.075s
+## user 0m0.065s
+## sys  0m0.024s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m3.724s
-## user 0m3.700s
-## sys  0m0.044s
+## real 0m3.723s
+## user 0m3.707s
+## sys  0m0.033s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -837,5 +858,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-03-07 07:04:08.384940+00:00
+Build Date UTC : 2022-03-24 07:53:47.048998+00:00
 -->
