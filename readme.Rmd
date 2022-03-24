@@ -277,14 +277,22 @@ bcftools view -H -f PASS eg/1kgp.bcf | head -3
 
 ## Filtering VCF file using the INFO field/s
 
-Use `bcftools filter`.
+Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In the example below we are filtering out variants that have a depth of less than 200. We also use the `-s` parameter to name our filter and this name will be displayed in the `FILTER` column.
 
 ```{bash engine.opts='-l'}
-bcftools filter -s "Depth200" -e "DP<200" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
+bcftools filter -s "Depth200" -e "DP<200" eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
 
+Use `&` to combine several other criteria.
+
 ```{bash engine.opts='-l'}
-bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
+bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep -v "^##" | head -4
+```
+
+The `-e` or `-i` parameters accept an expression and we can use it to perform calculations. In the example below, variants with a QD divided by DP ratio of less than 0.3 are labelled with `QD/DP`; this ratio was created for illustrative purposes only. Note that `QD` and `DP` are prefixed with `INFO/`; this was done to explicitly state that we want the QD and DP values from the INFO field, since there is also a DP value in the FORMAT field. (This VCF file is different from the first filtering example, which only had one DP value.)
+
+```{bash engine.opts='-l'}
+bcftools filter -s "QD/DP" -e "INFO/QD / INFO/DP < 0.3" eg/aln.hc.vcf.gz | grep -v "^##" | head -4
 ```
 
 ## Summarise SNPs and INDELs per sample
