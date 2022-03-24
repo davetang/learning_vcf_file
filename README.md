@@ -33,7 +33,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Mon 07 Mar 2022 07:04:05 AM UTC
+Thu 24 Mar 2022 07:53:44 AM UTC
 
 Learning the VCF format
 ================
@@ -291,9 +291,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m16.842s
-    ## user 0m28.403s
-    ## sys  0m1.680s
+    ## real 0m16.857s
+    ## user 0m28.199s
+    ## sys  0m1.879s
 
 VCF to uncompressed BCF.
 
@@ -302,9 +302,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m44.606s
-    ## user 1m1.622s
-    ## sys  0m3.248s
+    ## real 0m15.803s
+    ## user 0m28.453s
+    ## sys  0m1.665s
 
 VCF to compressed VCF.
 
@@ -313,9 +313,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 1m6.957s
-    ## user 1m25.202s
-    ## sys  0m3.987s
+    ## real 0m22.462s
+    ## user 0m38.715s
+    ## sys  0m2.505s
 
 File sizes
 
@@ -510,23 +510,48 @@ bcftools view -H -f PASS eg/1kgp.bcf | head -3
 
 ## Filtering VCF file using the INFO field/s
 
-Use `bcftools filter`.
+Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In
+the example below we are filtering out variants that have a depth of
+less than 200. We also use the `-s` parameter to name our filter and
+this name will be displayed in the `FILTER` column.
 
 ``` bash
-bcftools filter -s "Depth200" -e "DP<200" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
+bcftools filter -s "Depth200" -e "DP<200" eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
 
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
     ## 1000000  151 .   T   A   225.417 Depth200    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
     ## 1000000  172 .   TAA TA  142.185 Depth200    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
     ## 1000000  336 .   A   G   225.417 Depth200    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
 
+Use `&` to combine several other criteria.
+
 ``` bash
-bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep -v "^#" | head -3
+bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
 
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
     ## 1000000  151 .   T   A   225.417 Depth200&VDB    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
     ## 1000000  172 .   TAA TA  142.185 Depth200&VDB    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
     ## 1000000  336 .   A   G   225.417 PASS    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
+
+The `-e` or `-i` parameters accept an expression and we can use it to
+perform calculations. In the example below, variants with a QD divided
+by DP ratio of less than 0.3 are labelled with `QD/DP`; this ratio was
+created for illustrative purposes only. Note that `QD` and `DP` are
+prefixed with `INFO/`; this was done to explicitly state that we want
+the QD and DP values from the INFO field, since there is also a DP value
+in the FORMAT field. (This VCF file is different from the first
+filtering example, which only had one DP value.)
+
+``` bash
+bcftools filter -s "QD/DP" -e "INFO/QD / INFO/DP < 0.3" eg/aln.hc.vcf.gz | grep -v "^##" | head -4
+```
+
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+    ## 1000000  151 .   T   A   4111.06 QD/DP   AC=2;AF=1;AN=2;DP=100;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=25.36;SOR=9.065 GT:AD:DP:GQ:PL  1/1:0,92:92:99:4125,277,0
+    ## 1000000  172 .   TA  T   3122.03 PASS    AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
+    ## 1000000  336 .   A   G   4884.06 QD/DP   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
 
 ## Summarise SNPs and INDELs per sample
 
@@ -693,9 +718,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.076s
-    ## user 0m0.056s
-    ## sys  0m0.040s
+    ## real 0m0.075s
+    ## user 0m0.065s
+    ## sys  0m0.024s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -705,9 +730,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.724s
-    ## user 0m3.700s
-    ## sys  0m0.044s
+    ## real 0m3.723s
+    ## user 0m3.707s
+    ## sys  0m0.033s
 
 Use commas to list more than one loci.
 
