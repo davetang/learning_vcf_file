@@ -18,6 +18,7 @@ Table of Contents
    * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
    * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
    * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
+   * [Add custom annotations](#add-custom-annotations)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
    * [Random subset of variants](#random-subset-of-variants)
    * [Index a VCF file](#index-a-vcf-file)
@@ -33,7 +34,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Thu 24 Mar 2022 07:53:44 AM UTC
+Mon 04 Apr 2022 02:30:11 AM UTC
 
 Learning the VCF format
 ================
@@ -80,6 +81,9 @@ should be used instead of VCFtools. To learn more about BCFtools (and
 SAMtools), check out the paper [Twelve years of SAMtools and
 BCFtools](https://academic.oup.com/gigascience/article/10/2/giab008/6137722)
 and please cite it if you use BCFtools for your work.
+
+Lastly, this README is created by `create_readme.sh` on GitHub Actions,
+which executes `readme.Rmd` and creates `README.md`.
 
 ## Installation
 
@@ -291,9 +295,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m16.857s
-    ## user 0m28.199s
-    ## sys  0m1.879s
+    ## real 0m20.028s
+    ## user 0m33.678s
+    ## sys  0m2.360s
 
 VCF to uncompressed BCF.
 
@@ -302,9 +306,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m15.803s
-    ## user 0m28.453s
-    ## sys  0m1.665s
+    ## real 0m18.548s
+    ## user 0m33.150s
+    ## sys  0m2.482s
 
 VCF to compressed VCF.
 
@@ -313,9 +317,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m22.462s
-    ## user 0m38.715s
-    ## sys  0m2.505s
+    ## real 0m28.508s
+    ## user 0m46.866s
+    ## sys  0m3.364s
 
 File sizes
 
@@ -617,6 +621,57 @@ bcftools plugin fill-tags eg/aln.bt.vcf.gz | grep -v "^#" | head -1
 
     ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;NS=1;AF=1;MAF=0;AC_Het=0;AC_Hom=2;AC_Hemi=0;HWE=1;ExcHet=1    GT:PL   1/1:255,255,0
 
+## Add custom annotations
+
+The `annotate` function can be used to [add additional
+annotations](https://samtools.github.io/bcftools/howtos/annotate.html)
+to a VCF file. You can use a VCF file or a tabix-indexed tab-delimited
+file; if a tab-delimited file is used, an additional header file is
+required.
+
+To demonstrate, a tab-delimited file with incremental integers (fifth
+column) is created.
+
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | head -3 | cut -f1,2,4,5 | perl -nle '$i++; print join("\t", $_, "$i")' > eg/test_anno.tsv
+cat eg/test_anno.tsv
+```
+
+    ## 1000000  151 T   A   1
+    ## 1000000  172 TAA TA  2
+    ## 1000000  336 A   G   3
+
+`eg/test_anno.tsv` needs to be tabix-indexed with the following
+parameters:
+
+  - `-s` specifies the column for sequence names
+  - `-b` specifies the column for region start/s
+  - `-e` specifies the column for region end/s
+
+<!-- end list -->
+
+``` bash
+bgzip eg/test_anno.tsv
+tabix -s1 -b2 -e2 eg/test_anno.tsv.gz
+```
+
+Create header file.
+
+``` bash
+echo -e "##INFO=<ID=INC,Number=1,Type=Integer,Description=\"Increment number\">" > eg/test_anno.hdr
+```
+
+Add `INC` annotation.
+
+``` bash
+bcftools annotate -a eg/test_anno.tsv.gz -h eg/test_anno.hdr -c CHROM,POS,REF,ALT,INC eg/aln.bt.vcf.gz | grep -v "^##" | head -4
+```
+
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;INC=1 GT:PL   1/1:255,255,0
+    ## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60;INC=2   GT:PL   1/1:169,117,0
+    ## 1000000  336 .   A   G   225.417 .   DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60;INC=3   GT:PL   1/1:255,255,0
+
 ## Check whether the REF sequence is correct
 
 Change the reference sequence of variant at position 151 to G.
@@ -718,9 +773,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.075s
-    ## user 0m0.065s
-    ## sys  0m0.024s
+    ## real 0m0.087s
+    ## user 0m0.079s
+    ## sys  0m0.036s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -730,9 +785,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.723s
-    ## user 0m3.707s
-    ## sys  0m0.033s
+    ## real 0m4.327s
+    ## user 0m4.286s
+    ## sys  0m0.063s
 
 Use commas to list more than one loci.
 
