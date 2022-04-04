@@ -510,6 +510,25 @@ Use `bcftools query`.
 bcftools query -l eg/1kgp.vcf.gz | head -5
 ```
 
+## Rename sample names
+
+Use `reheader` to rename samples in a VCF using a text file containing the new sample names (one per line). Note that the default output format for `reheader` is BCF (with no option for another format).
+
+Old sample names.
+
+```{bash engine.opts='-l'}
+bcftools query -l eg/1001genomes_snp-short-indel_only_ACGTN_5000.vcf.gz | head -5
+```
+
+Rename VCF file using new sample names in `eg/sample_name.txt`.
+
+```{bash engine.opts='-l'}
+num_sample=$(bcftools query -l eg/1001genomes_snp-short-indel_only_ACGTN_5000.vcf.gz | wc -l)
+for (( i = 0 ; i < ${num_sample} ; i++ )); do echo ${i}; done > eg/sample_name.txt
+
+bcftools reheader -s eg/sample_name.txt eg/1001genomes_snp-short-indel_only_ACGTN_5000.vcf.gz | bcftools view -h - | tail -1
+```
+
 ## Subset sample/s from a multi-sample VCF file
 
 Subset HG00733.
