@@ -40,7 +40,7 @@ It is also relatively straightforward to compile on Linux (if your system has al
 ```bash
 dir=$HOME/tools
 
-ver=1.14
+ver=1.15
 for tool in htslib bcftools samtools; do
    check=${tool}
    if [[ ${tool} == htslib ]]; then
@@ -541,6 +541,35 @@ Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
 
 ```{bash engine.opts='-l'}
 bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
+```
+
+## Concatenate VCF files
+
+Concatenating is similar to joining VCF files in a row-wise manner. This only works for VCF files with the same samples that are also organised in the same order.
+
+If we concatenate `eg/aln.bt.vcf.gz` and `eg/aln.hc.vcf.gz` we would expect that the total number of variants is the sum of both.
+
+```{bash engine.opts='-l'}
+expr $(bcftools view -H eg/aln.bt.vcf.gz | wc -l) + $(bcftools view -H eg/aln.hc.vcf.gz | wc -l)
+```
+
+Perform the concatenation with default settings and count the number of variants.
+
+```{bash engine.opts='-l'}
+bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
+```
+
+Removing duplicates requires indexed VCF files; the `-f` parameter is used with `bcftools index` to overwrite an index if it exists.
+
+```{bash engine.opts='-l'}
+bcftools index -f eg/aln.bt.vcf.gz
+bcftools index -f eg/aln.hc.vcf.gz
+```
+
+To remove duplicates (`-D`) we need to allow overlaps (`-a`).
+
+```{bash engine.opts='-l'}
+bcftools concat -a -D eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 ```
 
 ## Merging VCF files
