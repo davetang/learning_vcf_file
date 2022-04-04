@@ -407,6 +407,53 @@ Sample 10%.
 bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
 ```
 
+## Sorting
+
+BCFtools has a `sort` function but the usage does not indicate the sorting order. We can create a subsetted and shuffled VCF file and check the order after sorting.
+
+```{bash engine.opts='-l'}
+bcftools view -h eg/Pfeiffer.vcf > eg/Pfeiffer_header.vcf
+bcftools view eg/Pfeiffer.vcf | perl -nle 'BEGIN { srand(1984) } if (/^#/){ next }; print if rand(1) < 0.01' | shuf > eg/Pfeiffer_shuf.txt
+
+cat eg/Pfeiffer_header.vcf eg/Pfeiffer_shuf.txt > eg/Pfeiffer_shuf.vcf
+
+bcftools view -H eg/Pfeiffer_shuf.vcf | head
+```
+
+Sort.
+
+```{bash engine.opts='-l'}
+bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
+```
+
+Check first 10 lines.
+
+```{bash engine.opts='-l'}
+bcftools view -H eg/Pfeiffer_sorted.vcf | head
+```
+
+Check chromosome order.
+
+```{bash engine.opts='-l'}
+bcftools view -H eg/Pfeiffer_sorted.vcf | cut -f1 | uniq
+```
+
+BCFtools sorts by lexical order (and there does not seem to be an option for another order).
+
+If you use Linux, we can use the `sort` utility provided by your distribution instead of `bcftools sort`; we just need to separate and join the VCF header back. For this README, the following version of `sort` was used.
+
+```{bash engine.opts='-l'}
+sort --version
+```
+
+Sort using natural sort.
+
+```{bash engine.opts='-l'}
+sort -k1,1V -k2,2n eg/Pfeiffer_shuf.txt > eg/Pfeiffer_ns.txt
+cat eg/Pfeiffer_header.vcf eg/Pfeiffer_ns.txt >  eg/Pfeiffer_ns.vcf
+bcftools view -H eg/Pfeiffer_ns.vcf | cut -f1 | uniq
+```
+
 ## Index a VCF file
 
 An index is required for several tasks such as [subsetting variants](#subset-variants-within-a-specific-genomic-region). Using either `bcftools index` or `tabix` seems to be fine, although they generate indexes with different suffixes.
