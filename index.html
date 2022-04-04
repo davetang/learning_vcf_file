@@ -79,6 +79,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#add-af-tag-to-a-vcf-file">Add AF tag to a VCF file</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#add-custom-annotations">Add custom annotations</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#check-whether-the-ref-sequence-is-correct">Check whether the REF sequence is correct</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#random-subset-of-variants">Random subset of variants</a>
@@ -178,6 +180,8 @@ should be used instead of VCFtools. To learn more about BCFtools (and
 SAMtools), check out the paper <a href="https://academic.oup.com/gigascience/article/10/2/giab008/6137722">Twelve years of SAMtools and
 BCFtools</a>
 and please cite it if you use BCFtools for your work.</p>
+<p>Lastly, this README is created by <code>create_readme.sh</code> on GitHub Actions,
+which executes <code>readme.Rmd</code> and creates <code>README.md</code>.</p>
 <h2 id="installation">Installation</h2>
 <p>The easiest way to install BCFtools is by using
 <a href="https://docs.conda.io/en/latest/">Conda</a> (and I recommend using
@@ -345,25 +349,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m16.857s
-## user 0m28.199s
-## sys  0m1.879s
+## real 0m20.028s
+## user 0m33.678s
+## sys  0m2.360s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m15.803s
-## user 0m28.453s
-## sys  0m1.665s
+## real 0m18.548s
+## user 0m33.150s
+## sys  0m2.482s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m22.462s
-## user 0m38.715s
-## sys  0m2.505s
+## real 0m28.508s
+## user 0m46.866s
+## sys  0m3.364s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -584,6 +588,44 @@ the AF tag.</p>
 </code></pre>
 <pre><code>## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;NS=1;AF=1;MAF=0;AC_Het=0;AC_Hom=2;AC_Hemi=0;HWE=1;ExcHet=1    GT:PL   1/1:255,255,0
 </code></pre>
+<h2 id="add-custom-annotations">Add custom annotations</h2>
+<p>The <code>annotate</code> function can be used to <a href="https://samtools.github.io/bcftools/howtos/annotate.html">add additional
+annotations</a>
+to a VCF file. You can use a VCF file or a tabix-indexed tab-delimited
+file; if a tab-delimited file is used, an additional header file is
+required.</p>
+<p>To demonstrate, a tab-delimited file with incremental integers (fifth
+column) is created.</p>
+<pre><code class="language-bash">bcftools view -H eg/aln.bt.vcf.gz | head -3 | cut -f1,2,4,5 | perl -nle '$i++; print join(&quot;\t&quot;, $_, &quot;$i&quot;)' &gt; eg/test_anno.tsv
+cat eg/test_anno.tsv
+</code></pre>
+<pre><code>## 1000000  151 T   A   1
+## 1000000  172 TAA TA  2
+## 1000000  336 A   G   3
+</code></pre>
+<p><code>eg/test_anno.tsv</code> needs to be tabix-indexed with the following
+parameters:</p>
+<ul>
+<li><code>-s</code> specifies the column for sequence names</li>
+<li><code>-b</code> specifies the column for region start/s</li>
+<li><code>-e</code> specifies the column for region end/s</li>
+</ul>
+<!-- end list -->
+
+<pre><code class="language-bash">bgzip eg/test_anno.tsv
+tabix -s1 -b2 -e2 eg/test_anno.tsv.gz
+</code></pre>
+<p>Create header file.</p>
+<pre><code class="language-bash">echo -e &quot;##INFO=&lt;ID=INC,Number=1,Type=Integer,Description=\&quot;Increment number\&quot;&gt;&quot; &gt; eg/test_anno.hdr
+</code></pre>
+<p>Add <code>INC</code> annotation.</p>
+<pre><code class="language-bash">bcftools annotate -a eg/test_anno.tsv.gz -h eg/test_anno.hdr -c CHROM,POS,REF,ALT,INC eg/aln.bt.vcf.gz | grep -v &quot;^##&quot; | head -4
+</code></pre>
+<pre><code>## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;INC=1 GT:PL   1/1:255,255,0
+## 1000000  172 .   TAA TA  142.185 .   INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60;INC=2   GT:PL   1/1:169,117,0
+## 1000000  336 .   A   G   225.417 .   DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60;INC=3   GT:PL   1/1:255,255,0
+</code></pre>
 <h2 id="check-whether-the-ref-sequence-is-correct">Check whether the REF sequence is correct</h2>
 <p>Change the reference sequence of variant at position 151 to G.</p>
 <pre><code class="language-bash">zcat eg/aln.bt.vcf.gz | perl -lane 'if($F[1] == 151){ $F[3] = G; print join(&quot;\t&quot;, @F) } else { print }' &gt; eg/incorrect.vcf
@@ -653,18 +695,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.075s
-## user 0m0.065s
-## sys  0m0.024s
+## real 0m0.087s
+## user 0m0.079s
+## sys  0m0.036s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m3.723s
-## user 0m3.707s
-## sys  0m0.033s
+## real 0m4.327s
+## user 0m4.286s
+## sys  0m0.063s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -858,5 +900,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-03-24 07:53:47.048998+00:00
+Build Date UTC : 2022-04-04 02:30:14.782239+00:00
 -->
