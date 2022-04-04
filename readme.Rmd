@@ -25,6 +25,8 @@ The _de facto_ file format for storing genetic variation is the Variant Call For
 
 Initially, VCFtools (and the associated scripts) was used for working with VCF files. VCFtools was also developed by the 1000 Genomes Project team but the [tool](https://github.com/vcftools/vcftools) does not seem to be actively maintained anymore. As VCF files are simply tab-delimited flat files, they are slow to process and the BCF was implemented, which is a more efficient format for data processing. A BCF file is the binary equivalent of a VCF file, akin to the SAM and BAM formats and [BCFtools](https://github.com/samtools/bcftools) is used to work with BCF (and VCF) files. BCFtools is actively maintained and therefore should be used instead of VCFtools. To learn more about BCFtools (and SAMtools), check out the paper [Twelve years of SAMtools and BCFtools](https://academic.oup.com/gigascience/article/10/2/giab008/6137722) and please cite it if you use BCFtools for your work.
 
+Lastly, this README is created by `create_readme.sh` on GitHub Actions, which executes `readme.Rmd` and creates `README.md`.
+
 ## Installation
 
 The easiest way to install BCFtools is by using [Conda](https://docs.conda.io/en/latest/) (and I recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html)).
@@ -329,6 +331,40 @@ The `fill-tags` plugin can add additional tags to a VCF file including the AF ta
 
 ```{bash engine.opts='-l'}
 bcftools plugin fill-tags eg/aln.bt.vcf.gz | grep -v "^#" | head -1
+```
+
+## Add custom annotations
+
+The `annotate` function can be used to [add additional annotations](https://samtools.github.io/bcftools/howtos/annotate.html) to a VCF file. You can use a VCF file or a tabix-indexed tab-delimited file; if a tab-delimited file is used, an additional header file is required.
+
+To demonstrate, a tab-delimited file with incremental integers (fifth column) is created.
+
+```{bash engine.opts='-l'}
+bcftools view -H eg/aln.bt.vcf.gz | head -3 | cut -f1,2,4,5 | perl -nle '$i++; print join("\t", $_, "$i")' > eg/test_anno.tsv
+cat eg/test_anno.tsv
+```
+
+`eg/test_anno.tsv` needs to be tabix-indexed with the following parameters:
+
+* `-s` specifies the column for sequence names
+* `-b` specifies the column for region start/s
+* `-e` specifies the column for region end/s
+
+```{bash engine.opts='-l'}
+bgzip eg/test_anno.tsv
+tabix -s1 -b2 -e2 eg/test_anno.tsv.gz
+```
+
+Create header file.
+
+```{bash engine.opts='-l'}
+echo -e "##INFO=<ID=INC,Number=1,Type=Integer,Description=\"Increment number\">" > eg/test_anno.hdr
+```
+
+Add `INC` annotation.
+
+```{bash engine.opts='-l'}
+bcftools annotate -a eg/test_anno.tsv.gz -h eg/test_anno.hdr -c CHROM,POS,REF,ALT,INC eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
 
 ## Check whether the REF sequence is correct
