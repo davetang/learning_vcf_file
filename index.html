@@ -367,25 +367,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m21.017s
-## user 0m35.275s
-## sys  0m1.755s
+## real 0m16.980s
+## user 0m28.445s
+## sys  0m1.690s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m18.251s
-## user 0m33.680s
-## sys  0m2.118s
+## real 0m15.356s
+## user 0m28.490s
+## sys  0m1.648s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m27.857s
-## user 0m47.801s
-## sys  0m2.467s
+## real 0m22.588s
+## user 0m39.112s
+## sys  0m2.140s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -713,21 +713,21 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
 ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
 ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
 ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-## 12   131876810   rs61935878  A   G   50.51   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.731;DB;DP=5;Dels=0;FS=0;HRun=4;HaplotypeScore=0.9469;MQ0=0;MQ=60;MQRankSum=0.731;QD=10.1;ReadPosRankSum=0.731;set=variant2  GT:AD:DP:GQ:PL  0/1:1,4:5:27.1:81,0,27
-## 19   54755978    rs45600235  C   G   675.83  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.434;DB;DP=86;Dels=0;FS=2.047;HRun=3;HaplotypeScore=0.8321;MQ0=0;MQ=57.82;MQRankSum=1.309;QD=7.86;ReadPosRankSum=-0.817;set=variant2    GT:AD:DP:GQ:PL  0/1:54,32:86:99:706,0,1552
-## 10   61311293    rs12412495  T   C   270.6   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.09;DB;DP=14;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=57.28;MQRankSum=0.778;QD=19.33;ReadPosRankSum=0.623;set=variant2   GT:AD:DP:GQ:PL  0/1:3,11:14:77.76:301,0,78
-## 5    151229811   rs12108921  T   G   336.4   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.499;DB;DP=27;Dels=0;FS=1.721;HRun=3;HaplotypeScore=0;MQ0=0;MQ=59.31;MQRankSum=1.917;QD=12.46;ReadPosRankSum=0.315;set=variant2  GT:AD:DP:GQ:PL  0/1:14,13:27:99:366,0,336
-## 8    43047593    rs17603428  G   A   56.45   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.637;DB;DP=11;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.717;QD=5.13;ReadPosRankSum=0.143;set=variant2 GT:AD:DP:GQ:PL  0/1:6,5:11:86.44:86,0,184
-## 19   2833617 rs8107771   G   A   169.91  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.533;DB;DP=13;Dels=0;FS=2.398;HRun=0;HaplotypeScore=0.9789;MQ0=0;MQ=60;MQRankSum=0;QD=13.07;ReadPosRankSum=0.437;set=variant2    GT:AD:DP:GQ:PL  0/1:5,8:13:99:200,0,120
-## 5    33649807    rs4504387   C   A   442.09  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.398;DB;DP=43;Dels=0;FS=1.259;HRun=1;HaplotypeScore=0;MQ0=0;MQ=58.58;MQRankSum=-0.158;QD=10.28;ReadPosRankSum=-0.816;set=variant2   GT:AD:DP:GQ:PL  0/1:23,20:43:99:472,0,649
-## 16   1244887 rs3751661   T   A   149.51  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.742;DB;DP=7;Dels=0;FS=0;HRun=0;HaplotypeScore=1.6643;MQ0=0;MQ=53.03;MQRankSum=0.742;QD=21.36;ReadPosRankSum=0.742;set=variant2 GT:AD:DP:GQ:PL  0/1:1,6:7:19.6:179,0,20
-## GL000225.1   30551   .   G   A   148.74  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.085;DP=25;Dels=0;FS=2.066;HRun=0;HaplotypeScore=1.787;MQ0=0;MQ=48.58;MQRankSum=-3.878;QD=5.95;ReadPosRankSum=-1.783;set=variant2    GT:AD:DP:GQ:PL  0/1:16,9:25:99:179,0,513
-## 2    164466039   rs11309594  AT  A   452.92  PASS    AC=2;AF=1;AN=2;DB;DP=19;FS=0;HRun=10;HaplotypeScore=52.2789;MQ0=0;MQ=60;QD=23.84;set=variant    GT:AD:DP:GQ:PL  1/1:0,19:19:56.99:495,57,0
+## 1    34006598    rs12741094  C   G   69.33   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.55;DB;DP=7;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.55;QD=9.9;ReadPosRankSum=-1.3;set=variant2 GT:AD:DP:GQ:PL  0/1:4,3:7:99:99,0,142
+## 8    8234077 rs4840952   G   C   229.91  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.408;DB;DP=15;Dels=0;FS=2.216;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.286;QD=15.33;ReadPosRankSum=0.306;set=variant2   GT:AD:DP:GQ:PL  0/1:5,10:15:99:260,0,152
+## 11   18487305    rs17851143  C   G   706.52  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.151;DB;DP=60;Dels=0;FS=3.639;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.429;QD=11.78;ReadPosRankSum=-1.538;set=variant2  GT:AD:DP:GQ:PL  0/1:31,29:60:99:737,0,868
+## 5    121187497   rs7720502   A   G   73.6    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.729;DB;DP=9;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.307;QD=8.18;ReadPosRankSum=-0.876;set=variant2    GT:AD:DP:GQ:PL  0/1:5,4:9:99:104,0,141
+## 18   34273440    rs483351    C   T   129.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.074;DB;DP=13;Dels=0;FS=0;HRun=2;HaplotypeScore=0;MQ0=0;MQ=58.2;MQRankSum=0.555;QD=9.92;ReadPosRankSum=2.281;set=variant2   GT:AD:DP:GQ:PL  0/1:7,6:13:99:159,0,237
+## 17   4351560 rs12450838  G   A   52.93   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.322;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=56.82;MQRankSum=-0.322;QD=6.62;ReadPosRankSum=1.92;set=variant2    GT:AD:DP:GQ:PL  0/1:5,3:8:82.92:83,0,132
+## 9    135522454   rs3832640   AAAGT   A   350.61  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.788;DB;DP=28;FS=0;HRun=0;HaplotypeScore=123.016;MQ0=0;MQ=53.84;MQRankSum=-1.945;QD=12.52;ReadPosRankSum=0.239;set=variant   GT:AD:DP:GQ:PL  0/1:19,9:28:99:390,0,1017
+## 7    150389677   rs6952002   G   C   164.85  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.741;DB;DP=16;Dels=0;FS=4.467;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.635;QD=10.3;ReadPosRankSum=-0.635;set=variant2   GT:AD:DP:GQ:PL  0/1:9,7:16:99:195,0,285
+## 22   16287155    rs73877828  G   T   319.67  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.549;DB;DP=32;Dels=0;FS=0;HRun=1;HaplotypeScore=0.8667;MQ0=1;MQ=45.91;MQRankSum=0.75;QD=9.99;ReadPosRankSum=-0.02;set=variant2  GT:AD:DP:GQ:PL  0/1:20,12:32:99:350,0,636
+## 22   22843118    rs2236730   C   T   1035.79 PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.182;DB;DP=79;Dels=0;FS=0;HRun=0;HaplotypeScore=0.9933;MQ0=0;MQ=58.09;MQRankSum=1.407;QD=13.11;ReadPosRankSum=-0.603;set=variant2    GT:AD:DP:GQ:PL  0/1:40,39:79:99:1066,0,1016
 </code></pre>
 <p>Sort.</p>
 <pre><code class="language-bash">bcftools sort eg/Pfeiffer_shuf.vcf &gt; eg/Pfeiffer_sorted.vcf
 </code></pre>
-<pre><code>## Writing to /tmp/bcftools.YSuffI
+<pre><code>## Writing to /tmp/bcftools.573EXi
 ## Merging 1 temporary files
 ## Cleaning
 ## Done
@@ -862,18 +862,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.093s
-## user 0m0.063s
-## sys  0m0.056s
+## real 0m0.073s
+## user 0m0.069s
+## sys  0m0.025s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m4.724s
-## user 0m4.670s
-## sys  0m0.078s
+## real 0m3.730s
+## user 0m3.708s
+## sys  0m0.039s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -948,8 +948,8 @@ variants.</p>
 </code></pre>
 <pre><code>## Checking the headers and starting positions of 2 files
 ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-## Concatenating eg/aln.bt.vcf.gz   0.028835 seconds
-## Concatenating eg/aln.hc.vcf.gz   0.033053 seconds
+## Concatenating eg/aln.bt.vcf.gz   0.025073 seconds
+## Concatenating eg/aln.hc.vcf.gz   0.027899 seconds
 ## 19997
 </code></pre>
 <p>Removing duplicates requires indexed VCF files; the <code>-f</code> parameter is
@@ -1120,5 +1120,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-04-05 01:18:11.399746+00:00
+Build Date UTC : 2022-04-05 02:45:13.051791+00:00
 -->
