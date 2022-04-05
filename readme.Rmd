@@ -5,6 +5,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 Sys.setenv( PATH=paste0(Sys.getenv("PATH"), ":", getwd(), "/tools/bin") )
+Sys.setenv( MANPATH=paste0(Sys.getenv("MANPATH"), ":", getwd(), "/tools/share/man") )
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
