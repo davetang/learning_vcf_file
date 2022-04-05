@@ -29,7 +29,7 @@ for tool in htslib bcftools; do
    fi
    if [[ ! -e ${install_path}/bin/${check} ]]; then
       url=https://github.com/samtools/${tool}/releases/download/${ver}/${tool}-${ver}.tar.bz2
-      wget ${url}
+      wget --quiet ${url}
       tar xjf ${tool}-${ver}.tar.bz2
       cd ${tool}-${ver}
       ./configure --prefix=${install_path}
@@ -43,7 +43,7 @@ if [[ ! -e ${install_path}/bin/vcf2bed ]]; then
    cd ${install_path}
    bedops_ver=2.4.40
    url=https://github.com/bedops/bedops/releases/download/v${bedops_ver}/bedops_linux_x86_64-v${bedops_ver}.tar.bz2
-   wget ${url}
+   wget --quiet ${url}
    tar -xjf bedops_linux_x86_64-v${bedops_ver}.tar.bz2
    rm bedops_linux_x86_64-v${bedops_ver}.tar.bz2
 fi
@@ -52,24 +52,11 @@ if [[ ! -e ${install_path}/bin/gh-md-toc ]]; then
    cd ${install_path}
    toc_ver=0.8.0
    url=https://github.com/ekalinin/github-markdown-toc/archive/refs/tags/${toc_ver}.tar.gz
-   wget -O github-markdown-toc-${toc_ver}.tar.gz ${url}
+   wget --quiet -O github-markdown-toc-${toc_ver}.tar.gz ${url}
    tar xzf github-markdown-toc-${toc_ver}.tar.gz
    mv github-markdown-toc-${toc_ver}/gh-md-toc ${install_path}/bin
    rm -rf github-markdown-toc-${toc_ver}*
 fi
-
-#if [[ ! -e ${install_path}/bin/vt ]]; then
-#   cd ${install_path}
-#   vt_ver=0.57721
-#   url=https://github.com/atks/vt/archive/refs/tags/${vt_ver}.tar.gz
-#   wget ${url} -O vt-${vt_ver}.tar.gz
-#   tar -xzf vt-${vt_ver}.tar.gz
-#   cd vt-${vt_ver}
-#   make
-#   mv vt ${install_path}/bin/
-#   cd ..
-#   rm -rf vt-${vt_ver}*
-#fi
 
 >&2 echo Done
 exit 0
