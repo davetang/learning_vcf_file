@@ -30,7 +30,7 @@ jobs:
       - run: echo "The workflow is now ready to test your code on the runner."
 
       - name: Install pandoc
-        run: apt update && apt install -y pandoc
+        run: apt update && apt install -y pandoc man
 
       - name: Install tools for README
         run: script/tools_for_readme.sh
