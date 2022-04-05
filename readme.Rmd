@@ -85,6 +85,14 @@ Running `bcftools` without any parameters will output the usage and the subcomma
 bcftools --help
 ```
 
+## Getting help
+
+If BCFtools was [installed]($installation) by compiling the source code, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable [needs to be set](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
+
+```{bash engine.opts='-l'}
+man bcftools | grep "LIST OF COMMANDS" -B 1984
+```
+
 ## VCF to BCF and other conversions
 
 Use `bcftools view` or `bcftools convert` to make conversions and use `--output-type u` or `--output-type b` for uncompressed and compressed BCF, respectively.
@@ -365,6 +373,18 @@ Add `INC` annotation.
 
 ```{bash engine.opts='-l'}
 bcftools annotate -a eg/test_anno.tsv.gz -h eg/test_anno.hdr -c CHROM,POS,REF,ALT,INC eg/aln.bt.vcf.gz | grep -v "^##" | head -4
+```
+
+To add the custom annotations to the ID column of the VCF file, specify the ID column instead of the INFO tag with the `-c` parameter. (Note that we no longer require the header file, since the ID column is a standard column in the VCF.)
+
+```{bash engine.opts='-l'}
+bcftools annotate -a eg/test_anno.tsv.gz -c CHROM,POS,REF,ALT,ID eg/aln.bt.vcf.gz | grep -v "^##" | head -4
+```
+
+In addition, `annotate` can set IDs on-the-fly using information from the VCF columns using the `--set-id` parameter.
+
+```{bash engine.opts='-l'}
+bcftools annotate --set-id '%CHROM\_%POS\_%REF\_%FIRST_ALT' eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
 
 ## Check whether the REF sequence is correct
