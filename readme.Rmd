@@ -90,8 +90,8 @@ bcftools --help
 
 If BCFtools was [installed]($installation) by compiling the source code, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable [needs to be set](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
 
-```{bash engine.opts='-l'}
-man bcftools | grep "LIST OF COMMANDS" -B 1984
+```bash
+man bcftools
 ```
 
 ## VCF to BCF and other conversions
