@@ -91,7 +91,7 @@ bcftools --help
 If BCFtools was [installed]($installation) by compiling the source code, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable [needs to be set](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
 
 ```bash
-man bcftools
+man bcftools | grep "LIST OF COMMANDS" -B 1984
 ```
 
 ## VCF to BCF and other conversions
@@ -176,48 +176,6 @@ File sizes
 du -h eg/1kgp.*
 ```
 
-## Filtering for different types of mutations
-
-Use the `bcftools view` subcommand to subset specific types of variants.
-
-    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
-
-SNPs.
-
-```{bash engine.opts='-l'}
-bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
-```
-
-Indels.
-
-```{bash engine.opts='-l'}
-bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
-```
-
-[Multiple Nucleotide Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions): The reference and alternate sequences are of the same length and have to be greater than 1 and all nucleotides in the sequences differ from one another.
-
-```{bash engine.opts='-l'}
-bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
-```
-
-Not sure what `ref` refers to but possibly structural variants. `INS:ME` refers to an insertion of a mobile element relative to the reference and the `<CN#>` refers to `Copy number allele: # copies` according to the VCF header.
-
-```{bash engine.opts='-l'}
-bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
-```
-
-Breakends (no variants of this class).
-
-```{bash engine.opts='-l'}
-bcftools view -H -v bnd eg/1kgp.bcf
-```
-
-Others.
-
-```{bash engine.opts='-l'}
-bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
-```
-
 ## VCF to PED
 
 See my [blog post](http://davetang.org/muse/2016/07/28/vcf-to-ped/).
@@ -276,17 +234,93 @@ Combining with the `view` subcommand:
 bcftools view -v snps eg/aln.bt.vcf.gz | bcftools query -f 'DP=%DP\tAN=%AN\tAC=%AC\tMQ=%MQ\n' - | head -3
 ```
 
-## Filtering VCF on the FILTER column
+## Filtering
 
-Use `bcftools view` to keep variants that have a "PASS" in the FILTER column.
+Many commands of BCFtools can be used for [filtering variants](https://samtools.github.io/bcftools/howtos/filtering.html) by using the `-f, --apply-filters` or the `-i, --include` and `-e, --exclude` parameters. We will download another example file to demonstrate how to perform filtering.
+
+```{bash engine.opts='-l'}
+wget --quiet https://davetang.org/file/ERR031940.merged.scored.filtered.bcf -O eg/ERR031940.bcf
+```
+
+To perform filtering on the `FILTER` column of the VCF file, use `bcftools view` and the `-f, --apply-filters` parameter.
 
     -f,   --apply-filters <list> require at least one of the listed FILTER strings (e.g. "PASS,.")
 
+Keep variants with `CNN_2D_SNP_Tranche_99.90_100.00` in the `FILTER` column.
+
 ```{bash engine.opts='-l'}
-bcftools view -H -f PASS eg/1kgp.bcf | head -3
+bcftools view -H -f CNN_2D_SNP_Tranche_99.90_100.00 eg/ERR031940.bcf | wc -l
 ```
 
-## Filtering VCF file using the INFO field/s
+Keep variants with `CNN_2D_SNP_Tranche_99.90_100.00` and `CNN_2D_INDEL_Tranche_99.00_100.00` in the `FILTER` column.
+
+```{bash engine.opts='-l'}
+bcftools view -H -f CNN_2D_SNP_Tranche_99.90_100.00,CNN_2D_INDEL_Tranche_99.00_100.00 eg/ERR031940.bcf | wc -l
+```
+
+Keep variants that have passed filters, i.e. contain `PASS` in the `FILTER` column.
+
+```{bash engine.opts='-l'}
+bcftools view -H -f PASS eg/ERR031940.bcf | head -3
+```
+
+The `filter` command can achieve the same filtering step as above.
+
+```{bash engine.opts='-l'}
+bcftools filter -i 'FILTER="PASS"' eg/ERR031940.bcf | bcftools view -H - | head -3
+```
+
+`bcftools query` can also perform the same filtering using `-i, --include` but a format must be specified.
+
+```{bash engine.opts='-l'}
+bcftools query -i 'FILTER="PASS"' -f '%CHROM %POS %FILTER\n' eg/ERR031940.bcf | head -3
+```
+
+Which command should be used for filtering? I would recommend using `bcftools filter` for filtering since it clearly states that you are performing filtering in the command name (it is clearer to someone not familiar with BCFtools) and the `-i` and `-e` expressions are flexible enough to perform most filtering requirements. Use `bcftools query` if you want to perform filtering and modify the output.
+
+### Different mutations
+
+Use the `bcftools view` subcommand to subset specific types of variants.
+
+    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
+
+SNPs.
+
+```{bash engine.opts='-l'}
+bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+Indels.
+
+```{bash engine.opts='-l'}
+bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+[Multiple Nucleotide Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions): The reference and alternate sequences are of the same length and have to be greater than 1 and all nucleotides in the sequences differ from one another.
+
+```{bash engine.opts='-l'}
+bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
+```
+
+Not sure what `ref` refers to but possibly structural variants. `INS:ME` refers to an insertion of a mobile element relative to the reference and the `<CN#>` refers to `Copy number allele: # copies` according to the VCF header.
+
+```{bash engine.opts='-l'}
+bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+Breakends (no variants of this class).
+
+```{bash engine.opts='-l'}
+bcftools view -H -v bnd eg/1kgp.bcf
+```
+
+Others.
+
+```{bash engine.opts='-l'}
+bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+### Filtering VCF file using the INFO field/s
 
 Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In the example below we are filtering out variants that have a depth of less than 200. We also use the `-s` parameter to name our filter and this name will be displayed in the `FILTER` column.
 
@@ -299,6 +333,8 @@ Use `&` to combine several other criteria.
 ```{bash engine.opts='-l'}
 bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep -v "^##" | head -4
 ```
+
+Note that `&` and `&&` have different meanings in the expression and make a difference if you have more than one sample in your VCF file. Using `&` requires that the conditions are satisfied within one sample and `&&` means that conditions can be satisfied across samples.
 
 The `-e` or `-i` parameters accept an expression and we can use it to perform calculations. In the example below, variants with a QD divided by DP ratio of less than 0.3 are labelled with `QD/DP`; this ratio was created for illustrative purposes only. Note that `QD` and `DP` are prefixed with `INFO/`; this was done to explicitly state that we want the QD and DP values from the INFO field, since there is also a DP value in the FORMAT field. (This VCF file is different from the first filtering example, which only had one DP value.)
 
@@ -548,6 +584,18 @@ num_sample=$(bcftools query -l eg/1001genomes_snp-short-indel_only_ACGTN_5000.vc
 for (( i = 0 ; i < ${num_sample} ; i++ )); do echo ${i}; done > eg/sample_name.txt
 
 bcftools reheader -s eg/sample_name.txt eg/1001genomes_snp-short-indel_only_ACGTN_5000.vcf.gz | bcftools view -h - | tail -1
+```
+
+## Remove header info
+
+The `reheader` command can also be used to modify the header information, such as removing specific info. For example if we want to remove `GATKCommandLine`, we would first create a new header file and use it to generate a new header.
+
+```{bash engine.opts='-l'}
+# GATKCommandLine exists in the header before running reheader
+bcftools view -h eg/aln.hc.vcf.gz | grep -c GATKCommandLine
+
+bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine > eg/new_header.txt
+bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h - | grep -c GATKCommandLine
 ```
 
 ## Subset sample/s from a multi-sample VCF file
