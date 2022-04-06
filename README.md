@@ -39,7 +39,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Wed 06 Apr 2022 02:48:57 AM UTC
+Wed 06 Apr 2022 04:39:44 AM UTC
 
 Learning the VCF format
 ================
@@ -219,11 +219,12 @@ bcftools --help
 
 ## Getting help
 
-If BCFtools was [installed]($installation) by compiling the source code,
-you can simply run `man bcftools` to access the manual pages for getting
-help. If BCFtools was installed using `Conda`, the `MANPATH` environment
-variable [needs to be
-set](https://github.com/conda/conda/issues/845#issuecomment-525223443).
+If BCFtools was [installed]($installation) by compiling the source code
+with the path to the man pages added to `MANPATH`, you can simply run
+`man bcftools` to access the manual pages for getting help. If BCFtools
+was installed using `Conda`, the `MANPATH` environment variable needs to
+be set
+\[accordingly\]\](<https://github.com/conda/conda/issues/845#issuecomment-525223443>).
 The man pages provides additional information for each subcommand and
 its parameters.
 
@@ -281,6 +282,10 @@ man bcftools | grep "LIST OF COMMANDS" -B 1984
     ##        model is recommended for most tasks.
     ## 
     ## LIST OF COMMANDS
+
+You can also [open an
+issue](https://github.com/davetang/learning_vcf_file/issues) and I will
+try to answer your question.
 
 ## VCF to BCF and other conversions
 
@@ -365,9 +370,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m17.506s
-    ## user 0m30.557s
-    ## sys  0m1.545s
+    ## real 0m17.641s
+    ## user 0m30.388s
+    ## sys  0m1.526s
 
 VCF to uncompressed BCF.
 
@@ -376,9 +381,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m16.352s
-    ## user 0m30.576s
-    ## sys  0m1.678s
+    ## real 0m16.254s
+    ## user 0m30.481s
+    ## sys  0m1.570s
 
 VCF to compressed VCF.
 
@@ -387,9 +392,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m24.737s
-    ## user 0m42.591s
-    ## sys  0m2.293s
+    ## real 0m24.801s
+    ## user 0m42.569s
+    ## sys  0m2.099s
 
 File sizes
 
@@ -574,18 +579,18 @@ Which command should be used for filtering? I would recommend using
 performing filtering in the command name (it is clearer to someone not
 familiar with BCFtools) and the `-i` and `-e` expressions are flexible
 enough to perform most filtering requirements. Use `bcftools query` if
-you want to perform filtering and modify the output.
+you want to perform filtering and modify the output. See `man bcftools`
+for more information about `EXPRESSIONS`, which I recommend reading.
 
 ### Different mutations
 
-Use the `bcftools view` subcommand to subset specific types of variants.
-
-    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
+Use `TYPE` in the filtering expression to subset specific types of
+variants; types include: indel, snp, mnp, ref, bnd, other, and overlap.
 
 SNPs.
 
 ``` bash
-bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="snp"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
 ```
 
     ## 1    10505   .   A   T   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
@@ -594,7 +599,7 @@ bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
 Indels.
 
 ``` bash
-bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="indel"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
 ```
 
     ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363
@@ -607,10 +612,10 @@ be greater than 1 and all nucleotides in the sequences differ from one
 another.
 
 ``` bash
-bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
+bcftools filter -i 'TYPE="mnps"' eg/ex.vcf | grep -v "^#" | cut -f1-8
 ```
 
-    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant
 
 Not sure what `ref` refers to but possibly structural variants. `INS:ME`
 refers to an insertion of a mobile element relative to the reference and
@@ -619,6 +624,9 @@ VCF header.
 
 ``` bash
 bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+
+# filter returns nothing but view does
+# bcftools filter -i 'TYPE="ref"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
 ```
 
     ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
@@ -628,18 +636,526 @@ bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
 Breakends (no variants of this class).
 
 ``` bash
-bcftools view -H -v bnd eg/1kgp.bcf
+bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf
 ```
+
+    ## ##fileformat=VCFv4.1
+    ## ##FILTER=<ID=PASS,Description="All filters passed">
+    ## ##fileDate=20140730
+    ## ##reference=ftp://ftp.1000genomes.ebi.ac.uk//vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+    ## ##source=1000GenomesPhase3Pipeline
+    ## ##contig=<ID=1,assembly=b37,length=249250621>
+    ## ##contig=<ID=2,assembly=b37,length=243199373>
+    ## ##contig=<ID=3,assembly=b37,length=198022430>
+    ## ##contig=<ID=4,assembly=b37,length=191154276>
+    ## ##contig=<ID=5,assembly=b37,length=180915260>
+    ## ##contig=<ID=6,assembly=b37,length=171115067>
+    ## ##contig=<ID=7,assembly=b37,length=159138663>
+    ## ##contig=<ID=8,assembly=b37,length=146364022>
+    ## ##contig=<ID=9,assembly=b37,length=141213431>
+    ## ##contig=<ID=10,assembly=b37,length=135534747>
+    ## ##contig=<ID=11,assembly=b37,length=135006516>
+    ## ##contig=<ID=12,assembly=b37,length=133851895>
+    ## ##contig=<ID=13,assembly=b37,length=115169878>
+    ## ##contig=<ID=14,assembly=b37,length=107349540>
+    ## ##contig=<ID=15,assembly=b37,length=102531392>
+    ## ##contig=<ID=16,assembly=b37,length=90354753>
+    ## ##contig=<ID=17,assembly=b37,length=81195210>
+    ## ##contig=<ID=18,assembly=b37,length=78077248>
+    ## ##contig=<ID=19,assembly=b37,length=59128983>
+    ## ##contig=<ID=20,assembly=b37,length=63025520>
+    ## ##contig=<ID=21,assembly=b37,length=48129895>
+    ## ##contig=<ID=22,assembly=b37,length=51304566>
+    ## ##contig=<ID=GL000191.1,assembly=b37,length=106433>
+    ## ##contig=<ID=GL000192.1,assembly=b37,length=547496>
+    ## ##contig=<ID=GL000193.1,assembly=b37,length=189789>
+    ## ##contig=<ID=GL000194.1,assembly=b37,length=191469>
+    ## ##contig=<ID=GL000195.1,assembly=b37,length=182896>
+    ## ##contig=<ID=GL000196.1,assembly=b37,length=38914>
+    ## ##contig=<ID=GL000197.1,assembly=b37,length=37175>
+    ## ##contig=<ID=GL000198.1,assembly=b37,length=90085>
+    ## ##contig=<ID=GL000199.1,assembly=b37,length=169874>
+    ## ##contig=<ID=GL000200.1,assembly=b37,length=187035>
+    ## ##contig=<ID=GL000201.1,assembly=b37,length=36148>
+    ## ##contig=<ID=GL000202.1,assembly=b37,length=40103>
+    ## ##contig=<ID=GL000203.1,assembly=b37,length=37498>
+    ## ##contig=<ID=GL000204.1,assembly=b37,length=81310>
+    ## ##contig=<ID=GL000205.1,assembly=b37,length=174588>
+    ## ##contig=<ID=GL000206.1,assembly=b37,length=41001>
+    ## ##contig=<ID=GL000207.1,assembly=b37,length=4262>
+    ## ##contig=<ID=GL000208.1,assembly=b37,length=92689>
+    ## ##contig=<ID=GL000209.1,assembly=b37,length=159169>
+    ## ##contig=<ID=GL000210.1,assembly=b37,length=27682>
+    ## ##contig=<ID=GL000211.1,assembly=b37,length=166566>
+    ## ##contig=<ID=GL000212.1,assembly=b37,length=186858>
+    ## ##contig=<ID=GL000213.1,assembly=b37,length=164239>
+    ## ##contig=<ID=GL000214.1,assembly=b37,length=137718>
+    ## ##contig=<ID=GL000215.1,assembly=b37,length=172545>
+    ## ##contig=<ID=GL000216.1,assembly=b37,length=172294>
+    ## ##contig=<ID=GL000217.1,assembly=b37,length=172149>
+    ## ##contig=<ID=GL000218.1,assembly=b37,length=161147>
+    ## ##contig=<ID=GL000219.1,assembly=b37,length=179198>
+    ## ##contig=<ID=GL000220.1,assembly=b37,length=161802>
+    ## ##contig=<ID=GL000221.1,assembly=b37,length=155397>
+    ## ##contig=<ID=GL000222.1,assembly=b37,length=186861>
+    ## ##contig=<ID=GL000223.1,assembly=b37,length=180455>
+    ## ##contig=<ID=GL000224.1,assembly=b37,length=179693>
+    ## ##contig=<ID=GL000225.1,assembly=b37,length=211173>
+    ## ##contig=<ID=GL000226.1,assembly=b37,length=15008>
+    ## ##contig=<ID=GL000227.1,assembly=b37,length=128374>
+    ## ##contig=<ID=GL000228.1,assembly=b37,length=129120>
+    ## ##contig=<ID=GL000229.1,assembly=b37,length=19913>
+    ## ##contig=<ID=GL000230.1,assembly=b37,length=43691>
+    ## ##contig=<ID=GL000231.1,assembly=b37,length=27386>
+    ## ##contig=<ID=GL000232.1,assembly=b37,length=40652>
+    ## ##contig=<ID=GL000233.1,assembly=b37,length=45941>
+    ## ##contig=<ID=GL000234.1,assembly=b37,length=40531>
+    ## ##contig=<ID=GL000235.1,assembly=b37,length=34474>
+    ## ##contig=<ID=GL000236.1,assembly=b37,length=41934>
+    ## ##contig=<ID=GL000237.1,assembly=b37,length=45867>
+    ## ##contig=<ID=GL000238.1,assembly=b37,length=39939>
+    ## ##contig=<ID=GL000239.1,assembly=b37,length=33824>
+    ## ##contig=<ID=GL000240.1,assembly=b37,length=41933>
+    ## ##contig=<ID=GL000241.1,assembly=b37,length=42152>
+    ## ##contig=<ID=GL000242.1,assembly=b37,length=43523>
+    ## ##contig=<ID=GL000243.1,assembly=b37,length=43341>
+    ## ##contig=<ID=GL000244.1,assembly=b37,length=39929>
+    ## ##contig=<ID=GL000245.1,assembly=b37,length=36651>
+    ## ##contig=<ID=GL000246.1,assembly=b37,length=38154>
+    ## ##contig=<ID=GL000247.1,assembly=b37,length=36422>
+    ## ##contig=<ID=GL000248.1,assembly=b37,length=39786>
+    ## ##contig=<ID=GL000249.1,assembly=b37,length=38502>
+    ## ##contig=<ID=MT,assembly=b37,length=16569>
+    ## ##contig=<ID=NC_007605,assembly=b37,length=171823>
+    ## ##contig=<ID=X,assembly=b37,length=155270560>
+    ## ##contig=<ID=Y,assembly=b37,length=59373566>
+    ## ##contig=<ID=hs37d5,assembly=b37,length=35477943>
+    ## ##ALT=<ID=CNV,Description="Copy Number Polymorphism">
+    ## ##ALT=<ID=DEL,Description="Deletion">
+    ## ##ALT=<ID=DUP,Description="Duplication">
+    ## ##ALT=<ID=INS:ME:ALU,Description="Insertion of ALU element">
+    ## ##ALT=<ID=INS:ME:LINE1,Description="Insertion of LINE1 element">
+    ## ##ALT=<ID=INS:ME:SVA,Description="Insertion of SVA element">
+    ## ##ALT=<ID=INS:MT,Description="Nuclear Mitochondrial Insertion">
+    ## ##ALT=<ID=INV,Description="Inversion">
+    ## ##ALT=<ID=CN0,Description="Copy number allele: 0 copies">
+    ## ##ALT=<ID=CN1,Description="Copy number allele: 1 copy">
+    ## ##ALT=<ID=CN2,Description="Copy number allele: 2 copies">
+    ## ##ALT=<ID=CN3,Description="Copy number allele: 3 copies">
+    ## ##ALT=<ID=CN4,Description="Copy number allele: 4 copies">
+    ## ##ALT=<ID=CN5,Description="Copy number allele: 5 copies">
+    ## ##ALT=<ID=CN6,Description="Copy number allele: 6 copies">
+    ## ##ALT=<ID=CN7,Description="Copy number allele: 7 copies">
+    ## ##ALT=<ID=CN8,Description="Copy number allele: 8 copies">
+    ## ##ALT=<ID=CN9,Description="Copy number allele: 9 copies">
+    ## ##ALT=<ID=CN10,Description="Copy number allele: 10 copies">
+    ## ##ALT=<ID=CN11,Description="Copy number allele: 11 copies">
+    ## ##ALT=<ID=CN12,Description="Copy number allele: 12 copies">
+    ## ##ALT=<ID=CN13,Description="Copy number allele: 13 copies">
+    ## ##ALT=<ID=CN14,Description="Copy number allele: 14 copies">
+    ## ##ALT=<ID=CN15,Description="Copy number allele: 15 copies">
+    ## ##ALT=<ID=CN16,Description="Copy number allele: 16 copies">
+    ## ##ALT=<ID=CN17,Description="Copy number allele: 17 copies">
+    ## ##ALT=<ID=CN18,Description="Copy number allele: 18 copies">
+    ## ##ALT=<ID=CN19,Description="Copy number allele: 19 copies">
+    ## ##ALT=<ID=CN20,Description="Copy number allele: 20 copies">
+    ## ##ALT=<ID=CN21,Description="Copy number allele: 21 copies">
+    ## ##ALT=<ID=CN22,Description="Copy number allele: 22 copies">
+    ## ##ALT=<ID=CN23,Description="Copy number allele: 23 copies">
+    ## ##ALT=<ID=CN24,Description="Copy number allele: 24 copies">
+    ## ##ALT=<ID=CN25,Description="Copy number allele: 25 copies">
+    ## ##ALT=<ID=CN26,Description="Copy number allele: 26 copies">
+    ## ##ALT=<ID=CN27,Description="Copy number allele: 27 copies">
+    ## ##ALT=<ID=CN28,Description="Copy number allele: 28 copies">
+    ## ##ALT=<ID=CN29,Description="Copy number allele: 29 copies">
+    ## ##ALT=<ID=CN30,Description="Copy number allele: 30 copies">
+    ## ##ALT=<ID=CN31,Description="Copy number allele: 31 copies">
+    ## ##ALT=<ID=CN32,Description="Copy number allele: 32 copies">
+    ## ##ALT=<ID=CN33,Description="Copy number allele: 33 copies">
+    ## ##ALT=<ID=CN34,Description="Copy number allele: 34 copies">
+    ## ##ALT=<ID=CN35,Description="Copy number allele: 35 copies">
+    ## ##ALT=<ID=CN36,Description="Copy number allele: 36 copies">
+    ## ##ALT=<ID=CN37,Description="Copy number allele: 37 copies">
+    ## ##ALT=<ID=CN38,Description="Copy number allele: 38 copies">
+    ## ##ALT=<ID=CN39,Description="Copy number allele: 39 copies">
+    ## ##ALT=<ID=CN40,Description="Copy number allele: 40 copies">
+    ## ##ALT=<ID=CN41,Description="Copy number allele: 41 copies">
+    ## ##ALT=<ID=CN42,Description="Copy number allele: 42 copies">
+    ## ##ALT=<ID=CN43,Description="Copy number allele: 43 copies">
+    ## ##ALT=<ID=CN44,Description="Copy number allele: 44 copies">
+    ## ##ALT=<ID=CN45,Description="Copy number allele: 45 copies">
+    ## ##ALT=<ID=CN46,Description="Copy number allele: 46 copies">
+    ## ##ALT=<ID=CN47,Description="Copy number allele: 47 copies">
+    ## ##ALT=<ID=CN48,Description="Copy number allele: 48 copies">
+    ## ##ALT=<ID=CN49,Description="Copy number allele: 49 copies">
+    ## ##ALT=<ID=CN50,Description="Copy number allele: 50 copies">
+    ## ##ALT=<ID=CN51,Description="Copy number allele: 51 copies">
+    ## ##ALT=<ID=CN52,Description="Copy number allele: 52 copies">
+    ## ##ALT=<ID=CN53,Description="Copy number allele: 53 copies">
+    ## ##ALT=<ID=CN54,Description="Copy number allele: 54 copies">
+    ## ##ALT=<ID=CN55,Description="Copy number allele: 55 copies">
+    ## ##ALT=<ID=CN56,Description="Copy number allele: 56 copies">
+    ## ##ALT=<ID=CN57,Description="Copy number allele: 57 copies">
+    ## ##ALT=<ID=CN58,Description="Copy number allele: 58 copies">
+    ## ##ALT=<ID=CN59,Description="Copy number allele: 59 copies">
+    ## ##ALT=<ID=CN60,Description="Copy number allele: 60 copies">
+    ## ##ALT=<ID=CN61,Description="Copy number allele: 61 copies">
+    ## ##ALT=<ID=CN62,Description="Copy number allele: 62 copies">
+    ## ##ALT=<ID=CN63,Description="Copy number allele: 63 copies">
+    ## ##ALT=<ID=CN64,Description="Copy number allele: 64 copies">
+    ## ##ALT=<ID=CN65,Description="Copy number allele: 65 copies">
+    ## ##ALT=<ID=CN66,Description="Copy number allele: 66 copies">
+    ## ##ALT=<ID=CN67,Description="Copy number allele: 67 copies">
+    ## ##ALT=<ID=CN68,Description="Copy number allele: 68 copies">
+    ## ##ALT=<ID=CN69,Description="Copy number allele: 69 copies">
+    ## ##ALT=<ID=CN70,Description="Copy number allele: 70 copies">
+    ## ##ALT=<ID=CN71,Description="Copy number allele: 71 copies">
+    ## ##ALT=<ID=CN72,Description="Copy number allele: 72 copies">
+    ## ##ALT=<ID=CN73,Description="Copy number allele: 73 copies">
+    ## ##ALT=<ID=CN74,Description="Copy number allele: 74 copies">
+    ## ##ALT=<ID=CN75,Description="Copy number allele: 75 copies">
+    ## ##ALT=<ID=CN76,Description="Copy number allele: 76 copies">
+    ## ##ALT=<ID=CN77,Description="Copy number allele: 77 copies">
+    ## ##ALT=<ID=CN78,Description="Copy number allele: 78 copies">
+    ## ##ALT=<ID=CN79,Description="Copy number allele: 79 copies">
+    ## ##ALT=<ID=CN80,Description="Copy number allele: 80 copies">
+    ## ##ALT=<ID=CN81,Description="Copy number allele: 81 copies">
+    ## ##ALT=<ID=CN82,Description="Copy number allele: 82 copies">
+    ## ##ALT=<ID=CN83,Description="Copy number allele: 83 copies">
+    ## ##ALT=<ID=CN84,Description="Copy number allele: 84 copies">
+    ## ##ALT=<ID=CN85,Description="Copy number allele: 85 copies">
+    ## ##ALT=<ID=CN86,Description="Copy number allele: 86 copies">
+    ## ##ALT=<ID=CN87,Description="Copy number allele: 87 copies">
+    ## ##ALT=<ID=CN88,Description="Copy number allele: 88 copies">
+    ## ##ALT=<ID=CN89,Description="Copy number allele: 89 copies">
+    ## ##ALT=<ID=CN90,Description="Copy number allele: 90 copies">
+    ## ##ALT=<ID=CN91,Description="Copy number allele: 91 copies">
+    ## ##ALT=<ID=CN92,Description="Copy number allele: 92 copies">
+    ## ##ALT=<ID=CN93,Description="Copy number allele: 93 copies">
+    ## ##ALT=<ID=CN94,Description="Copy number allele: 94 copies">
+    ## ##ALT=<ID=CN95,Description="Copy number allele: 95 copies">
+    ## ##ALT=<ID=CN96,Description="Copy number allele: 96 copies">
+    ## ##ALT=<ID=CN97,Description="Copy number allele: 97 copies">
+    ## ##ALT=<ID=CN98,Description="Copy number allele: 98 copies">
+    ## ##ALT=<ID=CN99,Description="Copy number allele: 99 copies">
+    ## ##ALT=<ID=CN100,Description="Copy number allele: 100 copies">
+    ## ##ALT=<ID=CN101,Description="Copy number allele: 101 copies">
+    ## ##ALT=<ID=CN102,Description="Copy number allele: 102 copies">
+    ## ##ALT=<ID=CN103,Description="Copy number allele: 103 copies">
+    ## ##ALT=<ID=CN104,Description="Copy number allele: 104 copies">
+    ## ##ALT=<ID=CN105,Description="Copy number allele: 105 copies">
+    ## ##ALT=<ID=CN106,Description="Copy number allele: 106 copies">
+    ## ##ALT=<ID=CN107,Description="Copy number allele: 107 copies">
+    ## ##ALT=<ID=CN108,Description="Copy number allele: 108 copies">
+    ## ##ALT=<ID=CN109,Description="Copy number allele: 109 copies">
+    ## ##ALT=<ID=CN110,Description="Copy number allele: 110 copies">
+    ## ##ALT=<ID=CN111,Description="Copy number allele: 111 copies">
+    ## ##ALT=<ID=CN112,Description="Copy number allele: 112 copies">
+    ## ##ALT=<ID=CN113,Description="Copy number allele: 113 copies">
+    ## ##ALT=<ID=CN114,Description="Copy number allele: 114 copies">
+    ## ##ALT=<ID=CN115,Description="Copy number allele: 115 copies">
+    ## ##ALT=<ID=CN116,Description="Copy number allele: 116 copies">
+    ## ##ALT=<ID=CN117,Description="Copy number allele: 117 copies">
+    ## ##ALT=<ID=CN118,Description="Copy number allele: 118 copies">
+    ## ##ALT=<ID=CN119,Description="Copy number allele: 119 copies">
+    ## ##ALT=<ID=CN120,Description="Copy number allele: 120 copies">
+    ## ##ALT=<ID=CN121,Description="Copy number allele: 121 copies">
+    ## ##ALT=<ID=CN122,Description="Copy number allele: 122 copies">
+    ## ##ALT=<ID=CN123,Description="Copy number allele: 123 copies">
+    ## ##ALT=<ID=CN124,Description="Copy number allele: 124 copies">
+    ## ##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
+    ## ##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1)">
+    ## ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+    ## ##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+    ## ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+    ## ##INFO=<ID=CS,Number=1,Type=String,Description="Source call set.">
+    ## ##INFO=<ID=END,Number=1,Type=Integer,Description="End coordinate of this variant">
+    ## ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+    ## ##INFO=<ID=MC,Number=.,Type=String,Description="Merged calls.">
+    ## ##INFO=<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END<POLARITY; If there is only 5' OR 3' support for this call, will be NULL NULL for START and END">
+    ## ##INFO=<ID=MEND,Number=1,Type=Integer,Description="Mitochondrial end coordinate of inserted sequence">
+    ## ##INFO=<ID=MLEN,Number=1,Type=Integer,Description="Estimated length of mitochondrial insert">
+    ## ##INFO=<ID=MSTART,Number=1,Type=Integer,Description="Mitochondrial start coordinate of inserted sequence">
+    ## ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+    ## ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+    ## ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+    ## ##INFO=<ID=TSD,Number=1,Type=String,Description="Precise Target Site Duplication for bases, if unknown, value will be NULL">
+    ## ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+    ## ##INFO=<ID=EAS_AF,Number=A,Type=Float,Description="Allele frequency in the EAS populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=EUR_AF,Number=A,Type=Float,Description="Allele frequency in the EUR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=AFR_AF,Number=A,Type=Float,Description="Allele frequency in the AFR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=AMR_AF,Number=A,Type=Float,Description="Allele frequency in the AMR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=SAS_AF,Number=A,Type=Float,Description="Allele frequency in the SAS populations calculated from AC and AN, in the range (0,1)">
+    ## ##bcftools_filterVersion=1.15+htslib-1.15
+    ## ##bcftools_filterCommand=filter -i TYPE="bnd" eg/1kgp.bcf; Date=Wed Apr  6 04:39:22 2022
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00124 HG00501 HG00635 HG00702 HG00733 HG01983 HG02024 HG02046 HG02363 HG02372 HG02377 HG02381 HG02387 HG02388 HG03715 HG03948 NA19240 NA19311 NA19313 NA19660 NA19675 NA19685 NA19985 NA20322 NA20336 NA20341 NA20344 NA20526 NA20871 NA20893 NA20898
 
 Others.
 
 ``` bash
-bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+bcftools filter -i 'TYPE="other"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
 ```
 
     ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
     ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
     ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
+
+Also not sure about `overlap` either.
+
+``` bash
+bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf
+```
+
+    ## ##fileformat=VCFv4.1
+    ## ##FILTER=<ID=PASS,Description="All filters passed">
+    ## ##fileDate=20140730
+    ## ##reference=ftp://ftp.1000genomes.ebi.ac.uk//vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz
+    ## ##source=1000GenomesPhase3Pipeline
+    ## ##contig=<ID=1,assembly=b37,length=249250621>
+    ## ##contig=<ID=2,assembly=b37,length=243199373>
+    ## ##contig=<ID=3,assembly=b37,length=198022430>
+    ## ##contig=<ID=4,assembly=b37,length=191154276>
+    ## ##contig=<ID=5,assembly=b37,length=180915260>
+    ## ##contig=<ID=6,assembly=b37,length=171115067>
+    ## ##contig=<ID=7,assembly=b37,length=159138663>
+    ## ##contig=<ID=8,assembly=b37,length=146364022>
+    ## ##contig=<ID=9,assembly=b37,length=141213431>
+    ## ##contig=<ID=10,assembly=b37,length=135534747>
+    ## ##contig=<ID=11,assembly=b37,length=135006516>
+    ## ##contig=<ID=12,assembly=b37,length=133851895>
+    ## ##contig=<ID=13,assembly=b37,length=115169878>
+    ## ##contig=<ID=14,assembly=b37,length=107349540>
+    ## ##contig=<ID=15,assembly=b37,length=102531392>
+    ## ##contig=<ID=16,assembly=b37,length=90354753>
+    ## ##contig=<ID=17,assembly=b37,length=81195210>
+    ## ##contig=<ID=18,assembly=b37,length=78077248>
+    ## ##contig=<ID=19,assembly=b37,length=59128983>
+    ## ##contig=<ID=20,assembly=b37,length=63025520>
+    ## ##contig=<ID=21,assembly=b37,length=48129895>
+    ## ##contig=<ID=22,assembly=b37,length=51304566>
+    ## ##contig=<ID=GL000191.1,assembly=b37,length=106433>
+    ## ##contig=<ID=GL000192.1,assembly=b37,length=547496>
+    ## ##contig=<ID=GL000193.1,assembly=b37,length=189789>
+    ## ##contig=<ID=GL000194.1,assembly=b37,length=191469>
+    ## ##contig=<ID=GL000195.1,assembly=b37,length=182896>
+    ## ##contig=<ID=GL000196.1,assembly=b37,length=38914>
+    ## ##contig=<ID=GL000197.1,assembly=b37,length=37175>
+    ## ##contig=<ID=GL000198.1,assembly=b37,length=90085>
+    ## ##contig=<ID=GL000199.1,assembly=b37,length=169874>
+    ## ##contig=<ID=GL000200.1,assembly=b37,length=187035>
+    ## ##contig=<ID=GL000201.1,assembly=b37,length=36148>
+    ## ##contig=<ID=GL000202.1,assembly=b37,length=40103>
+    ## ##contig=<ID=GL000203.1,assembly=b37,length=37498>
+    ## ##contig=<ID=GL000204.1,assembly=b37,length=81310>
+    ## ##contig=<ID=GL000205.1,assembly=b37,length=174588>
+    ## ##contig=<ID=GL000206.1,assembly=b37,length=41001>
+    ## ##contig=<ID=GL000207.1,assembly=b37,length=4262>
+    ## ##contig=<ID=GL000208.1,assembly=b37,length=92689>
+    ## ##contig=<ID=GL000209.1,assembly=b37,length=159169>
+    ## ##contig=<ID=GL000210.1,assembly=b37,length=27682>
+    ## ##contig=<ID=GL000211.1,assembly=b37,length=166566>
+    ## ##contig=<ID=GL000212.1,assembly=b37,length=186858>
+    ## ##contig=<ID=GL000213.1,assembly=b37,length=164239>
+    ## ##contig=<ID=GL000214.1,assembly=b37,length=137718>
+    ## ##contig=<ID=GL000215.1,assembly=b37,length=172545>
+    ## ##contig=<ID=GL000216.1,assembly=b37,length=172294>
+    ## ##contig=<ID=GL000217.1,assembly=b37,length=172149>
+    ## ##contig=<ID=GL000218.1,assembly=b37,length=161147>
+    ## ##contig=<ID=GL000219.1,assembly=b37,length=179198>
+    ## ##contig=<ID=GL000220.1,assembly=b37,length=161802>
+    ## ##contig=<ID=GL000221.1,assembly=b37,length=155397>
+    ## ##contig=<ID=GL000222.1,assembly=b37,length=186861>
+    ## ##contig=<ID=GL000223.1,assembly=b37,length=180455>
+    ## ##contig=<ID=GL000224.1,assembly=b37,length=179693>
+    ## ##contig=<ID=GL000225.1,assembly=b37,length=211173>
+    ## ##contig=<ID=GL000226.1,assembly=b37,length=15008>
+    ## ##contig=<ID=GL000227.1,assembly=b37,length=128374>
+    ## ##contig=<ID=GL000228.1,assembly=b37,length=129120>
+    ## ##contig=<ID=GL000229.1,assembly=b37,length=19913>
+    ## ##contig=<ID=GL000230.1,assembly=b37,length=43691>
+    ## ##contig=<ID=GL000231.1,assembly=b37,length=27386>
+    ## ##contig=<ID=GL000232.1,assembly=b37,length=40652>
+    ## ##contig=<ID=GL000233.1,assembly=b37,length=45941>
+    ## ##contig=<ID=GL000234.1,assembly=b37,length=40531>
+    ## ##contig=<ID=GL000235.1,assembly=b37,length=34474>
+    ## ##contig=<ID=GL000236.1,assembly=b37,length=41934>
+    ## ##contig=<ID=GL000237.1,assembly=b37,length=45867>
+    ## ##contig=<ID=GL000238.1,assembly=b37,length=39939>
+    ## ##contig=<ID=GL000239.1,assembly=b37,length=33824>
+    ## ##contig=<ID=GL000240.1,assembly=b37,length=41933>
+    ## ##contig=<ID=GL000241.1,assembly=b37,length=42152>
+    ## ##contig=<ID=GL000242.1,assembly=b37,length=43523>
+    ## ##contig=<ID=GL000243.1,assembly=b37,length=43341>
+    ## ##contig=<ID=GL000244.1,assembly=b37,length=39929>
+    ## ##contig=<ID=GL000245.1,assembly=b37,length=36651>
+    ## ##contig=<ID=GL000246.1,assembly=b37,length=38154>
+    ## ##contig=<ID=GL000247.1,assembly=b37,length=36422>
+    ## ##contig=<ID=GL000248.1,assembly=b37,length=39786>
+    ## ##contig=<ID=GL000249.1,assembly=b37,length=38502>
+    ## ##contig=<ID=MT,assembly=b37,length=16569>
+    ## ##contig=<ID=NC_007605,assembly=b37,length=171823>
+    ## ##contig=<ID=X,assembly=b37,length=155270560>
+    ## ##contig=<ID=Y,assembly=b37,length=59373566>
+    ## ##contig=<ID=hs37d5,assembly=b37,length=35477943>
+    ## ##ALT=<ID=CNV,Description="Copy Number Polymorphism">
+    ## ##ALT=<ID=DEL,Description="Deletion">
+    ## ##ALT=<ID=DUP,Description="Duplication">
+    ## ##ALT=<ID=INS:ME:ALU,Description="Insertion of ALU element">
+    ## ##ALT=<ID=INS:ME:LINE1,Description="Insertion of LINE1 element">
+    ## ##ALT=<ID=INS:ME:SVA,Description="Insertion of SVA element">
+    ## ##ALT=<ID=INS:MT,Description="Nuclear Mitochondrial Insertion">
+    ## ##ALT=<ID=INV,Description="Inversion">
+    ## ##ALT=<ID=CN0,Description="Copy number allele: 0 copies">
+    ## ##ALT=<ID=CN1,Description="Copy number allele: 1 copy">
+    ## ##ALT=<ID=CN2,Description="Copy number allele: 2 copies">
+    ## ##ALT=<ID=CN3,Description="Copy number allele: 3 copies">
+    ## ##ALT=<ID=CN4,Description="Copy number allele: 4 copies">
+    ## ##ALT=<ID=CN5,Description="Copy number allele: 5 copies">
+    ## ##ALT=<ID=CN6,Description="Copy number allele: 6 copies">
+    ## ##ALT=<ID=CN7,Description="Copy number allele: 7 copies">
+    ## ##ALT=<ID=CN8,Description="Copy number allele: 8 copies">
+    ## ##ALT=<ID=CN9,Description="Copy number allele: 9 copies">
+    ## ##ALT=<ID=CN10,Description="Copy number allele: 10 copies">
+    ## ##ALT=<ID=CN11,Description="Copy number allele: 11 copies">
+    ## ##ALT=<ID=CN12,Description="Copy number allele: 12 copies">
+    ## ##ALT=<ID=CN13,Description="Copy number allele: 13 copies">
+    ## ##ALT=<ID=CN14,Description="Copy number allele: 14 copies">
+    ## ##ALT=<ID=CN15,Description="Copy number allele: 15 copies">
+    ## ##ALT=<ID=CN16,Description="Copy number allele: 16 copies">
+    ## ##ALT=<ID=CN17,Description="Copy number allele: 17 copies">
+    ## ##ALT=<ID=CN18,Description="Copy number allele: 18 copies">
+    ## ##ALT=<ID=CN19,Description="Copy number allele: 19 copies">
+    ## ##ALT=<ID=CN20,Description="Copy number allele: 20 copies">
+    ## ##ALT=<ID=CN21,Description="Copy number allele: 21 copies">
+    ## ##ALT=<ID=CN22,Description="Copy number allele: 22 copies">
+    ## ##ALT=<ID=CN23,Description="Copy number allele: 23 copies">
+    ## ##ALT=<ID=CN24,Description="Copy number allele: 24 copies">
+    ## ##ALT=<ID=CN25,Description="Copy number allele: 25 copies">
+    ## ##ALT=<ID=CN26,Description="Copy number allele: 26 copies">
+    ## ##ALT=<ID=CN27,Description="Copy number allele: 27 copies">
+    ## ##ALT=<ID=CN28,Description="Copy number allele: 28 copies">
+    ## ##ALT=<ID=CN29,Description="Copy number allele: 29 copies">
+    ## ##ALT=<ID=CN30,Description="Copy number allele: 30 copies">
+    ## ##ALT=<ID=CN31,Description="Copy number allele: 31 copies">
+    ## ##ALT=<ID=CN32,Description="Copy number allele: 32 copies">
+    ## ##ALT=<ID=CN33,Description="Copy number allele: 33 copies">
+    ## ##ALT=<ID=CN34,Description="Copy number allele: 34 copies">
+    ## ##ALT=<ID=CN35,Description="Copy number allele: 35 copies">
+    ## ##ALT=<ID=CN36,Description="Copy number allele: 36 copies">
+    ## ##ALT=<ID=CN37,Description="Copy number allele: 37 copies">
+    ## ##ALT=<ID=CN38,Description="Copy number allele: 38 copies">
+    ## ##ALT=<ID=CN39,Description="Copy number allele: 39 copies">
+    ## ##ALT=<ID=CN40,Description="Copy number allele: 40 copies">
+    ## ##ALT=<ID=CN41,Description="Copy number allele: 41 copies">
+    ## ##ALT=<ID=CN42,Description="Copy number allele: 42 copies">
+    ## ##ALT=<ID=CN43,Description="Copy number allele: 43 copies">
+    ## ##ALT=<ID=CN44,Description="Copy number allele: 44 copies">
+    ## ##ALT=<ID=CN45,Description="Copy number allele: 45 copies">
+    ## ##ALT=<ID=CN46,Description="Copy number allele: 46 copies">
+    ## ##ALT=<ID=CN47,Description="Copy number allele: 47 copies">
+    ## ##ALT=<ID=CN48,Description="Copy number allele: 48 copies">
+    ## ##ALT=<ID=CN49,Description="Copy number allele: 49 copies">
+    ## ##ALT=<ID=CN50,Description="Copy number allele: 50 copies">
+    ## ##ALT=<ID=CN51,Description="Copy number allele: 51 copies">
+    ## ##ALT=<ID=CN52,Description="Copy number allele: 52 copies">
+    ## ##ALT=<ID=CN53,Description="Copy number allele: 53 copies">
+    ## ##ALT=<ID=CN54,Description="Copy number allele: 54 copies">
+    ## ##ALT=<ID=CN55,Description="Copy number allele: 55 copies">
+    ## ##ALT=<ID=CN56,Description="Copy number allele: 56 copies">
+    ## ##ALT=<ID=CN57,Description="Copy number allele: 57 copies">
+    ## ##ALT=<ID=CN58,Description="Copy number allele: 58 copies">
+    ## ##ALT=<ID=CN59,Description="Copy number allele: 59 copies">
+    ## ##ALT=<ID=CN60,Description="Copy number allele: 60 copies">
+    ## ##ALT=<ID=CN61,Description="Copy number allele: 61 copies">
+    ## ##ALT=<ID=CN62,Description="Copy number allele: 62 copies">
+    ## ##ALT=<ID=CN63,Description="Copy number allele: 63 copies">
+    ## ##ALT=<ID=CN64,Description="Copy number allele: 64 copies">
+    ## ##ALT=<ID=CN65,Description="Copy number allele: 65 copies">
+    ## ##ALT=<ID=CN66,Description="Copy number allele: 66 copies">
+    ## ##ALT=<ID=CN67,Description="Copy number allele: 67 copies">
+    ## ##ALT=<ID=CN68,Description="Copy number allele: 68 copies">
+    ## ##ALT=<ID=CN69,Description="Copy number allele: 69 copies">
+    ## ##ALT=<ID=CN70,Description="Copy number allele: 70 copies">
+    ## ##ALT=<ID=CN71,Description="Copy number allele: 71 copies">
+    ## ##ALT=<ID=CN72,Description="Copy number allele: 72 copies">
+    ## ##ALT=<ID=CN73,Description="Copy number allele: 73 copies">
+    ## ##ALT=<ID=CN74,Description="Copy number allele: 74 copies">
+    ## ##ALT=<ID=CN75,Description="Copy number allele: 75 copies">
+    ## ##ALT=<ID=CN76,Description="Copy number allele: 76 copies">
+    ## ##ALT=<ID=CN77,Description="Copy number allele: 77 copies">
+    ## ##ALT=<ID=CN78,Description="Copy number allele: 78 copies">
+    ## ##ALT=<ID=CN79,Description="Copy number allele: 79 copies">
+    ## ##ALT=<ID=CN80,Description="Copy number allele: 80 copies">
+    ## ##ALT=<ID=CN81,Description="Copy number allele: 81 copies">
+    ## ##ALT=<ID=CN82,Description="Copy number allele: 82 copies">
+    ## ##ALT=<ID=CN83,Description="Copy number allele: 83 copies">
+    ## ##ALT=<ID=CN84,Description="Copy number allele: 84 copies">
+    ## ##ALT=<ID=CN85,Description="Copy number allele: 85 copies">
+    ## ##ALT=<ID=CN86,Description="Copy number allele: 86 copies">
+    ## ##ALT=<ID=CN87,Description="Copy number allele: 87 copies">
+    ## ##ALT=<ID=CN88,Description="Copy number allele: 88 copies">
+    ## ##ALT=<ID=CN89,Description="Copy number allele: 89 copies">
+    ## ##ALT=<ID=CN90,Description="Copy number allele: 90 copies">
+    ## ##ALT=<ID=CN91,Description="Copy number allele: 91 copies">
+    ## ##ALT=<ID=CN92,Description="Copy number allele: 92 copies">
+    ## ##ALT=<ID=CN93,Description="Copy number allele: 93 copies">
+    ## ##ALT=<ID=CN94,Description="Copy number allele: 94 copies">
+    ## ##ALT=<ID=CN95,Description="Copy number allele: 95 copies">
+    ## ##ALT=<ID=CN96,Description="Copy number allele: 96 copies">
+    ## ##ALT=<ID=CN97,Description="Copy number allele: 97 copies">
+    ## ##ALT=<ID=CN98,Description="Copy number allele: 98 copies">
+    ## ##ALT=<ID=CN99,Description="Copy number allele: 99 copies">
+    ## ##ALT=<ID=CN100,Description="Copy number allele: 100 copies">
+    ## ##ALT=<ID=CN101,Description="Copy number allele: 101 copies">
+    ## ##ALT=<ID=CN102,Description="Copy number allele: 102 copies">
+    ## ##ALT=<ID=CN103,Description="Copy number allele: 103 copies">
+    ## ##ALT=<ID=CN104,Description="Copy number allele: 104 copies">
+    ## ##ALT=<ID=CN105,Description="Copy number allele: 105 copies">
+    ## ##ALT=<ID=CN106,Description="Copy number allele: 106 copies">
+    ## ##ALT=<ID=CN107,Description="Copy number allele: 107 copies">
+    ## ##ALT=<ID=CN108,Description="Copy number allele: 108 copies">
+    ## ##ALT=<ID=CN109,Description="Copy number allele: 109 copies">
+    ## ##ALT=<ID=CN110,Description="Copy number allele: 110 copies">
+    ## ##ALT=<ID=CN111,Description="Copy number allele: 111 copies">
+    ## ##ALT=<ID=CN112,Description="Copy number allele: 112 copies">
+    ## ##ALT=<ID=CN113,Description="Copy number allele: 113 copies">
+    ## ##ALT=<ID=CN114,Description="Copy number allele: 114 copies">
+    ## ##ALT=<ID=CN115,Description="Copy number allele: 115 copies">
+    ## ##ALT=<ID=CN116,Description="Copy number allele: 116 copies">
+    ## ##ALT=<ID=CN117,Description="Copy number allele: 117 copies">
+    ## ##ALT=<ID=CN118,Description="Copy number allele: 118 copies">
+    ## ##ALT=<ID=CN119,Description="Copy number allele: 119 copies">
+    ## ##ALT=<ID=CN120,Description="Copy number allele: 120 copies">
+    ## ##ALT=<ID=CN121,Description="Copy number allele: 121 copies">
+    ## ##ALT=<ID=CN122,Description="Copy number allele: 122 copies">
+    ## ##ALT=<ID=CN123,Description="Copy number allele: 123 copies">
+    ## ##ALT=<ID=CN124,Description="Copy number allele: 124 copies">
+    ## ##INFO=<ID=AC,Number=A,Type=Integer,Description="Total number of alternate alleles in called genotypes">
+    ## ##INFO=<ID=AF,Number=A,Type=Float,Description="Estimated allele frequency in the range (0,1)">
+    ## ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+    ## ##INFO=<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">
+    ## ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">
+    ## ##INFO=<ID=CS,Number=1,Type=String,Description="Source call set.">
+    ## ##INFO=<ID=END,Number=1,Type=Integer,Description="End coordinate of this variant">
+    ## ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">
+    ## ##INFO=<ID=MC,Number=.,Type=String,Description="Merged calls.">
+    ## ##INFO=<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END<POLARITY; If there is only 5' OR 3' support for this call, will be NULL NULL for START and END">
+    ## ##INFO=<ID=MEND,Number=1,Type=Integer,Description="Mitochondrial end coordinate of inserted sequence">
+    ## ##INFO=<ID=MLEN,Number=1,Type=Integer,Description="Estimated length of mitochondrial insert">
+    ## ##INFO=<ID=MSTART,Number=1,Type=Integer,Description="Mitochondrial start coordinate of inserted sequence">
+    ## ##INFO=<ID=NS,Number=1,Type=Integer,Description="Number of samples with data">
+    ## ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">
+    ## ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+    ## ##INFO=<ID=TSD,Number=1,Type=String,Description="Precise Target Site Duplication for bases, if unknown, value will be NULL">
+    ## ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+    ## ##INFO=<ID=EAS_AF,Number=A,Type=Float,Description="Allele frequency in the EAS populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=EUR_AF,Number=A,Type=Float,Description="Allele frequency in the EUR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=AFR_AF,Number=A,Type=Float,Description="Allele frequency in the AFR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=AMR_AF,Number=A,Type=Float,Description="Allele frequency in the AMR populations calculated from AC and AN, in the range (0,1)">
+    ## ##INFO=<ID=SAS_AF,Number=A,Type=Float,Description="Allele frequency in the SAS populations calculated from AC and AN, in the range (0,1)">
+    ## ##bcftools_filterVersion=1.15+htslib-1.15
+    ## ##bcftools_filterCommand=filter -i TYPE="overlap" eg/1kgp.bcf; Date=Wed Apr  6 04:39:26 2022
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00124 HG00501 HG00635 HG00702 HG00733 HG01983 HG02024 HG02046 HG02363 HG02372 HG02377 HG02381 HG02387 HG02388 HG03715 HG03948 NA19240 NA19311 NA19313 NA19660 NA19675 NA19685 NA19985 NA20322 NA20336 NA20341 NA20344 NA20526 NA20871 NA20893 NA20898
 
 ### Filtering VCF file using the INFO field/s
 
@@ -905,16 +1421,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 1    24859767    rs12061734  A   C   297.1   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.862;DB;DP=23;Dels=0;FS=3.834;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.36;MQRankSum=-0.277;QD=12.92;ReadPosRankSum=0.277;set=variant2 GT:AD:DP:GQ:PL  0/1:11,12:23:99:327,0,246
-    ## 14   88407917    rs12432149  G   A   523.5   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.822;DB;DP=38;Dels=0;FS=1.342;HRun=0;HaplotypeScore=0.9987;MQ0=0;MQ=58.01;MQRankSum=0.851;QD=13.78;ReadPosRankSum=-0.558;set=variant2    GT:AD:DP:GQ:PL  0/1:17,21:38:99:553,0,418
-    ## 9    43400251    rs4961789   T   C   98.95   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.491;DB;DP=17;Dels=0;FS=3.09;HRun=0;HaplotypeScore=0;MQ0=0;MQ=40.77;MQRankSum=-3.512;QD=5.82;ReadPosRankSum=-1.01;set=variant2   GT:AD:DP:GQ:PL  0/1:9,8:17:99:129,0,240
-    ## 16   33371484    rs11643832  T   G   292.37  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.901;DB;DP=54;Dels=0;FS=0;HRun=0;HaplotypeScore=0.7887;MQ0=0;MQ=57.69;MQRankSum=-0.135;QD=5.41;ReadPosRankSum=0.447;set=variant2 GT:AD:DP:GQ:PL  0/1:42,12:54:99:322,0,1434
-    ## 6    29771111    rs1610716   C   T   141.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.453;DB;DP=10;Dels=0;FS=3.522;HRun=1;HaplotypeScore=0.9998;MQ0=0;MQ=60;MQRankSum=-0.47;QD=14.1;ReadPosRankSum=0.851;set=variant2    GT:AD:DP:GQ:PL  0/1:5,5:10:99:171,0,107
-    ## 9    101017371   rs73488777  C   T   378.77  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.666;DB;DP=28;Dels=0;FS=6.805;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.758;QD=13.53;ReadPosRankSum=-0.804;set=variant2  GT:AD:DP:GQ:PL  0/1:14,14:28:99:409,0,342
-    ## 8    17406367    rs35800296  GT  G   253.58  PASS    AC=2;AF=1;AN=2;DB;DP=16;FS=0;HRun=11;HaplotypeScore=37.6032;MQ0=0;MQ=61.34;QD=15.85;set=variant GT:AD:DP:GQ:PL  1/1:4,12:16:35.94:296,36,0
+    ## 14   106919176   .   C   CTG 472.68  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.492;DP=17;FS=0;HRun=0;HaplotypeScore=187.218;MQ0=0;MQ=40.25;MQRankSum=-3.172;QD=27.8;ReadPosRankSum=0.34;set=variant    GT:AD:DP:GQ:PL  0/1:8,8:17:99:512,0,167
+    ## 9    90501500    rs34017995  G   A   389.48  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.586;DB;DP=25;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=59.07;MQRankSum=-1.396;QD=15.58;ReadPosRankSum=0.246;set=variant2 GT:AD:DP:GQ:PL  0/1:11,14:25:99:419,0,251
+    ## GL000241.1   17108   .   A   C   675.75  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=6.617;DP=79;Dels=0;FS=0;HRun=0;HaplotypeScore=5.7331;MQ0=0;MQ=50.59;MQRankSum=-6.469;QD=8.55;ReadPosRankSum=0.183;set=variant2    GT:AD:DP:GQ:PL  0/1:44,35:79:99:706,0,1167
+    ## 4    86952648    rs10025882  T   C   151.46  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.532;DB;DP=11;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.825;QD=13.77;ReadPosRankSum=0.143;set=variant2    GT:AD:DP:GQ:PL  0/1:5,6:11:99:181,0,161
+    ## 6    159192045   rs1038537   A   G   125.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.227;DB;DP=16;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=1.133;QD=7.81;ReadPosRankSum=-0.34;set=variant2  GT:AD:DP:GQ:PL  0/1:11,5:16:99:155,0,395
+    ## GL000225.1   58202   .   G   A   623.71  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.942;DP=35;Dels=0;FS=2.58;HRun=1;HaplotypeScore=4.8919;MQ0=0;MQ=52.58;MQRankSum=1.439;QD=17.82;ReadPosRankSum=0.551;set=variant2    GT:AD:DP:GQ:PL  0/1:11,24:35:99:654,0,254
+    ## 14   20295627    rs72663752  C   G   1188.17 PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.414;DB;DP=121;Dels=0;FS=3.567;HRun=0;HaplotypeScore=0.9987;MQ0=0;MQ=58.03;MQRankSum=0.366;QD=9.82;ReadPosRankSum=2.058;set=variant2 GT:AD:DP:GQ:PL  0/1:75,46:121:99:1218,0,2019
+    ## 3    52228150    rs411457    A   T   164.03  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.001;DB;DP=14;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=58.2;MQRankSum=-0.065;QD=11.72;ReadPosRankSum=-0.452;set=variant2 GT:AD:DP:GQ:PL  0/1:8,6:14:99:194,0,206
+    ## 2    96679384    rs2579517   C   T   150.1   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.322;DB;DP=8;Dels=0;FS=0;HRun=2;HaplotypeScore=1.9468;MQ0=0;MQ=56.28;MQRankSum=1.92;QD=18.76;ReadPosRankSum=0.322;set=variant2  GT:AD:DP:GQ:PL  0/1:3,5:8:91.23:180,0,91
     ## 14   68042496    rs4902491   A   G   120.3   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.684;QD=15.04;ReadPosRankSum=0.322;set=variant2  GT:AD:DP:GQ:PL  0/1:3,5:8:94.51:150,0,95
-    ## 7    30701665    .   T   C   97.3    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.881;DP=9;Dels=0;FS=3.522;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0;QD=10.81;ReadPosRankSum=-1.652;set=variant2    GT:AD:DP:GQ:PL  0/1:5,4:9:99:127,0,142
-    ## 20   47850182    rs238148    C   T   933.05  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.871;DB;DP=81;Dels=0;FS=0;HRun=2;HaplotypeScore=1.6609;MQ0=0;MQ=59.23;MQRankSum=0.298;QD=11.52;ReadPosRankSum=1.29;set=variant2 GT:AD:DP:GQ:PL  0/1:42,39:81:99:963,0,1202
 
 Sort.
 
@@ -922,7 +1438,7 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.0tvW1H
+    ## Writing to /tmp/bcftools.OgUru5
     ## Merging 1 temporary files
     ## Cleaning
     ## Done
@@ -1082,9 +1598,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.076s
-    ## user 0m0.077s
-    ## sys  0m0.019s
+    ## real 0m0.075s
+    ## user 0m0.080s
+    ## sys  0m0.016s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -1094,9 +1610,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.957s
-    ## user 0m3.929s
-    ## sys  0m0.049s
+    ## real 0m3.941s
+    ## user 0m3.900s
+    ## sys  0m0.061s
 
 Use commas to list more than one loci.
 
@@ -1206,8 +1722,8 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
     ## ##contig=<ID=1000000,length=1000000>
     ## ##source=HaplotypeCaller
     ## ##bcftools_viewVersion=1.15+htslib-1.15
-    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Apr  6 02:48:53 2022
-    ## ##bcftools_viewCommand=view -h -; Date=Wed Apr  6 02:48:53 2022
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Apr  6 04:39:39 2022
+    ## ##bcftools_viewCommand=view -h -; Date=Wed Apr  6 04:39:39 2022
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
 
 ## Subset sample/s from a multi-sample VCF file
@@ -1256,8 +1772,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.026873 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.030739 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.026567 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.030468 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
