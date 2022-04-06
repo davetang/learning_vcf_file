@@ -590,10 +590,15 @@ bcftools reheader -s eg/sample_name.txt eg/1001genomes_snp-short-indel_only_ACGT
 
 The `reheader` command can also be used to modify the header information, such as removing specific info. For example if we want to remove `GATKCommandLine`, we would first create a new header file and use it to generate a new header.
 
-```{bash engine.opts='-l'}
-# GATKCommandLine exists in the header before running reheader
-bcftools view -h eg/aln.hc.vcf.gz | grep -c GATKCommandLine
+`GATKCommandLine` exists in the header before running `reheader`.
 
+```{bash engine.opts='-l'}
+bcftools view -h eg/aln.hc.vcf.gz | grep GATKCommandLine
+```
+
+`GATKCommandLine` has been removed with `reheader`.
+
+```{bash engine.opts='-l'}
 bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine > eg/new_header.txt
 bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
 ```
