@@ -280,7 +280,7 @@ bcftools query -i 'FILTER="PASS"' -f '%CHROM %POS %FILTER\n' eg/ERR031940.bcf | 
 
 Which command should be used for filtering? I would recommend using `bcftools filter` for filtering since it clearly states that you are performing filtering in the command name (it is clearer to someone not familiar with BCFtools) and the `-i` and `-e` expressions are flexible enough to perform most filtering requirements. Use `bcftools query` if you want to perform filtering and modify the output. See `man bcftools` for more information about `EXPRESSIONS`, which I recommend reading.
 
-### Different mutations
+### Filtering variant types
 
 Use `TYPE` in the filtering expression to subset specific types of variants; types include: indel, snp, mnp, ref, bnd, other, and overlap.
 
@@ -314,7 +314,7 @@ bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
 Breakends (no variants of this class).
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf
+bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf | grep -v "^#"
 ```
 
 Others.
@@ -326,10 +326,24 @@ bcftools filter -i 'TYPE="other"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head 
 Also not sure about `overlap` either.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf
+bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf | grep -v "^#"
 ```
 
-### Filtering VCF file using the INFO field/s
+### Filtering genotypes
+
+Use `GT` in the filtering expression to subset specific genotypes.
+
+```{bash engine.opts='-l'}
+bcftools filter -i 'GT="1|1"' eg/1kgp.bcf | grep -v "^#" | head -3
+```
+
+Genotypes using 2nd alternate allele.
+
+```{bash engine.opts='-l'}
+bcftools filter -i 'GT~"2"' eg/1kgp.bcf | grep -v "^#" | head -3
+```
+
+### Filtering INFO field/s
 
 Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In the example below we are filtering out variants that have a depth of less than 200. We also use the `-s` parameter to name our filter and this name will be displayed in the `FILTER` column.
 
