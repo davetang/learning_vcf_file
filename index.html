@@ -422,25 +422,25 @@ gunzip eg/1kgp.vcf.gz
 <pre><code class="language-bash">time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m20.557s
-## user 0m34.991s
-## sys  0m2.505s
+## real 0m17.506s
+## user 0m30.557s
+## sys  0m1.545s
 </code></pre>
 <p>VCF to uncompressed BCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m19.752s
-## user 0m35.090s
-## sys  0m2.351s
+## real 0m16.352s
+## user 0m30.576s
+## sys  0m1.678s
 </code></pre>
 <p>VCF to compressed VCF.</p>
 <pre><code class="language-bash">time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 </code></pre>
 <pre><code>## 
-## real 0m29.619s
-## user 0m48.519s
-## sys  0m3.385s
+## real 0m24.737s
+## user 0m42.591s
+## sys  0m2.293s
 </code></pre>
 <p>File sizes</p>
 <pre><code class="language-bash">du -h eg/1kgp.*
@@ -814,21 +814,21 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
 ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
 ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
 ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-## 9    137671814   rs34589987  A   G   103.14  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.421;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0.9469;MQ0=0;MQ=60;MQRankSum=0;QD=12.89;ReadPosRankSum=-0.922;set=variant2   GT:AD:DP:GQ:PL  0/1:4,4:8:99:133,0,127
-## 7    128038555   rs2288550   C   G   549.08  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.593;DB;DP=51;Dels=0;FS=8.283;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.144;QD=10.77;ReadPosRankSum=2.249;set=variant2   GT:AD:DP:GQ:PL  0/1:30,21:51:99:579,0,743
-## 3    194373833   rs1705991   G   A   359.85  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.269;DB;DP=40;Dels=0;FS=0;HRun=0;HaplotypeScore=1.9899;MQ0=0;MQ=58.32;MQRankSum=-0.754;QD=9;ReadPosRankSum=0.084;set=variant2   GT:AD:DP:GQ:PL  0/1:25,15:40:99:390,0,699
-## 2    236055911   rs7605399   T   C   156.87  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.422;DB;DP=9;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.248;QD=17.43;ReadPosRankSum=-0.248;set=variant2    GT:AD:DP:GQ:PL  0/1:3,6:9:59.28:187,0,59
-## 1    151039609   rs3738481   A   G   119.48  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.322;QD=14.93;ReadPosRankSum=-0.956;set=variant2 GT:AD:DP:GQ:PL  0/1:3,5:8:90.88:149,0,91
-## 8    125155706   rs4316135   G   A   275.98  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.943;DB;DP=18;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.53;QD=15.33;ReadPosRankSum=1.943;set=variant2 GT:AD:DP:GQ:PL  0/1:9,9:18:99:306,0,291
-## 2    132277465   rs9287519   G   A   311.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.061;DB;DP=16;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.061;QD=19.5;ReadPosRankSum=-0.424;set=variant2   GT:AD:DP:GQ:PL  0/1:4,12:16:96.67:342,0,97
-## 6    33232055    rs115835765 G   A   309.67  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.452;DB;DP=17;Dels=0;FS=2.336;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.452;QD=18.22;ReadPosRankSum=-0.452;set=variant2   GT:AD:DP:GQ:PL  0/1:6,11:17:99:340,0,144
-## 3    10167264    rs67667957  G   C   254.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.898;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.733;QD=25.5;ReadPosRankSum=-1.733;set=variant2   GT:AD:DP:GQ:PL  0/1:2,8:10:53.37:285,0,53
-## 9    135522454   rs3832640   AAAGT   A   350.61  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.788;DB;DP=28;FS=0;HRun=0;HaplotypeScore=123.016;MQ0=0;MQ=53.84;MQRankSum=-1.945;QD=12.52;ReadPosRankSum=0.239;set=variant   GT:AD:DP:GQ:PL  0/1:19,9:28:99:390,0,1017
+## 1    24859767    rs12061734  A   C   297.1   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.862;DB;DP=23;Dels=0;FS=3.834;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.36;MQRankSum=-0.277;QD=12.92;ReadPosRankSum=0.277;set=variant2 GT:AD:DP:GQ:PL  0/1:11,12:23:99:327,0,246
+## 14   88407917    rs12432149  G   A   523.5   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.822;DB;DP=38;Dels=0;FS=1.342;HRun=0;HaplotypeScore=0.9987;MQ0=0;MQ=58.01;MQRankSum=0.851;QD=13.78;ReadPosRankSum=-0.558;set=variant2    GT:AD:DP:GQ:PL  0/1:17,21:38:99:553,0,418
+## 9    43400251    rs4961789   T   C   98.95   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.491;DB;DP=17;Dels=0;FS=3.09;HRun=0;HaplotypeScore=0;MQ0=0;MQ=40.77;MQRankSum=-3.512;QD=5.82;ReadPosRankSum=-1.01;set=variant2   GT:AD:DP:GQ:PL  0/1:9,8:17:99:129,0,240
+## 16   33371484    rs11643832  T   G   292.37  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.901;DB;DP=54;Dels=0;FS=0;HRun=0;HaplotypeScore=0.7887;MQ0=0;MQ=57.69;MQRankSum=-0.135;QD=5.41;ReadPosRankSum=0.447;set=variant2 GT:AD:DP:GQ:PL  0/1:42,12:54:99:322,0,1434
+## 6    29771111    rs1610716   C   T   141.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.453;DB;DP=10;Dels=0;FS=3.522;HRun=1;HaplotypeScore=0.9998;MQ0=0;MQ=60;MQRankSum=-0.47;QD=14.1;ReadPosRankSum=0.851;set=variant2    GT:AD:DP:GQ:PL  0/1:5,5:10:99:171,0,107
+## 9    101017371   rs73488777  C   T   378.77  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.666;DB;DP=28;Dels=0;FS=6.805;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.758;QD=13.53;ReadPosRankSum=-0.804;set=variant2  GT:AD:DP:GQ:PL  0/1:14,14:28:99:409,0,342
+## 8    17406367    rs35800296  GT  G   253.58  PASS    AC=2;AF=1;AN=2;DB;DP=16;FS=0;HRun=11;HaplotypeScore=37.6032;MQ0=0;MQ=61.34;QD=15.85;set=variant GT:AD:DP:GQ:PL  1/1:4,12:16:35.94:296,36,0
+## 14   68042496    rs4902491   A   G   120.3   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.684;QD=15.04;ReadPosRankSum=0.322;set=variant2  GT:AD:DP:GQ:PL  0/1:3,5:8:94.51:150,0,95
+## 7    30701665    .   T   C   97.3    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.881;DP=9;Dels=0;FS=3.522;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0;QD=10.81;ReadPosRankSum=-1.652;set=variant2    GT:AD:DP:GQ:PL  0/1:5,4:9:99:127,0,142
+## 20   47850182    rs238148    C   T   933.05  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.871;DB;DP=81;Dels=0;FS=0;HRun=2;HaplotypeScore=1.6609;MQ0=0;MQ=59.23;MQRankSum=0.298;QD=11.52;ReadPosRankSum=1.29;set=variant2 GT:AD:DP:GQ:PL  0/1:42,39:81:99:963,0,1202
 </code></pre>
 <p>Sort.</p>
 <pre><code class="language-bash">bcftools sort eg/Pfeiffer_shuf.vcf &gt; eg/Pfeiffer_sorted.vcf
 </code></pre>
-<pre><code>## Writing to /tmp/bcftools.HqoFiF
+<pre><code>## Writing to /tmp/bcftools.0tvW1H
 ## Merging 1 temporary files
 ## Cleaning
 ## Done
@@ -963,18 +963,18 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m0.095s
-## user 0m0.093s
-## sys  0m0.028s
+## real 0m0.076s
+## user 0m0.077s
+## sys  0m0.019s
 </code></pre>
 <p><code>bcftools view</code> with <code>-t</code> streams the entire file, so is much slower.</p>
 <pre><code class="language-bash">time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 </code></pre>
 <pre><code>## 31036
 ## 
-## real 0m4.510s
-## user 0m4.444s
-## sys  0m0.091s
+## real 0m3.957s
+## user 0m3.929s
+## sys  0m0.049s
 </code></pre>
 <p>Use commas to list more than one loci.</p>
 <pre><code class="language-bash">bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
@@ -1023,14 +1023,16 @@ bcftools reheader -s eg/sample_name.txt eg/1001genomes_snp-short-indel_only_ACGT
 information, such as removing specific info. For example if we want to
 remove <code>GATKCommandLine</code>, we would first create a new header file and
 use it to generate a new header.</p>
-<pre><code class="language-bash"># GATKCommandLine exists in the header before running reheader
-bcftools view -h eg/aln.hc.vcf.gz | grep -c GATKCommandLine
-
-bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine &gt; eg/new_header.txt
+<p><code>GATKCommandLine</code> exists in the header before running <code>reheader</code>.</p>
+<pre><code class="language-bash">bcftools view -h eg/aln.hc.vcf.gz | grep GATKCommandLine
+</code></pre>
+<pre><code>## ##GATKCommandLine=&lt;ID=HaplotypeCaller,CommandLine="HaplotypeCaller --output aln.hc.vcf --input aln.bam --reference test_31.fa --use-posteriors-to-calculate-qual false --dont-use-dragstr-priors false --use-new-qual-calculator true --annotate-with-num-discovered-alleles false --heterozygosity 0.001 --indel-heterozygosity 1.25E-4 --heterozygosity-stdev 0.01 --standard-min-confidence-threshold-for-calling 30.0 --max-alternate-alleles 6 --max-genotype-count 1024 --sample-ploidy 2 --num-reference-samples-if-no-call 0 --genotype-assignment-method USE_PLS_TO_ASSIGN --contamination-fraction-to-filter 0.0 --output-mode EMIT_VARIANTS_ONLY --all-site-pls false --gvcf-gq-bands 1 --gvcf-gq-bands 2 --gvcf-gq-bands 3 --gvcf-gq-bands 4 --gvcf-gq-bands 5 --gvcf-gq-bands 6 --gvcf-gq-bands 7 --gvcf-gq-bands 8 --gvcf-gq-bands 9 --gvcf-gq-bands 10 --gvcf-gq-bands 11 --gvcf-gq-bands 12 --gvcf-gq-bands 13 --gvcf-gq-bands 14 --gvcf-gq-bands 15 --gvcf-gq-bands 16 --gvcf-gq-bands 17 --gvcf-gq-bands 18 --gvcf-gq-bands 19 --gvcf-gq-bands 20 --gvcf-gq-bands 21 --gvcf-gq-bands 22 --gvcf-gq-bands 23 --gvcf-gq-bands 24 --gvcf-gq-bands 25 --gvcf-gq-bands 26 --gvcf-gq-bands 27 --gvcf-gq-bands 28 --gvcf-gq-bands 29 --gvcf-gq-bands 30 --gvcf-gq-bands 31 --gvcf-gq-bands 32 --gvcf-gq-bands 33 --gvcf-gq-bands 34 --gvcf-gq-bands 35 --gvcf-gq-bands 36 --gvcf-gq-bands 37 --gvcf-gq-bands 38 --gvcf-gq-bands 39 --gvcf-gq-bands 40 --gvcf-gq-bands 41 --gvcf-gq-bands 42 --gvcf-gq-bands 43 --gvcf-gq-bands 44 --gvcf-gq-bands 45 --gvcf-gq-bands 46 --gvcf-gq-bands 47 --gvcf-gq-bands 48 --gvcf-gq-bands 49 --gvcf-gq-bands 50 --gvcf-gq-bands 51 --gvcf-gq-bands 52 --gvcf-gq-bands 53 --gvcf-gq-bands 54 --gvcf-gq-bands 55 --gvcf-gq-bands 56 --gvcf-gq-bands 57 --gvcf-gq-bands 58 --gvcf-gq-bands 59 --gvcf-gq-bands 60 --gvcf-gq-bands 70 --gvcf-gq-bands 80 --gvcf-gq-bands 90 --gvcf-gq-bands 99 --floor-blocks false --indel-size-to-eliminate-in-ref-model 10 --disable-optimizations false --dragen-mode false --apply-bqd false --apply-frd false --disable-spanning-event-genotyping false --transform-dragen-mapping-quality false --mapping-quality-threshold-for-genotyping 20 --max-effective-depth-adjustment-for-frd 0 --just-determine-active-regions false --dont-genotype false --do-not-run-physical-phasing false --do-not-correct-overlapping-quality false --use-filtered-reads-for-annotations false --adaptive-pruning false --do-not-recover-dangling-branches false --recover-dangling-heads false --kmer-size 10 --kmer-size 25 --dont-increase-kmer-sizes-for-cycles false --allow-non-unique-kmers-in-ref false --num-pruning-samples 1 --min-dangling-branch-length 4 --recover-all-dangling-branches false --max-num-haplotypes-in-population 128 --min-pruning 2 --adaptive-pruning-initial-error-rate 0.001 --pruning-lod-threshold 2.302585092994046 --pruning-seeding-lod-threshold 9.210340371976184 --max-unpruned-variants 100 --linked-de-bruijn-graph false --disable-artificial-haplotype-recovery false --enable-legacy-graph-cycle-detection false --debug-assembly false --debug-graph-transformations false --capture-assembly-failure-bam false --num-matching-bases-in-dangling-end-to-recover -1 --error-correction-log-odds -Infinity --error-correct-reads false --kmer-length-for-read-error-correction 25 --min-observations-for-kmer-to-be-solid 20 --base-quality-score-threshold 18 --dragstr-het-hom-ratio 2 --dont-use-dragstr-pair-hmm-scores false --pair-hmm-gap-continuation-penalty 10 --expected-mismatch-rate-for-read-disqualification 0.02 --pair-hmm-implementation FASTEST_AVAILABLE --pcr-indel-model CONSERVATIVE --phred-scaled-global-read-mismapping-rate 45 --disable-symmetric-hmm-normalizing false --disable-cap-base-qualities-to-map-quality false --enable-dynamic-read-disqualification-for-genotyping false --dynamic-read-disqualification-threshold 1.0 --native-pair-hmm-threads 4 --native-pair-hmm-use-double-precision false --bam-writer-type CALLED_HAPLOTYPES --dont-use-soft-clipped-bases false --min-base-quality-score 10 --smith-waterman JAVA --emit-ref-confidence NONE --max-mnp-distance 0 --force-call-filtered-alleles false --soft-clip-low-quality-ends false --allele-informative-reads-overlap-margin 2 --smith-waterman-dangling-end-match-value 25 --smith-waterman-dangling-end-mismatch-penalty -50 --smith-waterman-dangling-end-gap-open-penalty -110 --smith-waterman-dangling-end-gap-extend-penalty -6 --smith-waterman-haplotype-to-reference-match-value 200 --smith-waterman-haplotype-to-reference-mismatch-penalty -150 --smith-waterman-haplotype-to-reference-gap-open-penalty -260 --smith-waterman-haplotype-to-reference-gap-extend-penalty -11 --smith-waterman-read-to-haplotype-match-value 10 --smith-waterman-read-to-haplotype-mismatch-penalty -15 --smith-waterman-read-to-haplotype-gap-open-penalty -30 --smith-waterman-read-to-haplotype-gap-extend-penalty -5 --min-assembly-region-size 50 --max-assembly-region-size 300 --active-probability-threshold 0.002 --max-prob-propagation-distance 50 --force-active false --assembly-region-padding 100 --padding-around-indels 75 --padding-around-snps 20 --padding-around-strs 75 --max-extension-into-assembly-region-padding-legacy 25 --max-reads-per-alignment-start 50 --enable-legacy-assembly-region-trimming false --interval-set-rule UNION --interval-padding 0 --interval-exclusion-padding 0 --interval-merging-rule ALL --read-validation-stringency SILENT --seconds-between-progress-updates 10.0 --disable-sequence-dictionary-validation false --create-output-bam-index true --create-output-bam-md5 false --create-output-variant-index true --create-output-variant-md5 false --max-variants-per-shard 0 --lenient false --add-output-sam-program-record true --add-output-vcf-command-line true --cloud-prefetch-buffer 40 --cloud-index-prefetch-buffer -1 --disable-bam-index-caching false --sites-only-vcf-output false --help false --version false --showHidden false --verbosity INFO --QUIET false --use-jdk-deflater false --use-jdk-inflater false --gcs-max-retries 20 --gcs-project-for-requester-pays  --disable-tool-default-read-filters false --minimum-mapping-quality 20 --disable-tool-default-annotations false --enable-all-annotations false --allow-old-rms-mapping-quality-annotation-data false",Version="4.2.4.1",Date="March 7, 2022 at 7:25:57 AM UTC"&gt;
+</code></pre>
+<p><code>GATKCommandLine</code> has been removed with <code>reheader</code>.</p>
+<pre><code class="language-bash">bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine &gt; eg/new_header.txt
 bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
 </code></pre>
-<pre><code>## 1
-## ##fileformat=VCFv4.2
+<pre><code>## ##fileformat=VCFv4.2
 ## ##FILTER=&lt;ID=PASS,Description="All filters passed"&gt;
 ## ##FILTER=&lt;ID=LowQual,Description="Low quality"&gt;
 ## ##FORMAT=&lt;ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed"&gt;
@@ -1056,8 +1058,8 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
 ## ##contig=&lt;ID=1000000,length=1000000&gt;
 ## ##source=HaplotypeCaller
 ## ##bcftools_viewVersion=1.15+htslib-1.15
-## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Apr  6 02:36:45 2022
-## ##bcftools_viewCommand=view -h -; Date=Wed Apr  6 02:36:45 2022
+## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Apr  6 02:48:53 2022
+## ##bcftools_viewCommand=view -h -; Date=Wed Apr  6 02:48:53 2022
 ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
 </code></pre>
 <h2 id="subset-samples-from-a-multi-sample-vcf-file">Subset sample/s from a multi-sample VCF file</h2>
@@ -1091,8 +1093,8 @@ variants.</p>
 </code></pre>
 <pre><code>## Checking the headers and starting positions of 2 files
 ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-## Concatenating eg/aln.bt.vcf.gz   0.031437 seconds
-## Concatenating eg/aln.hc.vcf.gz   0.035481 seconds
+## Concatenating eg/aln.bt.vcf.gz   0.026873 seconds
+## Concatenating eg/aln.hc.vcf.gz   0.030739 seconds
 ## 19997
 </code></pre>
 <p>Removing duplicates requires indexed VCF files; the <code>-f</code> parameter is
@@ -1263,5 +1265,5 @@ time" src="https://starchart.cc/davetang/learning_vcf_file.svg" /></a></p>
 
 <!--
 MkDocs version : 1.2.3
-Build Date UTC : 2022-04-06 02:36:52.093695+00:00
+Build Date UTC : 2022-04-06 02:49:00.732978+00:00
 -->
