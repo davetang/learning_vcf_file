@@ -26,7 +26,7 @@ The _de facto_ file format for storing genetic variation is the Variant Call For
 
 Initially, VCFtools (and the associated scripts) was used for working with VCF files. VCFtools was also developed by the 1000 Genomes Project team but the [tool](https://github.com/vcftools/vcftools) does not seem to be actively maintained anymore. As VCF files are simply tab-delimited flat files, they are slow to process and the BCF was implemented, which is a more efficient format for data processing. A BCF file is the binary equivalent of a VCF file, akin to the SAM and BAM formats and [BCFtools](https://github.com/samtools/bcftools) is used to work with BCF (and VCF) files. BCFtools is actively maintained and therefore should be used instead of VCFtools. To learn more about BCFtools (and SAMtools), check out the paper [Twelve years of SAMtools and BCFtools](https://academic.oup.com/gigascience/article/10/2/giab008/6137722) and please cite it if you use BCFtools for your work.
 
-Lastly, this README is created by `create_readme.sh` on GitHub Actions, which executes `readme.Rmd` and creates `README.md`.
+Lastly, this README is created by `create_readme.sh` using GitHub Actions, which executes `readme.Rmd` and creates `README.md` and can also be viewed at <https://davetang.github.io/learning_vcf_file/>.
 
 ## Installation
 
@@ -88,7 +88,7 @@ bcftools --help
 
 ## Getting help
 
-If BCFtools was [installed]($installation) by compiling the source code with the path to the man pages added to `MANPATH`, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable needs to be set [accordingly]](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
+If BCFtools was [installed]($installation) by compiling the source code with the path to the man pages added to `MANPATH`, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable needs to be set [accordingly](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
 
 ```{bash engine.opts='-l'}
 man bcftools | grep "LIST OF COMMANDS" -B 1984
