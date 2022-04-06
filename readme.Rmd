@@ -88,11 +88,13 @@ bcftools --help
 
 ## Getting help
 
-If BCFtools was [installed]($installation) by compiling the source code, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable [needs to be set](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
+If BCFtools was [installed]($installation) by compiling the source code with the path to the man pages added to `MANPATH`, you can simply run `man bcftools` to access the manual pages for getting help. If BCFtools was installed using `Conda`, the `MANPATH` environment variable needs to be set [accordingly]](https://github.com/conda/conda/issues/845#issuecomment-525223443). The man pages provides additional information for each subcommand and its parameters.
 
 ```{bash engine.opts='-l'}
 man bcftools | grep "LIST OF COMMANDS" -B 1984
 ```
+
+You can also [open an issue](https://github.com/davetang/learning_vcf_file/issues) and I will try to answer your question.
 
 ## VCF to BCF and other conversions
 
@@ -276,48 +278,55 @@ bcftools filter -i 'FILTER="PASS"' eg/ERR031940.bcf | bcftools view -H - | head 
 bcftools query -i 'FILTER="PASS"' -f '%CHROM %POS %FILTER\n' eg/ERR031940.bcf | head -3
 ```
 
-Which command should be used for filtering? I would recommend using `bcftools filter` for filtering since it clearly states that you are performing filtering in the command name (it is clearer to someone not familiar with BCFtools) and the `-i` and `-e` expressions are flexible enough to perform most filtering requirements. Use `bcftools query` if you want to perform filtering and modify the output.
+Which command should be used for filtering? I would recommend using `bcftools filter` for filtering since it clearly states that you are performing filtering in the command name (it is clearer to someone not familiar with BCFtools) and the `-i` and `-e` expressions are flexible enough to perform most filtering requirements. Use `bcftools query` if you want to perform filtering and modify the output. See `man bcftools` for more information about `EXPRESSIONS`, which I recommend reading.
 
 ### Different mutations
 
-Use the `bcftools view` subcommand to subset specific types of variants.
-
-    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
+Use `TYPE` in the filtering expression to subset specific types of variants; types include: indel, snp, mnp, ref, bnd, other, and overlap.
 
 SNPs.
 
 ```{bash engine.opts='-l'}
-bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="snp"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
 ```
 
 Indels.
 
 ```{bash engine.opts='-l'}
-bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="indel"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
 ```
 
 [Multiple Nucleotide Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions): The reference and alternate sequences are of the same length and have to be greater than 1 and all nucleotides in the sequences differ from one another.
 
 ```{bash engine.opts='-l'}
-bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
+bcftools filter -i 'TYPE="mnps"' eg/ex.vcf | grep -v "^#" | cut -f1-8
 ```
 
 Not sure what `ref` refers to but possibly structural variants. `INS:ME` refers to an insertion of a mobile element relative to the reference and the `<CN#>` refers to `Copy number allele: # copies` according to the VCF header.
 
 ```{bash engine.opts='-l'}
 bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+
+# filter returns nothing but view does
+# bcftools filter -i 'TYPE="ref"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
 ```
 
 Breakends (no variants of this class).
 
 ```{bash engine.opts='-l'}
-bcftools view -H -v bnd eg/1kgp.bcf
+bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf
 ```
 
 Others.
 
 ```{bash engine.opts='-l'}
-bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+bcftools filter -i 'TYPE="other"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+Also not sure about `overlap` either.
+
+```{bash engine.opts='-l'}
+bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf
 ```
 
 ### Filtering VCF file using the INFO field/s
