@@ -11,12 +11,12 @@ Table of Contents
    * [VCF to BCF and other conversions](#vcf-to-bcf-and-other-conversions)
    * [Viewing a VCF/BCF file](#viewing-a-vcfbcf-file)
    * [Comparing output types](#comparing-output-types)
-   * [Filtering for different types of mutations](#filtering-for-different-types-of-mutations)
    * [VCF to PED](#vcf-to-ped)
    * [VCF to BED](#vcf-to-bed)
    * [Extracting INFO field/s](#extracting-info-fields)
-   * [Filtering VCF on the FILTER column](#filtering-vcf-on-the-filter-column)
-   * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
+   * [Filtering](#filtering)
+      * [Different mutations](#different-mutations)
+      * [Filtering VCF file using the INFO field/s](#filtering-vcf-file-using-the-info-fields)
    * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
    * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
    * [Add custom annotations](#add-custom-annotations)
@@ -27,6 +27,7 @@ Table of Contents
    * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
    * [Output sample names](#output-sample-names)
    * [Rename sample names](#rename-sample-names)
+   * [Remove header info](#remove-header-info)
    * [Subset sample/s from a multi-sample VCF file](#subset-samples-from-a-multi-sample-vcf-file)
    * [Concatenate VCF files](#concatenate-vcf-files)
    * [Merging VCF files](#merging-vcf-files)
@@ -38,7 +39,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Tue 05 Apr 2022 02:45:09 AM UTC
+Wed 06 Apr 2022 02:36:49 AM UTC
 
 Learning the VCF format
 ================
@@ -227,8 +228,59 @@ The man pages provides additional information for each subcommand and
 its parameters.
 
 ``` bash
-man bcftools
+man bcftools | grep "LIST OF COMMANDS" -B 1984
 ```
+
+    ## BCFTOOLS(1)                                                        BCFTOOLS(1)
+    ## 
+    ## NAME
+    ##        bcftools - utilities for variant calling and manipulating VCFs and
+    ##        BCFs.
+    ## 
+    ## SYNOPSIS
+    ##        bcftools [--version|--version-only] [--help] [COMMAND] [OPTIONS]
+    ## 
+    ## DESCRIPTION
+    ##        BCFtools  is  a set of utilities that manipulate variant calls in the
+    ##        Variant Call Format (VCF) and its binary counterpart BCF. All commands
+    ##        work transparently with both VCFs and BCFs, both uncompressed and
+    ##        BGZF-compressed.
+    ## 
+    ##        Most commands accept VCF, bgzipped VCF and BCF with filetype detected
+    ##        automatically even when streaming from a pipe. Indexed VCF and BCF will
+    ##        work in all situations. Un-indexed VCF and BCF and streams will work in
+    ##        most, but not all situations. In general, whenever multiple VCFs are
+    ##        read simultaneously, they must be indexed and therefore also
+    ##        compressed. (Note that files with non-standard index names can be
+    ##        accessed as e.g. "bcftools view -r X:2928329
+    ##        file.vcf.gz##idx##non-standard-index-name".)
+    ## 
+    ##        BCFtools is designed to work on a stream. It regards an input file "-"
+    ##        as the standard input (stdin) and outputs to the standard output
+    ##        (stdout). Several commands can thus be  combined  with  Unix pipes.
+    ## 
+    ##    VERSION
+    ##        This manual page was last updated 2022-02-21 and refers to bcftools git
+    ##        version 1.15.
+    ## 
+    ##    BCF1
+    ##        The BCF1 format output by versions of samtools <= 0.1.19 is not
+    ##        compatible with this version of bcftools. To read BCF1 files one can
+    ##        use the view command from old versions of bcftools packaged with
+    ##        samtools versions <= 0.1.19 to convert to VCF, which can then be read
+    ##        by this version of bcftools.
+    ## 
+    ##                samtools-0.1.19/bcftools/bcftools view file.bcf1 | bcftools view
+    ## 
+    ##    VARIANT CALLING
+    ##        See bcftools call for variant calling from the output of the samtools
+    ##        mpileup command. In versions of samtools <= 0.1.19 calling was done
+    ##        with bcftools view. Users are now required to choose between the old
+    ##        samtools calling model (-c/--consensus-caller) and the new multiallelic
+    ##        calling model (-m/--multiallelic-caller). The multiallelic calling
+    ##        model is recommended for most tasks.
+    ## 
+    ## LIST OF COMMANDS
 
 ## VCF to BCF and other conversions
 
@@ -313,9 +365,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m16.980s
-    ## user 0m28.445s
-    ## sys  0m1.690s
+    ## real 0m20.557s
+    ## user 0m34.991s
+    ## sys  0m2.505s
 
 VCF to uncompressed BCF.
 
@@ -324,9 +376,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m15.356s
-    ## user 0m28.490s
-    ## sys  0m1.648s
+    ## real 0m19.752s
+    ## user 0m35.090s
+    ## sys  0m2.351s
 
 VCF to compressed VCF.
 
@@ -335,9 +387,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m22.588s
-    ## user 0m39.112s
-    ## sys  0m2.140s
+    ## real 0m29.619s
+    ## user 0m48.519s
+    ## sys  0m3.385s
 
 File sizes
 
@@ -349,71 +401,6 @@ du -h eg/1kgp.*
     ## 85M  eg/1kgp.un.bcf
     ## 1.5G eg/1kgp.vcf
     ## 84M  eg/1kgp.vcf.gz
-
-## Filtering for different types of mutations
-
-Use the `bcftools view` subcommand to subset specific types of variants.
-
-    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
-
-SNPs.
-
-``` bash
-bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
-```
-
-    ## 1    10505   .   A   T   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
-    ## 1    10506   .   C   G   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
-
-Indels.
-
-``` bash
-bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
-```
-
-    ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363
-    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=62;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0
-
-[Multiple Nucleotide
-Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions):
-The reference and alternate sequences are of the same length and have to
-be greater than 1 and all nucleotides in the sequences differ from one
-another.
-
-``` bash
-bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
-```
-
-    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
-
-Not sure what `ref` refers to but possibly structural variants. `INS:ME`
-refers to an insertion of a mobile element relative to the reference and
-the `<CN#>` refers to `Copy number allele: # copies` according to the
-VCF header.
-
-``` bash
-bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
-```
-
-    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
-    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
-    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
-
-Breakends (no variants of this class).
-
-``` bash
-bcftools view -H -v bnd eg/1kgp.bcf
-```
-
-Others.
-
-``` bash
-bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
-```
-
-    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
-    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
-    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
 
 ## VCF to PED
 
@@ -515,22 +502,146 @@ bcftools view -v snps eg/aln.bt.vcf.gz | bcftools query -f 'DP=%DP\tAN=%AN\tAC=%
     ## DP=109   AN=2    AC=2    MQ=60
     ## DP=102   AN=2    AC=2    MQ=60
 
-## Filtering VCF on the FILTER column
+## Filtering
 
-Use `bcftools view` to keep variants that have a “PASS” in the FILTER
-column.
+Many commands of BCFtools can be used for [filtering
+variants](https://samtools.github.io/bcftools/howtos/filtering.html) by
+using the `-f, --apply-filters` or the `-i, --include` and `-e,
+--exclude` parameters. We will download another example file to
+demonstrate how to perform filtering.
+
+``` bash
+wget --quiet https://davetang.org/file/ERR031940.merged.scored.filtered.bcf -O eg/ERR031940.bcf
+```
+
+To perform filtering on the `FILTER` column of the VCF file, use
+`bcftools view` and the `-f, --apply-filters` parameter.
 
     -f,   --apply-filters <list> require at least one of the listed FILTER strings (e.g. "PASS,.")
 
+Keep variants with `CNN_2D_SNP_Tranche_99.90_100.00` in the `FILTER`
+column.
+
 ``` bash
-bcftools view -H -f PASS eg/1kgp.bcf | head -3
+bcftools view -H -f CNN_2D_SNP_Tranche_99.90_100.00 eg/ERR031940.bcf | wc -l
 ```
 
-    ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363 GT  0|1 0|0 0|0 0|0 1|0 0|0 1|0 0|1 0|0 0|0 0|0 0|0 0|1 0|0 0|1 0|1 1|0 0|1 0|1 0|0 0|0 0|1 0|0 1|0 0|1 1|0 0|0 1|1 1|1 0|0 0|1
-    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=62;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0   GT  0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0 0|0
-    ## 1    10352   .   T   TA  100 PASS    AC=28;AN=62;NS=31;AF=0.4375;SAS_AF=0.4192;EUR_AF=0.4264;AFR_AF=0.4788;AMR_AF=0.4107;EAS_AF=0.4306   GT  1|0 0|1 1|1 0|0 1|0 1|0 1|0 1|0 0|0 1|0 1|0 1|0 0|0 0|1 1|0 0|0 1|0 1|1 0|1 0|0 1|0 0|1 1|0 1|0 1|0 0|1 0|1 1|0 0|1 1|0 1|0
+    ## 4505
 
-## Filtering VCF file using the INFO field/s
+Keep variants with `CNN_2D_SNP_Tranche_99.90_100.00` and
+`CNN_2D_INDEL_Tranche_99.00_100.00` in the `FILTER` column.
+
+``` bash
+bcftools view -H -f CNN_2D_SNP_Tranche_99.90_100.00,CNN_2D_INDEL_Tranche_99.00_100.00 eg/ERR031940.bcf | wc -l
+```
+
+    ## 4628
+
+Keep variants that have passed filters, i.e. contain `PASS` in the
+`FILTER` column.
+
+``` bash
+bcftools view -H -f PASS eg/ERR031940.bcf | head -3
+```
+
+    ## chr1 69270   rs201219564 A   G   689.06  PASS    AC=2;AF=1;AN=2;BaseQRankSum=-2.373;CNN_2D=-5.123;DB;DP=32;ExcessHet=3.0103;FS=0;MLEAC=2;MLEAF=1;MQ=26.77;MQRankSum=0.472;QD=22.23;ReadPosRankSum=-1.37;SOR=4.615    GT:AD:DP:GQ:PL  1/1:2,29:31:33:703,33,0
+    ## chr1 69511   rs2691305   A   G   1425.06 PASS    AC=2;AF=1;AN=2;BaseQRankSum=1.388;CNN_2D=-2.063;DB;DP=66;ExcessHet=3.0103;FS=4.847;MLEAC=2;MLEAF=1;MQ=36.21;MQRankSum=0.693;QD=24.57;ReadPosRankSum=0.928;SOR=1.544 GT:AD:DP:GQ:PL  1/1:1,57:58:99:1439,161,0
+    ## chr1 69761   rs200505207 A   T   957.05  PASS    AC=2;AF=1;AN=2;BaseQRankSum=1.919;CNN_2D=-8.226;DB;DP=36;ExcessHet=3.0103;FS=32.516;MLEAC=2;MLEAF=1;MQ=30.18;MQRankSum=1.342;QD=26.58;ReadPosRankSum=0.086;SOR=5.607    GT:AD:DP:GQ:PL  1/1:3,33:36:26:971,26,0
+
+The `filter` command can achieve the same filtering step as above.
+
+``` bash
+bcftools filter -i 'FILTER="PASS"' eg/ERR031940.bcf | bcftools view -H - | head -3
+```
+
+    ## chr1 69270   rs201219564 A   G   689.06  PASS    AC=2;AF=1;AN=2;BaseQRankSum=-2.373;CNN_2D=-5.123;DB;DP=32;ExcessHet=3.0103;FS=0;MLEAC=2;MLEAF=1;MQ=26.77;MQRankSum=0.472;QD=22.23;ReadPosRankSum=-1.37;SOR=4.615    GT:AD:DP:GQ:PL  1/1:2,29:31:33:703,33,0
+    ## chr1 69511   rs2691305   A   G   1425.06 PASS    AC=2;AF=1;AN=2;BaseQRankSum=1.388;CNN_2D=-2.063;DB;DP=66;ExcessHet=3.0103;FS=4.847;MLEAC=2;MLEAF=1;MQ=36.21;MQRankSum=0.693;QD=24.57;ReadPosRankSum=0.928;SOR=1.544 GT:AD:DP:GQ:PL  1/1:1,57:58:99:1439,161,0
+    ## chr1 69761   rs200505207 A   T   957.05  PASS    AC=2;AF=1;AN=2;BaseQRankSum=1.919;CNN_2D=-8.226;DB;DP=36;ExcessHet=3.0103;FS=32.516;MLEAC=2;MLEAF=1;MQ=30.18;MQRankSum=1.342;QD=26.58;ReadPosRankSum=0.086;SOR=5.607    GT:AD:DP:GQ:PL  1/1:3,33:36:26:971,26,0
+
+`bcftools query` can also perform the same filtering using `-i,
+--include` but a format must be specified.
+
+``` bash
+bcftools query -i 'FILTER="PASS"' -f '%CHROM %POS %FILTER\n' eg/ERR031940.bcf | head -3
+```
+
+    ## chr1 69270 PASS
+    ## chr1 69511 PASS
+    ## chr1 69761 PASS
+
+Which command should be used for filtering? I would recommend using
+`bcftools filter` for filtering since it clearly states that you are
+performing filtering in the command name (it is clearer to someone not
+familiar with BCFtools) and the `-i` and `-e` expressions are flexible
+enough to perform most filtering requirements. Use `bcftools query` if
+you want to perform filtering and modify the output.
+
+### Different mutations
+
+Use the `bcftools view` subcommand to subset specific types of variants.
+
+    -v/V, --types/--exclude-types LIST     Select/exclude comma-separated list of variant types: snps,indels,mnps,ref,bnd,other [null]
+
+SNPs.
+
+``` bash
+bcftools view -v snps eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+    ## 1    10505   .   A   T   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
+    ## 1    10506   .   C   G   100 PASS    AC=0;AN=62;NS=31;AF=0.000199681;SAS_AF=0;EUR_AF=0;AFR_AF=0.0008;AMR_AF=0;EAS_AF=0
+
+Indels.
+
+``` bash
+bcftools view -v indels eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+```
+
+    ## 1    10177   .   A   AC  100 PASS    AC=19;AN=62;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=62;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0
+
+[Multiple Nucleotide
+Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions):
+The reference and alternate sequences are of the same length and have to
+be greater than 1 and all nucleotides in the sequences differ from one
+another.
+
+``` bash
+bcftools view -H -v mnps eg/ex.vcf | grep -v "^#"
+```
+
+    ## 1    25563113    .   CC  GG  .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
+
+Not sure what `ref` refers to but possibly structural variants. `INS:ME`
+refers to an insertion of a mobile element relative to the reference and
+the `<CN#>` refers to `Copy number allele: # copies` according to the
+VCF header.
+
+``` bash
+bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
+    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
+    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
+
+Breakends (no variants of this class).
+
+``` bash
+bcftools view -H -v bnd eg/1kgp.bcf
+```
+
+Others.
+
+``` bash
+bcftools view -v other eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+```
+
+    ## 1    645710  ALU_umary_ALU_2 A   <INS:ME:ALU>    100 PASS    AC=0;AN=62;CS=ALU_umary;MEINFO=AluYa4_5,1,223,-;NS=31;SVLEN=222;SVTYPE=ALU;TSD=null;AF=0.00698882;SAS_AF=0.0041;EUR_AF=0.0189;AFR_AF=0;AMR_AF=0.0072;EAS_AF=0.0069
+    ## 1    668630  DUP_delly_DUP20532  G   <CN2>   100 PASS    AC=2;AN=62;CIEND=-150,150;CIPOS=-150,150;CS=DUP_delly;END=850204;NS=31;SVLEN=181574;SVTYPE=DUP;IMPRECISE;AF=0.0127796;SAS_AF=0.001;EUR_AF=0.001;AFR_AF=0.0015;AMR_AF=0;EAS_AF=0.0595
+    ## 1    713044  DUP_gs_CNV_1_713044_755966  C   <CN0>,<CN2> 100 PASS    AC=0,2;AN=62;CS=DUP_gs;END=755966;NS=31;SVTYPE=CNV;AF=0.000599042,0.0411342;SAS_AF=0,0.045;EUR_AF=0.001,0.0417;AFR_AF=0,0.0303;AMR_AF=0.0014,0.0259;EAS_AF=0.001,0.0615
+
+### Filtering VCF file using the INFO field/s
 
 Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In
 the example below we are filtering out variants that have a depth of
@@ -556,6 +667,11 @@ bcftools filter -s "Depth200&VDB" -e "DP<200 & VDB<0.9" eg/aln.bt.vcf.gz | grep 
     ## 1000000  151 .   T   A   225.417 Depth200&VDB    DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60   GT:PL   1/1:255,255,0
     ## 1000000  172 .   TAA TA  142.185 Depth200&VDB    INDEL;IDV=75;IMF=0.914634;DP=82;VDB=0.712699;SGB=-0.693147;RPBZ=-4.35727;MQBZ=0;SCBZ=0;FS=0;MQ0F=0;AC=2;AN=2;DP4=7,0,75,0;MQ=60 GT:PL   1/1:169,117,0
     ## 1000000  336 .   A   G   225.417 PASS    DP=109;VDB=0.972083;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,108,0;MQ=60 GT:PL   1/1:255,255,0
+
+Note that `&` and `&&` have different meanings in the expression and
+make a difference if you have more than one sample in your VCF file.
+Using `&` requires that the conditions are satisfied within one sample
+and `&&` means that conditions can be satisfied across samples.
 
 The `-e` or `-i` parameters accept an expression and we can use it to
 perform calculations. In the example below, variants with a QD divided
@@ -789,16 +905,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 1    34006598    rs12741094  C   G   69.33   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.55;DB;DP=7;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.55;QD=9.9;ReadPosRankSum=-1.3;set=variant2 GT:AD:DP:GQ:PL  0/1:4,3:7:99:99,0,142
-    ## 8    8234077 rs4840952   G   C   229.91  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.408;DB;DP=15;Dels=0;FS=2.216;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.286;QD=15.33;ReadPosRankSum=0.306;set=variant2   GT:AD:DP:GQ:PL  0/1:5,10:15:99:260,0,152
-    ## 11   18487305    rs17851143  C   G   706.52  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.151;DB;DP=60;Dels=0;FS=3.639;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.429;QD=11.78;ReadPosRankSum=-1.538;set=variant2  GT:AD:DP:GQ:PL  0/1:31,29:60:99:737,0,868
-    ## 5    121187497   rs7720502   A   G   73.6    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.729;DB;DP=9;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.307;QD=8.18;ReadPosRankSum=-0.876;set=variant2    GT:AD:DP:GQ:PL  0/1:5,4:9:99:104,0,141
-    ## 18   34273440    rs483351    C   T   129.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.074;DB;DP=13;Dels=0;FS=0;HRun=2;HaplotypeScore=0;MQ0=0;MQ=58.2;MQRankSum=0.555;QD=9.92;ReadPosRankSum=2.281;set=variant2   GT:AD:DP:GQ:PL  0/1:7,6:13:99:159,0,237
-    ## 17   4351560 rs12450838  G   A   52.93   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.322;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=56.82;MQRankSum=-0.322;QD=6.62;ReadPosRankSum=1.92;set=variant2    GT:AD:DP:GQ:PL  0/1:5,3:8:82.92:83,0,132
+    ## 9    137671814   rs34589987  A   G   103.14  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.421;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0.9469;MQ0=0;MQ=60;MQRankSum=0;QD=12.89;ReadPosRankSum=-0.922;set=variant2   GT:AD:DP:GQ:PL  0/1:4,4:8:99:133,0,127
+    ## 7    128038555   rs2288550   C   G   549.08  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.593;DB;DP=51;Dels=0;FS=8.283;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.144;QD=10.77;ReadPosRankSum=2.249;set=variant2   GT:AD:DP:GQ:PL  0/1:30,21:51:99:579,0,743
+    ## 3    194373833   rs1705991   G   A   359.85  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.269;DB;DP=40;Dels=0;FS=0;HRun=0;HaplotypeScore=1.9899;MQ0=0;MQ=58.32;MQRankSum=-0.754;QD=9;ReadPosRankSum=0.084;set=variant2   GT:AD:DP:GQ:PL  0/1:25,15:40:99:390,0,699
+    ## 2    236055911   rs7605399   T   C   156.87  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.422;DB;DP=9;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.248;QD=17.43;ReadPosRankSum=-0.248;set=variant2    GT:AD:DP:GQ:PL  0/1:3,6:9:59.28:187,0,59
+    ## 1    151039609   rs3738481   A   G   119.48  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.322;QD=14.93;ReadPosRankSum=-0.956;set=variant2 GT:AD:DP:GQ:PL  0/1:3,5:8:90.88:149,0,91
+    ## 8    125155706   rs4316135   G   A   275.98  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.943;DB;DP=18;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.53;QD=15.33;ReadPosRankSum=1.943;set=variant2 GT:AD:DP:GQ:PL  0/1:9,9:18:99:306,0,291
+    ## 2    132277465   rs9287519   G   A   311.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.061;DB;DP=16;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.061;QD=19.5;ReadPosRankSum=-0.424;set=variant2   GT:AD:DP:GQ:PL  0/1:4,12:16:96.67:342,0,97
+    ## 6    33232055    rs115835765 G   A   309.67  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.452;DB;DP=17;Dels=0;FS=2.336;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.452;QD=18.22;ReadPosRankSum=-0.452;set=variant2   GT:AD:DP:GQ:PL  0/1:6,11:17:99:340,0,144
+    ## 3    10167264    rs67667957  G   C   254.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.898;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.733;QD=25.5;ReadPosRankSum=-1.733;set=variant2   GT:AD:DP:GQ:PL  0/1:2,8:10:53.37:285,0,53
     ## 9    135522454   rs3832640   AAAGT   A   350.61  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.788;DB;DP=28;FS=0;HRun=0;HaplotypeScore=123.016;MQ0=0;MQ=53.84;MQRankSum=-1.945;QD=12.52;ReadPosRankSum=0.239;set=variant   GT:AD:DP:GQ:PL  0/1:19,9:28:99:390,0,1017
-    ## 7    150389677   rs6952002   G   C   164.85  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.741;DB;DP=16;Dels=0;FS=4.467;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.635;QD=10.3;ReadPosRankSum=-0.635;set=variant2   GT:AD:DP:GQ:PL  0/1:9,7:16:99:195,0,285
-    ## 22   16287155    rs73877828  G   T   319.67  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.549;DB;DP=32;Dels=0;FS=0;HRun=1;HaplotypeScore=0.8667;MQ0=1;MQ=45.91;MQRankSum=0.75;QD=9.99;ReadPosRankSum=-0.02;set=variant2  GT:AD:DP:GQ:PL  0/1:20,12:32:99:350,0,636
-    ## 22   22843118    rs2236730   C   T   1035.79 PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.182;DB;DP=79;Dels=0;FS=0;HRun=0;HaplotypeScore=0.9933;MQ0=0;MQ=58.09;MQRankSum=1.407;QD=13.11;ReadPosRankSum=-0.603;set=variant2    GT:AD:DP:GQ:PL  0/1:40,39:79:99:1066,0,1016
 
 Sort.
 
@@ -806,7 +922,7 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.573EXi
+    ## Writing to /tmp/bcftools.HqoFiF
     ## Merging 1 temporary files
     ## Cleaning
     ## Done
@@ -966,9 +1082,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.073s
-    ## user 0m0.069s
-    ## sys  0m0.025s
+    ## real 0m0.095s
+    ## user 0m0.093s
+    ## sys  0m0.028s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -978,9 +1094,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m3.730s
-    ## user 0m3.708s
-    ## sys  0m0.039s
+    ## real 0m4.510s
+    ## user 0m4.444s
+    ## sys  0m0.091s
 
 Use commas to list more than one loci.
 
@@ -1042,6 +1158,52 @@ bcftools reheader -s eg/sample_name.txt eg/1001genomes_snp-short-indel_only_ACGT
 
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90  91  92  93  94  95  96  97  98  99  100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133 134 135 136 137 138 139 140 141 142 143 144 145 146 147 148 149 150 151 152 153 154 155 156 157 158 159 160 161 162 163 164 165 166 167 168 169 170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185 186 187 188 189 190 191 192 193 194 195 196 197 198 199 200 201 202 203 204 205 206 207 208 209 210 211 212 213 214 215 216 217 218 219 220 221 222 223 224 225 226 227 228 229 230 231 232 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287 288 289 290 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348 349 350 351 352 353 354 355 356 357 358 359 360 361 362 363 364 365 366 367 368 369 370 371 372 373 374 375 376 377 378 379 380 381 382 383 384 385 386 387 388 389 390 391 392 393 394 395 396 397 398 399 400 401 402 403 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421 422 423 424 425 426 427 428 429 430 431 432 433 434 435 436 437 438 439 440 441 442 443 444 445 446 447 448 449 450 451 452 453 454 455 456 457 458 459 460 461 462 463 464 465 466 467 468 469 470 471 472 473 474 475 476 477 478 479 480 481 482 483 484 485 486 487 488 489 490 491 492 493 494 495 496 497 498 499 500 501 502 503 504 505 506 507 508 509 510 511 512 513 514 515 516 517 518 519 520 521 522 523 524 525 526 527 528 529 530 531 532 533 534 535 536 537 538 539 540 541 542 543 544 545 546 547 548 549 550 551 552 553 554 555 556 557 558 559 560 561 562 563 564 565 566 567 568 569 570 571 572 573 574 575 576 577 578 579 580 581 582 583 584 585 586 587 588 589 590 591 592 593 594 595 596 597 598 599 600 601 602 603 604 605 606 607 608 609 610 611 612 613 614 615 616 617 618 619 620 621 622 623 624 625 626 627 628 629 630 631 632 633 634 635 636 637 638 639 640 641 642 643 644 645 646 647 648 649 650 651 652 653 654 655 656 657 658 659 660 661 662 663 664 665 666 667 668 669 670 671 672 673 674 675 676 677 678 679 680 681 682 683 684 685 686 687 688 689 690 691 692 693 694 695 696 697 698 699 700 701 702 703 704 705 706 707 708 709 710 711 712 713 714 715 716 717 718 719 720 721 722 723 724 725 726 727 728 729 730 731 732 733 734 735 736 737 738 739 740 741 742 743 744 745 746 747 748 749 750 751 752 753 754 755 756 757 758 759 760 761 762 763 764 765 766 767 768 769 770 771 772 773 774 775 776 777 778 779 780 781 782 783 784 785 786 787 788 789 790 791 792 793 794 795 796 797 798 799 800 801 802 803 804 805 806 807 808 809 810 811 812 813 814 815 816 817 818 819 820 821 822 823 824 825 826 827 828 829 830 831 832 833 834 835 836 837 838 839 840 841 842 843 844 845 846 847 848 849 850 851 852 853 854 855 856 857 858 859 860 861 862 863 864 865 866 867 868 869 870 871 872 873 874 875 876 877 878 879 880 881 882 883 884 885 886 887 888 889 890 891 892 893 894 895 896 897 898 899 900 901 902 903 904 905 906 907 908 909 910 911 912 913 914 915 916 917 918 919 920 921 922 923 924 925 926 927 928 929 930 931 932 933 934 935 936 937 938 939 940 941 942 943 944 945 946 947 948 949 950 951 952 953 954 955 956 957 958 959 960 961 962 963 964 965 966 967 968 969 970 971 972 973 974 975 976 977 978 979 980 981 982 983 984 985 986 987 988 989 990 991 992 993 994 995 996 997 998 999 1000    1001    1002    1003    1004    1005    1006    1007    1008    1009    1010    1011    1012    1013    1014    1015    1016    1017    1018    1019    1020    1021    1022    1023    1024    1025    1026    1027    1028    1029    1030    1031    1032    1033    1034    1035    1036    1037    1038    1039    1040    1041    1042    1043    1044    1045    1046    1047    1048    1049    1050    1051    1052    1053    1054    1055    1056    1057    1058    1059    1060    1061    1062    1063    1064    1065    1066    1067    1068    1069    1070    1071    1072    1073    1074    1075    1076    1077    1078    1079    1080    1081    1082    1083    1084    1085    1086    1087    1088    1089    1090    1091    1092    1093    1094    1095    1096    1097    1098    1099    1100    1101    1102    1103    1104    1105    1106    1107    1108    1109    1110    1111    1112    1113    1114    1115    1116    1117    1118    1119    1120    1121    1122    1123    1124    1125    1126    1127    1128    1129    1130    1131    1132    1133    1134
 
+## Remove header info
+
+The `reheader` command can also be used to modify the header
+information, such as removing specific info. For example if we want to
+remove `GATKCommandLine`, we would first create a new header file and
+use it to generate a new header.
+
+``` bash
+# GATKCommandLine exists in the header before running reheader
+bcftools view -h eg/aln.hc.vcf.gz | grep -c GATKCommandLine
+
+bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine > eg/new_header.txt
+bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
+```
+
+    ## 1
+    ## ##fileformat=VCFv4.2
+    ## ##FILTER=<ID=PASS,Description="All filters passed">
+    ## ##FILTER=<ID=LowQual,Description="Low quality">
+    ## ##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+    ## ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth (reads with MQ=255 or with bad mates are filtered)">
+    ## ##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+    ## ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+    ## ##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+    ## ##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes, for each ALT allele, in the same order as listed">
+    ## ##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency, for each ALT allele, in the same order as listed">
+    ## ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+    ## ##INFO=<ID=BaseQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt Vs. Ref base qualities">
+    ## ##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth; some reads may have been filtered">
+    ## ##INFO=<ID=ExcessHet,Number=1,Type=Float,Description="Phred-scaled p-value for exact test of excess heterozygosity">
+    ## ##INFO=<ID=FS,Number=1,Type=Float,Description="Phred-scaled p-value using Fisher's exact test to detect strand bias">
+    ## ##INFO=<ID=InbreedingCoeff,Number=1,Type=Float,Description="Inbreeding coefficient as estimated from the genotype likelihoods per-sample when compared against the Hardy-Weinberg expectation">
+    ## ##INFO=<ID=MLEAC,Number=A,Type=Integer,Description="Maximum likelihood expectation (MLE) for the allele counts (not necessarily the same as the AC), for each ALT allele, in the same order as listed">
+    ## ##INFO=<ID=MLEAF,Number=A,Type=Float,Description="Maximum likelihood expectation (MLE) for the allele frequency (not necessarily the same as the AF), for each ALT allele, in the same order as listed">
+    ## ##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+    ## ##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score From Wilcoxon rank sum test of Alt vs. Ref read mapping qualities">
+    ## ##INFO=<ID=QD,Number=1,Type=Float,Description="Variant Confidence/Quality by Depth">
+    ## ##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs. Ref read position bias">
+    ## ##INFO=<ID=SOR,Number=1,Type=Float,Description="Symmetric Odds Ratio of 2x2 contingency table to detect strand bias">
+    ## ##contig=<ID=1000000,length=1000000>
+    ## ##source=HaplotypeCaller
+    ## ##bcftools_viewVersion=1.15+htslib-1.15
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Apr  6 02:36:45 2022
+    ## ##bcftools_viewCommand=view -h -; Date=Wed Apr  6 02:36:45 2022
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
+
 ## Subset sample/s from a multi-sample VCF file
 
 Subset HG00733.
@@ -1088,8 +1250,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.025073 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.027899 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.031437 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.035481 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
