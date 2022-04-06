@@ -287,46 +287,46 @@ Use `TYPE` in the filtering expression to subset specific types of variants; typ
 SNPs.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="snp"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="snp"' eg/1kgp.bcf | bcftools view -H - | cut -f1-8 | head -2
 ```
 
 Indels.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="indel"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -2
+bcftools filter -i 'TYPE="indel"' eg/1kgp.bcf | bcftools view -H - | cut -f1-8 | head -2
 ```
 
 [Multiple Nucleotide Polymorphisms](https://genome.sph.umich.edu/wiki/Variant_classification#Definitions): The reference and alternate sequences are of the same length and have to be greater than 1 and all nucleotides in the sequences differ from one another.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="mnps"' eg/ex.vcf | grep -v "^#" | cut -f1-8
+bcftools filter -i 'TYPE="mnps"' eg/ex.vcf | bcftools view -H - | cut -f1-8
 ```
 
 Not sure what `ref` refers to but possibly structural variants. `INS:ME` refers to an insertion of a mobile element relative to the reference and the `<CN#>` refers to `Copy number allele: # copies` according to the VCF header.
 
 ```{bash engine.opts='-l'}
-bcftools view -v ref eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+bcftools view -v ref eg/1kgp.bcf | bcftools view -H - | cut -f1-8 | head -3
 
 # filter returns nothing but view does
-# bcftools filter -i 'TYPE="ref"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+# bcftools filter -i 'TYPE="ref"' eg/1kgp.bcf | bcftools view -H - | cut -f1-8 | head -3
 ```
 
 Breakends (no variants of this class).
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf | grep -v "^#"
+bcftools filter -i 'TYPE="bnd"' eg/1kgp.bcf | bcftools view -H -
 ```
 
 Others.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="other"' eg/1kgp.bcf | grep -v "^#" | cut -f1-8 | head -3
+bcftools filter -i 'TYPE="other"' eg/1kgp.bcf | bcftools view -H - | cut -f1-8 | head -3
 ```
 
 Also not sure about `overlap` either.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf | grep -v "^#"
+bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf | bcftools view -H -
 ```
 
 ### Filtering genotypes
@@ -334,13 +334,13 @@ bcftools filter -i 'TYPE="overlap"' eg/1kgp.bcf | grep -v "^#"
 Use `GT` in the filtering expression to subset specific genotypes.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'GT="1|1"' eg/1kgp.bcf | grep -v "^#" | head -3
+bcftools filter -i 'GT="1|1"' eg/1kgp.bcf | bcftools view -H - | head -3
 ```
 
 Genotypes using 2nd alternate allele.
 
 ```{bash engine.opts='-l'}
-bcftools filter -i 'GT~"2"' eg/1kgp.bcf | grep -v "^#" | head -3
+bcftools filter -i 'GT~"2"' eg/1kgp.bcf | bcftools view -H - | head -3
 ```
 
 ### Filtering INFO field/s
