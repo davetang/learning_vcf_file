@@ -18,18 +18,20 @@ Table of Contents
       * [Filtering variant types](#filtering-variant-types)
       * [Filtering genotypes](#filtering-genotypes)
       * [Filtering INFO field/s](#filtering-info-fields)
+   * [Querying](#querying)
+      * [Output sample names](#output-sample-names)
+      * [Subset sample/s from a multi-sample VCF file](#subset-samples-from-a-multi-sample-vcf-file)
+      * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
+      * [Random subset of variants](#random-subset-of-variants)
+      * [Split an annotation field](#split-an-annotation-field)
    * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
    * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
    * [Add custom annotations](#add-custom-annotations)
    * [Check whether the REF sequence is correct](#check-whether-the-ref-sequence-is-correct)
-   * [Random subset of variants](#random-subset-of-variants)
    * [Sorting](#sorting)
    * [Index a VCF file](#index-a-vcf-file)
-   * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
-   * [Output sample names](#output-sample-names)
    * [Rename sample names](#rename-sample-names)
    * [Remove header info](#remove-header-info)
-   * [Subset sample/s from a multi-sample VCF file](#subset-samples-from-a-multi-sample-vcf-file)
    * [Concatenate VCF files](#concatenate-vcf-files)
    * [Merging VCF files](#merging-vcf-files)
    * [Decomposing and normalising variants](#decomposing-and-normalising-variants)
@@ -40,7 +42,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Thu 07 Apr 2022 01:22:00 AM UTC
+Thu 07 Apr 2022 02:50:53 AM UTC
 
 Learning the VCF format
 ================
@@ -372,9 +374,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m19.277s
-    ## user 0m31.981s
-    ## sys  0m2.096s
+    ## real 0m16.915s
+    ## user 0m28.542s
+    ## sys  0m1.466s
 
 VCF to uncompressed BCF.
 
@@ -383,9 +385,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m18.121s
-    ## user 0m31.903s
-    ## sys  0m2.498s
+    ## real 0m15.303s
+    ## user 0m28.529s
+    ## sys  0m1.555s
 
 VCF to compressed VCF.
 
@@ -394,9 +396,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m27.196s
-    ## user 0m44.237s
-    ## sys  0m3.068s
+    ## real 0m22.679s
+    ## user 0m39.281s
+    ## sys  0m2.103s
 
 File sizes
 
@@ -729,6 +731,218 @@ bcftools filter -s "QD/DP" -e "INFO/QD / INFO/DP < 0.3" eg/aln.hc.vcf.gz | grep 
     ## 1000000  172 .   TA  T   3122.03 PASS    AC=2;AF=1;AN=2;DP=89;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.73;SOR=8.909  GT:AD:DP:GQ:PL  1/1:0,85:85:99:3136,256,0
     ## 1000000  336 .   A   G   4884.06 QD/DP   AC=2;AF=1;AN=2;DP=115;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=30.97;SOR=9.401 GT:AD:DP:GQ:PL  1/1:0,109:109:99:4898,328,0
 
+## Querying
+
+The `query` and `view` commands can be used to query a VCF file.
+
+### Output sample names
+
+Use `bcftools query`.
+
+``` bash
+bcftools query -l eg/1kgp.vcf.gz | head -5
+```
+
+    ## HG00124
+    ## HG00501
+    ## HG00635
+    ## HG00702
+    ## HG00733
+
+### Subset sample/s from a multi-sample VCF file
+
+Subset HG00733.
+
+``` bash
+bcftools view -s HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
+```
+
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00733
+    ## 1    10177   .   A   AC  100 PASS    AC=1;AN=2;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363   GT  1|0
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=2;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0    GT  0|0
+
+Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
+
+``` bash
+bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
+```
+
+    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00124 HG00501 HG00635 HG00702 HG00733
+    ## 1    10177   .   A   AC  100 PASS    AC=2;AN=10;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363  GT  0|1 0|0 0|0 0|0 1|0
+    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=10;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0   GT  0|0 0|0 0|0 0|0 0|0
+
+### Subset variants within a specific genomic region
+
+Use `bcftools view` with `-r` or `-R`, which requires an index file. You
+can use `bcftools view` with `-t` or `-T`, which does not require an
+index file, but is much slower because the entire file is streamed.
+
+``` bash
+tabix -f eg/1kgp.bcf
+time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+    ## 31036
+    ## 
+    ## real 0m0.073s
+    ## user 0m0.061s
+    ## sys  0m0.032s
+
+`bcftools view` with `-t` streams the entire file, so is much slower.
+
+``` bash
+time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+    ## 31036
+    ## 
+    ## real 0m3.711s
+    ## user 0m3.706s
+    ## sys  0m0.025s
+
+Use commas to list more than one loci.
+
+``` bash
+bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+    ## 31382
+
+Or use a BED file to store regions of interest.
+
+``` bash
+echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
+bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
+```
+
+    ## 31382
+
+### Random subset of variants
+
+Total number of variants.
+
+``` bash
+bcftools view -H eg/aln.bt.vcf.gz | wc -l
+```
+
+    ## 10022
+
+A random sample can be achieved by using a Perl one-liner but this is a
+very slow approach since it goes through every variant line by line. In
+the example below, the `srand` function sets the seed (for
+reproducibility) and the float controls how many variants are outputted
+(1%). (Note that the use of `grep -v "^#"` is only line counting
+purposes.)
+
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | grep -v "^#" | wc -l
+```
+
+    ## 106
+
+Sub-sample 1% and save as BCF file.
+
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | bcftools view -O b - -o eg/aln.bt.ss.bcf
+```
+
+Sample 10%.
+
+``` bash
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
+```
+
+    ## 1019
+
+### Split an annotation field
+
+The
+[split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html)
+plugin can be used to split a structured field. However, `split-vep` was
+written to work with VCF files created by `bcftools csq` or
+[VEP](https://github.com/Ensembl/ensembl-vep). However, with some
+modifications we can get it working with
+[SnpEff](https://github.com/pcingola/SnpEff), which is another popular
+variant annotation tool.
+
+SnpEff provides annotations with the `ANN` tag.
+
+``` bash
+bcftools view -H eg/PRJNA784038_illumina.vt.ann.vcf.gz | head -1 | cut -f8
+```
+
+    ## VDB=0.02;SGB=-0.453602;RPBZ=1.63951;MQBZ=0;MQSBZ=0;BQBZ=-1.38042;SCBZ=-0.632456;FS=0;MQ0F=0;MQ=60;DP=8;DP4=2,3,1,1;AN=2;AC=1;ANN=T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|GU280_gp01|protein_coding||c.-262A>T|||||262|,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009725297.1|protein_coding||c.-262A>T|||||262|WARNING_TRANSCRIPT_NO_STOP_CODON,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009742608.1|protein_coding||c.-262A>T|||||262|WARNING_TRANSCRIPT_NO_STOP_CODON,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|GU280_gp01.2|protein_coding||c.-262A>T|||||262|,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009725298.1|protein_coding||c.-802A>T|||||802|WARNING_TRANSCRIPT_NO_START_CODON,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009742609.1|protein_coding||c.-802A>T|||||802|WARNING_TRANSCRIPT_NO_START_CODON,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009725299.1|protein_coding||c.-2716A>T|||||2716|WARNING_TRANSCRIPT_NO_START_CODON,T|upstream_gene_variant|MODIFIER|ORF1ab|GU280_gp01|transcript|YP_009742610.1|protein_coding||c.-2716A>T|||||2716|WARNING_TRANSCRIPT_NO_START_CODON,T|intergenic_region|MODIFIER|CHR_START-ORF1ab|CHR_START-GU280_gp01|intergenic_region|CHR_START-GU280_gp01|||n.4A>T||||||
+
+We can tell `split-vep` to use the `ANN` field using the `-a` parameter
+but it will tell us that the header is not defined in the expected
+format. (The `|| true` is added to prevent GitHub Actions from failing.)
+
+``` bash
+bcftools +split-vep eg/PRJNA784038_illumina.vt.ann.vcf.gz -a ANN || true
+```
+
+    ## Expected "Format: " substring in the header INFO/ANN/Description, found: "Functional annotations: 'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | cDNA.pos / cDNA.length | CDS.pos / CDS.length | AA.pos / AA.length | Distance | ERRORS / WARNINGS / INFO'"
+
+The [expected
+format](https://www.ensembl.org/info/docs/tools/vep/vep_formats.html?redirect=no)
+is:
+
+    ##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position">
+    #CHROM  POS       ID          REF  ALT  QUAL  FILTER  INFO
+    21      26978790  rs75377686  T    C    .     .       CSQ=C|missense_variant|MODERATE|MRPL39|ENSG00000154719|Transcript|ENST00000419219|protein_coding|2/8||ENST00000419219.1:c.251A>G|ENSP00000404426.1:p.Asn84Ser|260|251|84
+
+We can use `bcftools reheader` to modify the header, to make it
+`split-vep` compatible using some Perl.
+
+``` bash
+bcftools head eg/PRJNA784038_illumina.vt.ann.vcf.gz | perl -nle "if (/ID=ANN,/){ s/[\s\']//g; s/Functionalannotations:/Format: /; s/Annotation_Impact/Consequence/ } print" > eg/new_header.txt
+bcftools reheader -h eg/new_header.txt eg/PRJNA784038_illumina.vt.ann.vcf.gz -o eg/PRJNA784038_illumina.vt.ann.vep.bcf
+```
+
+We can now run `split-vep` and list the split annotation fields.
+
+``` bash
+bcftools +split-vep -a ANN -l eg/PRJNA784038_illumina.vt.ann.vep.bcf
+```
+
+    ## 0    Allele
+    ## 1    Annotation
+    ## 2    Consequence
+    ## 3    Gene_Name
+    ## 4    Gene_ID
+    ## 5    Feature_Type
+    ## 6    Feature_ID
+    ## 7    Transcript_BioType
+    ## 8    Rank
+    ## 9    HGVS.c
+    ## 10   HGVS.p
+    ## 11   cDNA.pos/cDNA.length
+    ## 12   CDS.pos/CDS.length
+    ## 13   AA.pos/AA.length
+    ## 14   Distance
+    ## 15   ERRORS/WARNINGS/INFO
+
+This variant file contains Omicron variants called using
+[BCFtools](https://davetang.org/muse/2022/01/26/omicron-variants/). We
+can use `split-vep` and `awk` to output the Spike protein variants that
+have a `LOW` consequence or higher. The `-d` parameter is used to output
+consequences on a new line rather than having comma-delimited entries.
+
+``` bash
+bcftools +split-vep -a ANN -d -f '%CHROM:%POS\t%Gene_Name\t%Consequence\t%HGVS.c\t%HGVS.p\n' eg/PRJNA784038_illumina.vt.ann.vep.bcf | awk '$2 == "S" && $3 != "MODIFIER" {print}' | head
+```
+
+    ## NC_045512.2:21588    S   MODERATE    c.26C>T p.Pro9Leu
+    ## NC_045512.2:21636    S   MODERATE    c.74C>T p.Pro25Leu
+    ## NC_045512.2:21736    S   LOW c.174C>T    p.Phe58Phe
+    ## NC_045512.2:21754    S   MODERATE    c.192G>T    p.Trp64Cys
+    ## NC_045512.2:21762    S   MODERATE    c.200C>T    p.Ala67Val
+    ## NC_045512.2:21768    S   MODERATE    c.206A>T    p.His69Leu
+    ## NC_045512.2:21770    S   MODERATE    c.208G>A    p.Val70Ile
+    ## NC_045512.2:21770    S   MODERATE    c.208G>C    p.Val70Leu
+    ## NC_045512.2:21770    S   MODERATE    c.208G>T    p.Val70Phe
+    ## NC_045512.2:21846    S   MODERATE    c.284C>T    p.Thr95Ile
+
 ## Summarise SNPs and INDELs per sample
 
 Use `bcftools stats` with the `-s -` parameter. The example VCF file
@@ -888,41 +1102,6 @@ bcftools norm -f eg/test_31.fa -c w eg/incorrect.vcf > /dev/null
     ## REF_MISMATCH 1000000 151 G   T
     ## Lines   total/split/realigned/skipped:   10022/0/851/0
 
-## Random subset of variants
-
-Total number of variants.
-
-``` bash
-bcftools view -H eg/aln.bt.vcf.gz | wc -l
-```
-
-    ## 10022
-
-A random sample can be achieved by using a Perl one-liner. In the
-example below, the `srand` function sets the seed (for reproducibility)
-and the float controls how many variants are outputted (1%). (Note that
-the use of `grep -v "^#"` is only line counting purposes.)
-
-``` bash
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | grep -v "^#" | wc -l
-```
-
-    ## 106
-
-Sub-sample 1% and save as BCF file.
-
-``` bash
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | bcftools view -O b - -o eg/aln.bt.ss.bcf
-```
-
-Sample 10%.
-
-``` bash
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
-```
-
-    ## 1019
-
 ## Sorting
 
 BCFtools has a `sort` function but the usage does not indicate the
@@ -943,16 +1122,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 7    16890344    rs11769432  T   A   70.6    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.358;DB;DP=5;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=55.21;MQRankSum=0.358;QD=14.12;ReadPosRankSum=0.358;set=variant2   GT:AD:DP:GQ:PL  0/1:2,3:5:57.7:101,0,58
-    ## 16   1817431 rs2575369   C   T   64.63   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.55;DB;DP=7;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.55;QD=9.23;ReadPosRankSum=0;set=variant2 GT:AD:DP:GQ:PL  0/1:4,3:7:94.62:95,0,127
-    ## 5    34810971    rs111531050 G   A   193.81  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.666;DB;DP=9;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=1.179;QD=21.53;ReadPosRankSum=-1.179;set=variant2    GT:AD:DP:GQ:PL  0/1:2,7:9:54.79:224,0,55
-    ## 11   56468155    rs11228732  T   G   528.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.924;DB;DP=78;Dels=0;FS=0;HRun=1;HaplotypeScore=2.8278;MQ0=4;MQ=51.64;MQRankSum=1.612;QD=6.78;ReadPosRankSum=-0.794;set=variant2 GT:AD:DP:GQ:PL  0/1:54,24:78:99:559,0,1468
-    ## 10   12140030    rs10906076  C   G   439.2   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.536;DB;DP=31;Dels=0;FS=3.114;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=2.005;QD=14.17;ReadPosRankSum=0.456;set=variant2    GT:AD:DP:GQ:PL  0/1:17,14:31:99:469,0,556
-    ## 1    24859767    rs12061734  A   C   297.1   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.862;DB;DP=23;Dels=0;FS=3.834;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.36;MQRankSum=-0.277;QD=12.92;ReadPosRankSum=0.277;set=variant2 GT:AD:DP:GQ:PL  0/1:11,12:23:99:327,0,246
-    ## 10   26462790    rs3740232   G   A   450.73  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.415;DB;DP=28;Dels=0;FS=5.943;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=1.428;QD=16.1;ReadPosRankSum=2.349;set=variant2 GT:AD:DP:GQ:PL  0/1:13,15:28:99:481,0,315
-    ## 1    200080464   rs80350388  C   A   54.75   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.361;DB;DP=9;Dels=0;FS=0;HRun=15;HaplotypeScore=5.7842;MQ0=0;MQ=54.65;MQRankSum=0.361;QD=6.08;ReadPosRankSum=0.729;set=variant2  GT:AD:DP:GQ:PL  0/1:5,4:9:84.75:85,0,148
-    ## 12   52938535    rs10783519  A   G   69.15   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.406;DB;DP=6;Dels=0;FS=0;HRun=2;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.406;QD=11.53;ReadPosRankSum=-0.988;set=variant2 GT:AD:DP:GQ:PL  0/1:3,3:6:97.16:99,0,97
-    ## 4    86952648    rs10025882  T   C   151.46  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.532;DB;DP=11;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.825;QD=13.77;ReadPosRankSum=0.143;set=variant2    GT:AD:DP:GQ:PL  0/1:5,6:11:99:181,0,161
+    ## 3    10167264    rs67667957  G   C   254.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.898;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.733;QD=25.5;ReadPosRankSum=-1.733;set=variant2   GT:AD:DP:GQ:PL  0/1:2,8:10:53.37:285,0,53
+    ## 11   62402523    .   G   C   195.35  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.337;DP=17;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.529;QD=11.49;ReadPosRankSum=1.876;set=variant2  GT:AD:DP:GQ:PL  0/1:9,8:17:99:225,0,304
+    ## 16   8953081 rs8097  C   G   150.07  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.741;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.741;QD=15.01;ReadPosRankSum=-0.365;set=variant2  GT:AD:DP:GQ:PL  0/1:4,6:10:68.47:180,0,68
+    ## 7    138719194   rs60105110  AG  A   237.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.733;DB;DP=10;FS=0;HRun=2;HaplotypeScore=52.0945;MQ0=0;MQ=62.13;MQRankSum=0.48;QD=23.7;ReadPosRankSum=-0.898;set=variant GT:AD:DP:GQ:PL  0/1:2,8:10:59.89:276,0,60
+    ## GL000225.1   30551   .   G   A   148.74  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.085;DP=25;Dels=0;FS=2.066;HRun=0;HaplotypeScore=1.787;MQ0=0;MQ=48.58;MQRankSum=-3.878;QD=5.95;ReadPosRankSum=-1.783;set=variant2    GT:AD:DP:GQ:PL  0/1:16,9:25:99:179,0,513
+    ## 15   64263784    rs7180050   G   A   130.36  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.067;DB;DP=14;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.133;QD=9.31;ReadPosRankSum=1.467;set=variant2 GT:AD:DP:GQ:PL  0/1:9,5:14:99:160,0,305
+    ## 7    150389677   rs6952002   G   C   164.85  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.741;DB;DP=16;Dels=0;FS=4.467;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.635;QD=10.3;ReadPosRankSum=-0.635;set=variant2   GT:AD:DP:GQ:PL  0/1:9,7:16:99:195,0,285
+    ## 22   30220925    rs112626077 C   T   68.88   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.727;DB;DP=4;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.727;QD=17.22;ReadPosRankSum=-0.727;set=variant2    GT:AD:DP:GQ:PL  0/1:1,3:4:26.54:99,0,27
+    ## 7    100371474   rs78193191  G   A   95.9    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.453;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.336;QD=9.59;ReadPosRankSum=0.103;set=variant2 GT:AD:DP:GQ:PL  0/1:5,5:10:99:126,0,166
+    ## 19   35741456    rs2073900   T   C   297.56  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.39;DB;DP=24;Dels=0;FS=7.401;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.406;QD=12.4;ReadPosRankSum=0.232;set=variant2  GT:AD:DP:GQ:PL  0/1:13,11:24:99:328,0,388
 
 Sort.
 
@@ -960,7 +1139,7 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.nzk1WV
+    ## Writing to /tmp/bcftools.VBngAY
     ## Merging 1 temporary files
     ## Cleaning
     ## Done
@@ -1107,66 +1286,6 @@ rm eg/aln.hc.vcf.gz.tbi
     ## 1000000  415 .   C   A   4569.06 .   AC=2;AF=1;AN=2;DP=106;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=27.24;SOR=3.442 GT:AD:DP:GQ:PL  1/1:0,102:102:99:4583,307,0
     ## 1000000  733 .   G   T   9279.06 .   AC=2;AF=1;AN=2;DP=215;ExcessHet=0;FS=0;MLEAC=2;MLEAF=1;MQ=60;QD=28.2;SOR=0.814  GT:AD:DP:GQ:PL  1/1:0,208:208:99:9293,626,0
 
-## Subset variants within a specific genomic region
-
-Use `bcftools view` with `-r` or `-R`, which requires an index file. You
-can use `bcftools view` with `-t` or `-T`, which does not require an
-index file, but is much slower because the entire file is streamed.
-
-``` bash
-tabix -f eg/1kgp.bcf
-time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-    ## 31036
-    ## 
-    ## real 0m0.085s
-    ## user 0m0.089s
-    ## sys  0m0.020s
-
-`bcftools view` with `-t` streams the entire file, so is much slower.
-
-``` bash
-time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-    ## 31036
-    ## 
-    ## real 0m4.062s
-    ## user 0m4.015s
-    ## sys  0m0.068s
-
-Use commas to list more than one loci.
-
-``` bash
-bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-    ## 31382
-
-Or use a BED file to store regions of interest.
-
-``` bash
-echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
-bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
-```
-
-    ## 31382
-
-## Output sample names
-
-Use `bcftools query`.
-
-``` bash
-bcftools query -l eg/1kgp.vcf.gz | head -5
-```
-
-    ## HG00124
-    ## HG00501
-    ## HG00635
-    ## HG00702
-    ## HG00733
-
 ## Rename sample names
 
 Use `reheader` to rename samples in a VCF using a text file containing
@@ -1244,31 +1363,9 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
     ## ##contig=<ID=1000000,length=1000000>
     ## ##source=HaplotypeCaller
     ## ##bcftools_viewVersion=1.15+htslib-1.15
-    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Thu Apr  7 01:21:57 2022
-    ## ##bcftools_viewCommand=view -h -; Date=Thu Apr  7 01:21:57 2022
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Thu Apr  7 02:50:49 2022
+    ## ##bcftools_viewCommand=view -h -; Date=Thu Apr  7 02:50:49 2022
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
-
-## Subset sample/s from a multi-sample VCF file
-
-Subset HG00733.
-
-``` bash
-bcftools view -s HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
-```
-
-    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00733
-    ## 1    10177   .   A   AC  100 PASS    AC=1;AN=2;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363   GT  1|0
-    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=2;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0    GT  0|0
-
-Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
-
-``` bash
-bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
-```
-
-    ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  HG00124 HG00501 HG00635 HG00702 HG00733
-    ## 1    10177   .   A   AC  100 PASS    AC=2;AN=10;NS=31;AF=0.425319;SAS_AF=0.4949;EUR_AF=0.4056;AFR_AF=0.4909;AMR_AF=0.3602;EAS_AF=0.3363  GT  0|1 0|0 0|0 0|0 1|0
-    ## 1    10235   .   T   TA  100 PASS    AC=0;AN=10;NS=31;AF=0.00119808;SAS_AF=0.0051;EUR_AF=0;AFR_AF=0;AMR_AF=0.0014;EAS_AF=0   GT  0|0 0|0 0|0 0|0 0|0
 
 ## Concatenate VCF files
 
@@ -1294,8 +1391,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.027977 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.032571 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.025026 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.029554 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
