@@ -365,6 +365,129 @@ The `-e` or `-i` parameters accept an expression and we can use it to perform ca
 bcftools filter -s "QD/DP" -e "INFO/QD / INFO/DP < 0.3" eg/aln.hc.vcf.gz | grep -v "^##" | head -4
 ```
 
+## Querying
+
+The `query` and `view` commands can be used to query a VCF file.
+
+### Output sample names
+
+Use `bcftools query`.
+
+```{bash engine.opts='-l'}
+bcftools query -l eg/1kgp.vcf.gz | head -5
+```
+
+### Subset sample/s from a multi-sample VCF file
+
+Subset HG00733.
+
+```{bash engine.opts='-l'}
+bcftools view -s HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
+```
+
+Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
+
+```{bash engine.opts='-l'}
+bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
+```
+
+### Subset variants within a specific genomic region
+
+Use `bcftools view` with `-r` or `-R`, which requires an index file. You can use `bcftools view` with `-t` or `-T`, which does not require an index file, but is much slower because the entire file is streamed.
+
+```{bash engine.opts='-l'}
+tabix -f eg/1kgp.bcf
+time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+`bcftools view` with `-t` streams the entire file, so is much slower.
+
+```{bash engine.opts='-l'}
+time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+Use commas to list more than one loci.
+
+```{bash engine.opts='-l'}
+bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
+```
+
+Or use a BED file to store regions of interest.
+
+```{bash engine.opts='-l'}
+echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
+bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
+```
+
+### Random subset of variants
+
+Total number of variants.
+
+```{bash engine.opts='-l'}
+bcftools view -H eg/aln.bt.vcf.gz | wc -l
+```
+
+A random sample can be achieved by using a Perl one-liner but this is a very slow approach since it goes through every variant line by line. In the example below, the `srand` function sets the seed (for reproducibility) and the float controls how many variants are outputted (1%). (Note that the use of `grep -v "^#"` is only line counting purposes.)
+
+```{bash engine.opts='-l'}
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | grep -v "^#" | wc -l
+```
+
+Sub-sample 1% and save as BCF file.
+
+```{bash engine.opts='-l'}
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | bcftools view -O b - -o eg/aln.bt.ss.bcf
+```
+
+Sample 10%.
+
+```{bash engine.opts='-l'}
+bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
+```
+
+### Split an annotation field
+
+The [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html) plugin can be used to split a structured field. However, `split-vep` was written to work with VCF files created by `bcftools csq` or [VEP](https://github.com/Ensembl/ensembl-vep). However, with some modifications we can get it working with [SnpEff](https://github.com/pcingola/SnpEff), which is another popular variant annotation tool.
+
+SnpEff provides annotations with the `ANN` tag.
+
+```{bash engine.opts='-l'}
+bcftools view -H eg/PRJNA784038_illumina.vt.ann.vcf.gz | head -1 | cut -f8
+```
+
+We can tell `split-vep` to use the `ANN` field using the `-a` parameter but it will tell us that the header is not defined in the expected format. (The ` || true` is added to prevent GitHub Actions from failing.)
+
+```{bash engine.opts='-l'}
+bcftools +split-vep eg/PRJNA784038_illumina.vt.ann.vcf.gz -a ANN || true
+```
+
+The [expected format](https://www.ensembl.org/info/docs/tools/vep/vep_formats.html?redirect=no) is:
+
+```
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position">
+#CHROM  POS       ID          REF  ALT  QUAL  FILTER  INFO
+21      26978790  rs75377686  T    C    .     .       CSQ=C|missense_variant|MODERATE|MRPL39|ENSG00000154719|Transcript|ENST00000419219|protein_coding|2/8||ENST00000419219.1:c.251A>G|ENSP00000404426.1:p.Asn84Ser|260|251|84
+```
+
+We can use `bcftools reheader` to modify the header, to make it `split-vep` compatible using some Perl.
+
+```{bash engine.opts='-l'}
+bcftools head eg/PRJNA784038_illumina.vt.ann.vcf.gz | perl -nle "if (/ID=ANN,/){ s/[\s\']//g; s/Functionalannotations:/Format: /; s/Annotation_Impact/Consequence/ } print" > eg/new_header.txt
+bcftools reheader -h eg/new_header.txt eg/PRJNA784038_illumina.vt.ann.vcf.gz -o eg/PRJNA784038_illumina.vt.ann.vep.bcf
+```
+
+We can now run `split-vep` and list the split annotation fields.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a ANN -l eg/PRJNA784038_illumina.vt.ann.vep.bcf
+```
+
+This variant file contains Omicron variants called using [BCFtools](https://davetang.org/muse/2022/01/26/omicron-variants/). We can use `split-vep` and `awk` to output the Spike protein variants that have a `LOW` consequence or higher. The `-d` parameter is used to output consequences on a new line rather than having comma-delimited entries.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a ANN -d -f '%CHROM:%POS\t%Gene_Name\t%Consequence\t%HGVS.c\t%HGVS.p\n' eg/PRJNA784038_illumina.vt.ann.vep.bcf | awk '$2 == "S" && $3 != "MODIFIER" {print}' | head
+```
+
 ## Summarise SNPs and INDELs per sample
 
 Use `bcftools stats` with the `-s -` parameter. The example VCF file `eg/ex.vcf` has four variants across three samples (one, two, and three).
@@ -461,32 +584,6 @@ Use `bcftools norm` with `-c` to check whether the REF sequence is correct.
 bcftools norm -f eg/test_31.fa -c w eg/incorrect.vcf > /dev/null
 ```
 
-## Random subset of variants
-
-Total number of variants.
-
-```{bash engine.opts='-l'}
-bcftools view -H eg/aln.bt.vcf.gz | wc -l
-```
-
-A random sample can be achieved by using a Perl one-liner. In the example below, the `srand` function sets the seed (for reproducibility) and the float controls how many variants are outputted (1%). (Note that the use of `grep -v "^#"` is only line counting purposes.)
-
-```{bash engine.opts='-l'}
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | grep -v "^#" | wc -l
-```
-
-Sub-sample 1% and save as BCF file.
-
-```{bash engine.opts='-l'}
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.01' | bcftools view -O b - -o eg/aln.bt.ss.bcf
-```
-
-Sample 10%.
-
-```{bash engine.opts='-l'}
-bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ print; next }; print if rand(1) < 0.1' | grep -v "^#" | wc -l
-```
-
 ## Sorting
 
 BCFtools has a `sort` function but the usage does not indicate the sorting order. We can create a subsetted and shuffled VCF file and check the order after sorting.
@@ -554,42 +651,6 @@ bcftools view -H -r 1000000:100-1000 eg/aln.hc.vcf.gz
 rm eg/aln.hc.vcf.gz.tbi
 ```
 
-## Subset variants within a specific genomic region
-
-Use `bcftools view` with `-r` or `-R`, which requires an index file. You can use `bcftools view` with `-t` or `-T`, which does not require an index file, but is much slower because the entire file is streamed.
-
-```{bash engine.opts='-l'}
-tabix -f eg/1kgp.bcf
-time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-`bcftools view` with `-t` streams the entire file, so is much slower.
-
-```{bash engine.opts='-l'}
-time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-Use commas to list more than one loci.
-
-```{bash engine.opts='-l'}
-bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
-```
-
-Or use a BED file to store regions of interest.
-
-```{bash engine.opts='-l'}
-echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
-bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
-```
-
-## Output sample names
-
-Use `bcftools query`.
-
-```{bash engine.opts='-l'}
-bcftools query -l eg/1kgp.vcf.gz | head -5
-```
-
 ## Rename sample names
 
 Use `reheader` to rename samples in a VCF using a text file containing the new sample names (one per line). Note that the default output format for `reheader` is BCF (with no option for another format).
@@ -624,20 +685,6 @@ bcftools view -h eg/aln.hc.vcf.gz | grep GATKCommandLine
 ```{bash engine.opts='-l'}
 bcftools view -h eg/aln.hc.vcf.gz | grep -v GATKCommandLine > eg/new_header.txt
 bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
-```
-
-## Subset sample/s from a multi-sample VCF file
-
-Subset HG00733.
-
-```{bash engine.opts='-l'}
-bcftools view -s HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
-```
-
-Subset HG00124, HG00501, HG00635, HG00702, and HG00733.
-
-```{bash engine.opts='-l'}
-bcftools view -s HG00124,HG00501,HG00635,HG00702,HG00733 eg/1kgp.vcf.gz | grep -v "^##" | head -3
 ```
 
 ## Concatenate VCF files
