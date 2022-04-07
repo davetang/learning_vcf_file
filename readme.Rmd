@@ -412,11 +412,11 @@ Use commas to list more than one loci.
 bcftools view -H -r 1:10000-50000,1:100000-200000,1:55000000-56000000 eg/1kgp.bcf | wc -l
 ```
 
-Or use a BED file to store regions of interest.
+Or use a file (coordinates are 1-based, which is the same as the VCF) to store regions of interest.
 
 ```{bash engine.opts='-l'}
-echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.bed
-bcftools view -H -R eg/regions.bed eg/1kgp.bcf | wc -l
+echo -e "1\t10000\t50000\n1\t100000\t200000\n1\t55000000\t56000000" > eg/regions.txt
+bcftools view -H -R eg/regions.txt eg/1kgp.bcf | wc -l
 ```
 
 ### Random subset of variants
