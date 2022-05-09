@@ -222,15 +222,21 @@ To report SNVs use `snvs` but note the tool reports the MNP as a SNV and the ref
 vcf2bed --snvs < eg/ex.vcf | cut -f1-3
 ```
 
-## Extracting INFO field/s
+## Extracting info from columns
 
-The VCF has various information fields; use the `query` subcommand to extract specific field/s.
+Use the `query` subcommand to extract information from the `INFO` or `FORMAT` column.
 
 ```{bash engine.opts='-l'}
 bcftools query -f 'DP=%DP\tAN=%AN\tAC=%AC\tMQ=%MQ\n' eg/aln.bt.vcf.gz | head -3
 ```
 
-Combining with the `view` subcommand:
+To extract from the `FORMAT` column, the FORMAT fields must be enclosed in square brackets, e.g. "[ %AD]".
+
+```{bash engine.opts='-l'}
+bcftools query -f 'AD=[%AD]\tGQ=[%GQ]\tAF=%AF\n' eg/ex.vcf
+```
+
+`query` can read from `STDIN` as with most of the BCFtools commands. The example below extracts information from the `INFO` column for only SNPs.
 
 ```{bash engine.opts='-l'}
 bcftools view -v snps eg/aln.bt.vcf.gz | bcftools query -f 'DP=%DP\tAN=%AN\tAC=%AC\tMQ=%MQ\n' - | head -3

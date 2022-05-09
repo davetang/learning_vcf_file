@@ -44,6 +44,7 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'davetingpongtang@gmail.com'
+          git config --global --add safe.directory /__w/learning_vcf_file/learning_vcf_file
           git add "README.md"
           git commit -m "Build README.md"
           git push origin main
