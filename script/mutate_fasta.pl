@@ -5,10 +5,16 @@
 use strict;
 use warnings;
 
-my $usage = "Usage: $0 <infile.fa> <mutation percent> <seed>\n";
+my $usage = "Usage: $0 <infile.fa> <mutation percent> <seed> [max_indel_len (default: 10)]\n";
 my $infile = shift or die $usage;
 my $percent = shift or die $usage;
 my $seed = shift or die $usage;
+
+my $indel_max = 10;
+my @nuc = qw/ A C G T /;
+if (@ARGV > 0){
+   $indel_max = shift;
+}
 
 # set seed for reproducibility
 srand($seed);
@@ -44,59 +50,38 @@ sub read_fasta {
 }
 
 sub mutate_seq {
-
    my ($seq, $pc) = @_;
-   my @nuc = qw/ A C G T /;
-   my @mutation = qw/insert delete point/;
+   my $num = int(length($seq) * $pc);
+   my %pos = pick_locus($seq, $num);
+   my $outfile = $infile;
+   $outfile =~ s/\.fa$/_mutation.log/;
+   open(my $fh, '>', $outfile) || die "Could not open $outfile for writing: $!\n";
 
-   my $total_num = int(length($seq) * $pc);
-   my $point_num = int($total_num * .8);
-   my $del_num = int($total_num * .1);
-   my $ins_num = int($total_num * .1);
-   my %mut_log = ();
-
-   %mut_log = pick_locus(\%mut_log, $point_num, "point");
-   %mut_log = pick_locus(\%mut_log, $ins_num, "ins");
-   %mut_log = pick_locus(\%mut_log, $del_num, "del");
-
-   foreach my $pos (sort {$b <=> $a} keys %mut_log){
-      my $type = $mut_log{$pos};
+   foreach my $pos (sort {$b <=> $a} keys %pos){
       my $ref = substr($seq, $pos, 1);
+      my $type = rand_mut(0.8, 0.1, 0.1);
+      my $alt = $ref;
 
-      if ($type eq 'point'){
-         my $alt = $ref;
+      if ($type eq 'SNV'){
          while($alt eq $ref){
             $alt = $nuc[int(rand(scalar(@nuc)))];
          }
-         $mut_log{$pos} = "$ref\t$alt";
          substr($seq, $pos, 1, $alt);
-      } elsif ($type eq 'del'){
-         my $prev_ref = substr($seq, $pos-1, 1);
-         $mut_log{$pos} = "${prev_ref}$ref\t$prev_ref";
-         substr($seq, $pos, 1, '');
-      } elsif ($type eq 'ins'){
-         my $rand_nuc = $nuc[int(rand(scalar(@nuc)))];
-         my $alt = $ref . $rand_nuc;
-         $mut_log{$pos} = "$ref\t$alt";
+      } elsif ($type eq 'DEL'){
+         my $len = rand_num($indel_max);
+         $ref = substr($seq, $pos-1, $len + 1);
+         $alt = substr($seq, $pos-1, 1);
+         substr($seq, $pos, $len, '');
+         $pos -= 1;
+      } elsif ($type eq 'INS'){
+         my $rand_nuc = rand_seq($indel_max);
+         $alt = $ref . $rand_nuc;
          substr($seq, $pos, 1, $alt);
       } else {
          die "Unknown mutation\n";
       }
-   }
-   my $outfile = $infile;
-   $outfile =~ s/\.fa$/_mutation.log/;
-   open(my $fh, '>', $outfile) || die "Could not open $outfile for writing: $!\n";
-   foreach my $pos (sort {$a <=> $b} keys %mut_log){
-      # use 1 bp coordinates to be compatible with VCF files
-      my $pos_one_base = $pos + 1;
-      my $mut = $mut_log{$pos};
-      my ($ref, $alt) = split(/\t/, $mut);
-      # if deletion, report coorindate of previous base
-      if (length($ref) > length($alt)){
-         print $fh "$pos\t$mut\n";
-      } else {
-         print $fh "$pos_one_base\t$mut\n";
-      }
+      # 1-based coordinates as per VCF files
+      print $fh join("\t", $pos+1, $ref, $alt, $type), "\n";
 
    }
    close($fh);
@@ -104,21 +89,48 @@ sub mutate_seq {
 }
 
 sub pick_locus {
-   my ($mut_log, $num, $type) = @_;
+   my ($seq, $num) = @_;
+   my %pos = ();
    for (1 .. $num){
-      # pick a random base to mutate
-      # if we already picked that base, repeat until we find a new one
-      my $rand_ind = int(rand(length($seq)));
-      if (exists $mut_log->{$rand_ind}){
-         while (exists $mut_log->{$rand_ind}){
-            $rand_ind = int(rand(length($seq)));
+      my $r = int(rand(length($seq)));
+      if (exists $pos{$r}){
+         while (exists $pos{$r}){
+            $r = int(rand(length($seq)));
          }
-         $mut_log->{$rand_ind} = $type;
+         $pos{$r} = 1;
       } else {
-         $mut_log->{$rand_ind} = $type;
+         $pos{$r} = 1;
       }
    }
-   return(%{$mut_log});
+   return(%pos);
+}
+
+sub rand_num {
+   my ($max) = @_;
+   int(rand($max))+1;
+}
+
+sub rand_seq {
+   my ($max) = @_;
+   my $len = rand_num($max);
+   my $seq = '';
+   for(1..$len){
+      $seq .= $nuc[int(rand(scalar(@nuc)))];
+   }
+   return($seq);
+}
+
+sub rand_mut {
+   my ($snv, $ins, $del) = @_;
+   die "$snv + $ins + $del must equal 1\n" if $snv+$ins+$del != 1;
+   my $rand = rand(1);
+   if ($rand < $snv){
+      return('SNV')
+   } elsif ($rand < $snv+$ins){
+      return('INS')
+   } else {
+      return('DEL')
+   }
 }
 
 sub add_newline {
