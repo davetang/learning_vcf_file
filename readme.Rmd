@@ -349,6 +349,27 @@ Genotypes using 2nd alternate allele.
 bcftools filter -i 'GT~"2"' eg/1kgp.bcf | bcftools view -H - | head -3
 ```
 
+You can also use abbreviations such as `GT="AA"`. See below for list of abbreviations.
+
+```{bash engine.opts='-l'}
+bcftools filter -i 'GT="AA"|GT="RA"' eg/1kgp.bcf | bcftools view -H - | head -3
+```
+
+Below are the list of genotypes you can use:
+
+* `GT="ref"` = reference
+* `GT="alt"` = alternate
+* `GT="mis"` = missing genotype
+* `GT="hom"` = homozygous
+* `GT="het"` = heterozygous
+* `GT="hap"` = haploid
+* `GT="RR"` = ref-ref hom
+* `GT="AA"` = alt-alt hom
+* `GT="RA"` or GT="AR" = ref-alt het
+* `GT="Aa"` or GT="aA" = alt-alt het
+* `GT="R"` = haploid ref
+* `GT="A"` = haploid alt
+
 ### Filtering INFO field/s
 
 Use `bcftools filter` to filter out (`-e` or `--exclude`) variants. In the example below we are filtering out variants that have a depth of less than 200. We also use the `-s` parameter to name our filter and this name will be displayed in the `FILTER` column.
