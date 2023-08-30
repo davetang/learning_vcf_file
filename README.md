@@ -42,7 +42,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Fri 19 Aug 2022 12:09:33 AM UTC
+Wed 30 Aug 2023 01:04:52 AM UTC
 
 Learning the VCF format
 ================
@@ -112,7 +112,7 @@ as well) into the directory specified by `dir=`.
 ``` bash
 dir=$HOME/tools
 
-ver=1.15
+ver=1.18
 for tool in htslib bcftools samtools; do
    check=${tool}
    if [[ ${tool} == htslib ]]; then
@@ -179,7 +179,7 @@ bcftools --help
 
     ## 
     ## Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
-    ## Version: 1.16 (using htslib 1.16)
+    ## Version: 1.18 (using htslib 1.18)
     ## 
     ## Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
     ## 
@@ -236,7 +236,7 @@ its parameters.
 man bcftools | grep "LIST OF COMMANDS" -B 1984
 ```
 
-    ## troff: <standard input>:2214: warning [p 22, 9.3i]: can't break line
+    ## troff: <standard input>:2322: warning [p 23, 10.5i]: can't break line
     ## BCFTOOLS(1)                                                        BCFTOOLS(1)
     ## 
     ## NAME
@@ -266,13 +266,13 @@ man bcftools | grep "LIST OF COMMANDS" -B 1984
     ##        (stdout). Several commands can thus be  combined  with  Unix pipes.
     ## 
     ##    VERSION
-    ##        This manual page was last updated 2022-08-18 and refers to bcftools git
-    ##        version 1.16.
+    ##        This manual page was last updated 2023-07-25 and refers to bcftools git
+    ##        version 1.18.
     ## 
     ##    BCF1
-    ##        The BCF1 format output by versions of samtools <= 0.1.19 is not
-    ##        compatible with this version of bcftools. To read BCF1 files one can
-    ##        use the view command from old versions of bcftools packaged with
+    ##        The obsolete BCF1 format output by versions of samtools <= 0.1.19 is
+    ##        not compatible with this version of bcftools. To read BCF1 files one
+    ##        can use the view command from old versions of bcftools packaged with
     ##        samtools versions <= 0.1.19 to convert to VCF, which can then be read
     ##        by this version of bcftools.
     ## 
@@ -285,6 +285,9 @@ man bcftools | grep "LIST OF COMMANDS" -B 1984
     ##        samtools calling model (-c/--consensus-caller) and the new multiallelic
     ##        calling model (-m/--multiallelic-caller). The multiallelic calling
     ##        model is recommended for most tasks.
+    ## 
+    ##    FILTERING EXPRESSIONS
+    ##        See EXPRESSIONS
     ## 
     ## LIST OF COMMANDS
 
@@ -375,9 +378,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m19.343s
-    ## user 0m33.468s
-    ## sys  0m1.806s
+    ## real 0m21.115s
+    ## user 0m36.137s
+    ## sys  0m2.698s
 
 VCF to uncompressed BCF.
 
@@ -386,9 +389,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m18.306s
-    ## user 0m33.793s
-    ## sys  0m2.054s
+    ## real 0m20.426s
+    ## user 0m35.716s
+    ## sys  0m2.733s
 
 VCF to compressed VCF.
 
@@ -397,9 +400,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m27.200s
-    ## user 0m44.582s
-    ## sys  0m2.631s
+    ## real 0m30.744s
+    ## user 0m48.139s
+    ## sys  0m3.845s
 
 File sizes
 
@@ -825,9 +828,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.091s
-    ## user 0m0.084s
-    ## sys  0m0.031s
+    ## real 0m0.097s
+    ## user 0m0.077s
+    ## sys  0m0.030s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -837,9 +840,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m4.445s
-    ## user 0m4.399s
-    ## sys  0m0.072s
+    ## real 0m4.815s
+    ## user 0m4.733s
+    ## sys  0m0.093s
 
 Use commas to list more than one loci.
 
@@ -1048,7 +1051,7 @@ the AF tag.
 bcftools plugin fill-tags eg/aln.bt.vcf.gz | grep -v "^#" | head -1
 ```
 
-    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;NS=1;AF=1;MAF=0;AC_Het=0;AC_Hom=2;AC_Hemi=0;HWE=1;ExcHet=1    GT:PL   1/1:255,255,0
+    ## 1000000  151 .   T   A   225.417 .   DP=92;VDB=0.696932;SGB=-0.693147;FS=0;MQ0F=0;AC=2;AN=2;DP4=0,0,90,0;MQ=60;F_MISSING=0;NS=1;AF=1;MAF=0;AC_Het=0;AC_Hom=2;AC_Hemi=0;HWE=1;ExcHet=1    GT:PL   1/1:255,255,0
 
 ## Add custom annotations
 
@@ -1165,16 +1168,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 2    210044808   rs6727838   A   G   75.22   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.231;DB;DP=5;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.358;QD=15.04;ReadPosRankSum=-1.231;set=variant2    GT:AD:DP:GQ:PL  0/1:2,3:5:61.09:105,0,61
-    ## 4    81001542    rs4234850   C   T   572.09  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.198;DB;DP=40;Dels=0;FS=2.795;HRun=1;HaplotypeScore=1.9997;MQ0=0;MQ=59.06;MQRankSum=0.271;QD=14.3;ReadPosRankSum=-1.598;set=variant2    GT:AD:DP:GQ:PL  0/1:19,21:40:99:602,0,519
-    ## 2    10186419    rs35927125  A   G   471.01  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.093;DB;DP=41;Dels=0;FS=6.816;HRun=1;HaplotypeScore=0.9992;MQ0=0;MQ=58.98;MQRankSum=0.357;QD=11.49;ReadPosRankSum=0.41;set=variant2  GT:AD:DP:GQ:PL  0/1:24,17:41:99:501,0,743
-    ## 10   61311293    rs12412495  T   C   270.6   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.09;DB;DP=14;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=57.28;MQRankSum=0.778;QD=19.33;ReadPosRankSum=0.623;set=variant2   GT:AD:DP:GQ:PL  0/1:3,11:14:77.76:301,0,78
-    ## 4    123269882   .   T   A   271.47  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.062;DP=27;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=57.73;MQRankSum=0.412;QD=10.05;ReadPosRankSum=-1.237;set=variant2   GT:AD:DP:GQ:PL  0/1:14,13:27:99:301,0,344
-    ## 2    141528592   rs7599219   T   C   353.32  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-3.01;DB;DP=28;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.66;MQRankSum=1.264;QD=12.62;ReadPosRankSum=1.264;set=variant2  GT:AD:DP:GQ:PL  0/1:14,14:28:99:383,0,400
-    ## 21   47328990    rs9976042   T   G   69.8    PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.727;DB;DP=4;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.727;QD=17.45;ReadPosRankSum=0.727;set=variant2 GT:AD:DP:GQ:PL  0/1:1,3:4:27.28:100,0,27
-    ## 9    131586318   rs41275922  C   T   137.44  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.2;DB;DP=13;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=58.55;MQRankSum=1.093;QD=10.57;ReadPosRankSum=-2.074;set=variant2  GT:AD:DP:GQ:PL  0/1:7,6:13:99:167,0,214
-    ## 7    138719194   rs60105110  AG  A   237.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.733;DB;DP=10;FS=0;HRun=2;HaplotypeScore=52.0945;MQ0=0;MQ=62.13;MQRankSum=0.48;QD=23.7;ReadPosRankSum=-0.898;set=variant GT:AD:DP:GQ:PL  0/1:2,8:10:59.89:276,0,60
-    ## 17   2929286 rs4072679   A   C   163.64  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.954;DB;DP=13;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.101;QD=12.59;ReadPosRankSum=0.935;set=variant2    GT:AD:DP:GQ:PL  0/1:7,6:13:99:194,0,192
+    ## 14   68042496    rs4902491   A   G   120.3   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.684;QD=15.04;ReadPosRankSum=0.322;set=variant2  GT:AD:DP:GQ:PL  0/1:3,5:8:94.51:150,0,95
+    ## 6    160557569   rs7762846   C   T   684.17  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.83;DB;DP=56;Dels=0;FS=2.454;HRun=1;HaplotypeScore=1.9732;MQ0=0;MQ=60;MQRankSum=0.222;QD=12.22;ReadPosRankSum=0.353;set=variant2    GT:AD:DP:GQ:PL  0/1:30,26:56:99:714,0,815
+    ## 4    187557600   rs328419    G   A   100.33  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.731;DB;DP=5;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=54.82;MQRankSum=0.731;QD=20.07;ReadPosRankSum=-0.731;set=variant2  GT:AD:DP:GQ:PL  0/1:1,4:5:21.93:130,0,22
+    ## 4    6596360 rs2301795   G   A   399.84  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.449;DB;DP=33;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.15;MQRankSum=0.45;QD=12.12;ReadPosRankSum=0.162;set=variant2  GT:AD:DP:GQ:PL  0/1:16,17:33:99:430,0,444
+    ## 22   23077555    rs4822296   T   C   592.64  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.787;DB;DP=76;Dels=0;FS=5.522;HRun=0;HaplotypeScore=4.9764;MQ0=2;MQ=51.71;MQRankSum=-4.728;QD=7.8;ReadPosRankSum=0.288;set=variant2  GT:AD:DP:GQ:PL  0/1:45,31:76:99:623,0,1184
+    ## 5    102537200   rs154290    T   G   125.47  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.52;DB;DP=11;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=52.16;MQRankSum=-0.278;QD=11.41;ReadPosRankSum=0.678;set=variant2  GT:AD:DP:GQ:PL  0/1:4,7:11:99:155,0,102
+    ## 19   57795783    rs74345217  A   G   134.81  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.047;DB;DP=12;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.467;QD=11.23;ReadPosRankSum=0.583;set=variant2    GT:AD:DP:GQ:PL  0/1:6,6:12:99:165,0,196
+    ## 11   62402523    .   G   C   195.35  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.337;DP=17;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.529;QD=11.49;ReadPosRankSum=1.876;set=variant2  GT:AD:DP:GQ:PL  0/1:9,8:17:99:225,0,304
+    ## 19   38935350    rs35018208  T   TC  128.64  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.495;DB;DP=8;FS=0;HRun=6;HaplotypeScore=17.7045;MQ0=0;MQ=61.34;MQRankSum=-0.198;QD=16.08;ReadPosRankSum=-0.198;set=variant  GT:AD:DP:GQ:PL  0/1:3,5:8:40.16:168,0,40
+    ## 7    142028118   rs361429    C   A   170.46  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.646;DB;DP=16;Dels=0;FS=0;HRun=0;HaplotypeScore=0.9469;MQ0=0;MQ=58.55;MQRankSum=-0.318;QD=10.65;ReadPosRankSum=-0.423;set=variant2  GT:AD:DP:GQ:PL  0/1:9,7:16:99:200,0,269
 
 Sort.
 
@@ -1182,7 +1185,7 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.bSVVyJ
+    ## Writing to /tmp/bcftools.Tsk9fa
     ## Merging 1 temporary files
     ## Cleaning
     ## Done
@@ -1405,9 +1408,9 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
     ## ##INFO=<ID=SOR,Number=1,Type=Float,Description="Symmetric Odds Ratio of 2x2 contingency table to detect strand bias">
     ## ##contig=<ID=1000000,length=1000000>
     ## ##source=HaplotypeCaller
-    ## ##bcftools_viewVersion=1.16+htslib-1.16
-    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Fri Aug 19 00:09:29 2022
-    ## ##bcftools_viewCommand=view -h -; Date=Fri Aug 19 00:09:29 2022
+    ## ##bcftools_viewVersion=1.18+htslib-1.18
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Aug 30 01:04:48 2023
+    ## ##bcftools_viewCommand=view -h -; Date=Wed Aug 30 01:04:48 2023
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
 
 ## Concatenate VCF files
@@ -1434,8 +1437,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.029616 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.033578 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.031654 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.039504 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
