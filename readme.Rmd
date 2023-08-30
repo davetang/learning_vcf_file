@@ -41,7 +41,7 @@ It is also relatively straightforward to compile on Linux (if your system has al
 ```bash
 dir=$HOME/tools
 
-ver=1.15
+ver=1.18
 for tool in htslib bcftools samtools; do
    check=${tool}
    if [[ ${tool} == htslib ]]; then
