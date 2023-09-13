@@ -24,6 +24,8 @@ Table of Contents
       * [Subset variants within a specific genomic region](#subset-variants-within-a-specific-genomic-region)
       * [Random subset of variants](#random-subset-of-variants)
       * [Split an annotation field](#split-an-annotation-field)
+         * [BCFtools csq](#bcftools-csq)
+         * [SnpEff](#snpeff)
    * [Summarise SNPs and INDELs per sample](#summarise-snps-and-indels-per-sample)
    * [Add AF tag to a VCF file](#add-af-tag-to-a-vcf-file)
    * [Add custom annotations](#add-custom-annotations)
@@ -42,7 +44,7 @@ Table of Contents
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
-Wed 30 Aug 2023 01:04:52 AM UTC
+Wed 13 Sep 2023 02:49:54 AM UTC
 
 Learning the VCF format
 ================
@@ -378,9 +380,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m21.115s
-    ## user 0m36.137s
-    ## sys  0m2.698s
+    ## real 0m17.359s
+    ## user 0m29.990s
+    ## sys  0m1.600s
 
 VCF to uncompressed BCF.
 
@@ -389,9 +391,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m20.426s
-    ## user 0m35.716s
-    ## sys  0m2.733s
+    ## real 0m16.167s
+    ## user 0m29.940s
+    ## sys  0m1.607s
 
 VCF to compressed VCF.
 
@@ -400,9 +402,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m30.744s
-    ## user 0m48.139s
-    ## sys  0m3.845s
+    ## real 0m24.377s
+    ## user 0m40.161s
+    ## sys  0m2.261s
 
 File sizes
 
@@ -828,9 +830,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.097s
-    ## user 0m0.077s
-    ## sys  0m0.030s
+    ## real 0m0.074s
+    ## user 0m0.073s
+    ## sys  0m0.012s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -840,9 +842,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m4.815s
-    ## user 0m4.733s
-    ## sys  0m0.093s
+    ## real 0m3.965s
+    ## user 0m3.947s
+    ## sys  0m0.027s
 
 Use commas to list more than one loci.
 
@@ -903,12 +905,88 @@ bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ pri
 
 The
 [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html)
-plugin can be used to split a structured field. However, `split-vep` was
-written to work with VCF files created by `bcftools csq` or
-[VEP](https://github.com/Ensembl/ensembl-vep). It is possible to get it
-working with [SnpEff](https://github.com/pcingola/SnpEff), another
-popular variant annotation tool. with some modifications to the VCF
-header.
+plugin can be used to split a structured field. `split-vep` was written
+to work with VCF files created by `bcftools csq` or
+[VEP](https://github.com/Ensembl/ensembl-vep).
+
+#### BCFtools csq
+
+An [example VCF file](https://github.com/davetang/vcf_example) that was
+annotated with BCFtools csq is available in
+`eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz`. The tag added by
+`csq` is `INFO/BCSQ`, so we need to provide this to split-vep. To list
+the annotation fields use `-l`.
+
+``` bash
+bcftools +split-vep -a BCSQ -l eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz
+```
+
+    ## 0    Consequence
+    ## 1    gene
+    ## 2    transcript
+    ## 3    biotype
+    ## 4    strand
+    ## 5    amino_acid_change
+    ## 6    dna_change
+
+Use `-f` to print the wanted fields in your own specified format;
+variants without consequences are excluded.
+
+``` bash
+bcftools +split-vep -a BCSQ -f '%CHROM:%POS,%ID,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+    ## chr1:69270,rs201219564,synonymous
+    ## chr1:69511,rs2691305,missense
+    ## chr1:69761,rs200505207,missense
+    ## chr1:69897,rs200676709,synonymous
+    ## chr1:941119,rs4372192,intron,non_coding
+    ## chr1:946247,rs2272757,synonymous
+    ## chr1:952180,rs3748595,intron,non_coding
+    ## chr1:952421,rs3828047,synonymous
+    ## chr1:953259,rs3748596,synonymous
+    ## chr1:953279,rs3748597,missense
+
+The `-d` or `--duplicate` is useful to output annotations per
+transcript/allele on a new line.
+
+``` bash
+bcftools +split-vep -a BCSQ -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+    ## ENST00000641515,synonymous
+    ## ENST00000641515,missense
+    ## ENST00000641515,missense
+    ## ENST00000641515,synonymous
+    ## .,.,intron,non_coding
+    ## ENST00000327044,synonymous
+    ## .,.,intron,non_coding
+    ## ENST00000327044,synonymous
+    ## ENST00000327044,synonymous
+    ## ENST00000327044,missense
+
+Use `-d` to split.
+
+``` bash
+bcftools +split-vep -a BCSQ -d -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+    ## ENST00000641515,synonymous
+    ## ENST00000641515,missense
+    ## ENST00000641515,missense
+    ## ENST00000641515,synonymous
+    ## .,intron
+    ## .,non_coding
+    ## ENST00000327044,synonymous
+    ## .,intron
+    ## .,non_coding
+    ## ENST00000327044,synonymous
+
+#### SnpEff
+
+It is possible to use the split-vep plugin with
+[SnpEff](https://github.com/pcingola/SnpEff), another popular variant
+annotation tool with some modifications to the VCF header.
 
 SnpEff provides annotations with the `ANN` tag.
 
@@ -1168,16 +1246,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 14   68042496    rs4902491   A   G   120.3   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.92;DB;DP=8;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.684;QD=15.04;ReadPosRankSum=0.322;set=variant2  GT:AD:DP:GQ:PL  0/1:3,5:8:94.51:150,0,95
-    ## 6    160557569   rs7762846   C   T   684.17  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.83;DB;DP=56;Dels=0;FS=2.454;HRun=1;HaplotypeScore=1.9732;MQ0=0;MQ=60;MQRankSum=0.222;QD=12.22;ReadPosRankSum=0.353;set=variant2    GT:AD:DP:GQ:PL  0/1:30,26:56:99:714,0,815
-    ## 4    187557600   rs328419    G   A   100.33  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.731;DB;DP=5;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=54.82;MQRankSum=0.731;QD=20.07;ReadPosRankSum=-0.731;set=variant2  GT:AD:DP:GQ:PL  0/1:1,4:5:21.93:130,0,22
-    ## 4    6596360 rs2301795   G   A   399.84  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.449;DB;DP=33;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58.15;MQRankSum=0.45;QD=12.12;ReadPosRankSum=0.162;set=variant2  GT:AD:DP:GQ:PL  0/1:16,17:33:99:430,0,444
-    ## 22   23077555    rs4822296   T   C   592.64  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.787;DB;DP=76;Dels=0;FS=5.522;HRun=0;HaplotypeScore=4.9764;MQ0=2;MQ=51.71;MQRankSum=-4.728;QD=7.8;ReadPosRankSum=0.288;set=variant2  GT:AD:DP:GQ:PL  0/1:45,31:76:99:623,0,1184
-    ## 5    102537200   rs154290    T   G   125.47  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.52;DB;DP=11;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=52.16;MQRankSum=-0.278;QD=11.41;ReadPosRankSum=0.678;set=variant2  GT:AD:DP:GQ:PL  0/1:4,7:11:99:155,0,102
-    ## 19   57795783    rs74345217  A   G   134.81  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.047;DB;DP=12;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.467;QD=11.23;ReadPosRankSum=0.583;set=variant2    GT:AD:DP:GQ:PL  0/1:6,6:12:99:165,0,196
-    ## 11   62402523    .   G   C   195.35  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.337;DP=17;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.529;QD=11.49;ReadPosRankSum=1.876;set=variant2  GT:AD:DP:GQ:PL  0/1:9,8:17:99:225,0,304
-    ## 19   38935350    rs35018208  T   TC  128.64  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.495;DB;DP=8;FS=0;HRun=6;HaplotypeScore=17.7045;MQ0=0;MQ=61.34;MQRankSum=-0.198;QD=16.08;ReadPosRankSum=-0.198;set=variant  GT:AD:DP:GQ:PL  0/1:3,5:8:40.16:168,0,40
-    ## 7    142028118   rs361429    C   A   170.46  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.646;DB;DP=16;Dels=0;FS=0;HRun=0;HaplotypeScore=0.9469;MQ0=0;MQ=58.55;MQRankSum=-0.318;QD=10.65;ReadPosRankSum=-0.423;set=variant2  GT:AD:DP:GQ:PL  0/1:9,7:16:99:200,0,269
+    ## 6    29771111    rs1610716   C   T   141.02  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.453;DB;DP=10;Dels=0;FS=3.522;HRun=1;HaplotypeScore=0.9998;MQ0=0;MQ=60;MQRankSum=-0.47;QD=14.1;ReadPosRankSum=0.851;set=variant2    GT:AD:DP:GQ:PL  0/1:5,5:10:99:171,0,107
+    ## 1    156354293   rs6668731   A   G   293.75  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.486;DB;DP=44;Dels=0;FS=1.372;HRun=0;HaplotypeScore=0;MQ0=0;MQ=58;MQRankSum=2.624;QD=6.68;ReadPosRankSum=-0.099;set=variant2    GT:AD:DP:GQ:PL  0/1:29,15:44:99:324,0,754
+    ## 2    98413781    rs2305143   C   T   493.3   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.313;DB;DP=36;Dels=0;FS=5.238;HRun=2;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.127;QD=13.7;ReadPosRankSum=0.824;set=variant2 GT:AD:DP:GQ:PL  0/1:17,19:36:99:523,0,488
+    ## 6    30893941    rs4678  G   A   620.33  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.653;DB;DP=53;Dels=0;FS=2.379;HRun=0;HaplotypeScore=1.81;MQ0=0;MQ=60;MQRankSum=0.724;QD=11.7;ReadPosRankSum=-0.742;set=variant2  GT:AD:DP:GQ:PL  0/1:29,24:53:99:650,0,763
+    ## 17   21903195    .   G   C   140.82  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.278;DP=11;Dels=0;FS=0;HRun=1;HaplotypeScore=2.986;MQ0=0;MQ=54.7;MQRankSum=0.597;QD=12.8;ReadPosRankSum=0.896;set=variant2   GT:AD:DP:GQ:PL  0/1:4,7:11:99:171,0,99
+    ## 8    33246591    rs17855838  G   C   642.54  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.903;DB;DP=85;Dels=0;FS=0;HRun=0;HaplotypeScore=2.9252;MQ0=0;MQ=58.4;MQRankSum=0.682;QD=7.56;ReadPosRankSum=0.539;set=variant2   GT:AD:DP:GQ:PL  0/1:59,26:85:99:673,0,1628
+    ## 10   115370254   rs12243176  A   G   647.78  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.867;DB;DP=54;Dels=0;FS=1.035;HRun=0;HaplotypeScore=1.9846;MQ0=1;MQ=59.44;MQRankSum=-1.295;QD=12;ReadPosRankSum=0.92;set=variant2   GT:AD:DP:GQ:PL  0/1:25,29:54:99:678,0,565
+    ## 9    77748151    rs7040349   G   A   68.27   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.55;DB;DP=7;Dels=0;FS=0;HRun=4;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.55;QD=9.75;ReadPosRankSum=0.55;set=variant2 GT:AD:DP:GQ:PL  0/1:4,3:7:98.26:98,0,137
+    ## 10   26462790    rs3740232   G   A   450.73  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.415;DB;DP=28;Dels=0;FS=5.943;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=1.428;QD=16.1;ReadPosRankSum=2.349;set=variant2 GT:AD:DP:GQ:PL  0/1:13,15:28:99:481,0,315
+    ## 17   79573860    rs10695650  C   CTTAA   485.74  PASS    AC=2;AF=1;AN=2;DB;DP=7;FS=0;HRun=0;HaplotypeScore=22.6742;MQ0=0;MQ=47;QD=69.39;set=variant  GT:AD:DP:GQ:PL  1/1:1,6:7:21.07:528,21,0
 
 Sort.
 
@@ -1185,7 +1263,7 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.Tsk9fa
+    ## Writing to /tmp/bcftools.cV4NiQ
     ## Merging 1 temporary files
     ## Cleaning
     ## Done
@@ -1409,8 +1487,8 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
     ## ##contig=<ID=1000000,length=1000000>
     ## ##source=HaplotypeCaller
     ## ##bcftools_viewVersion=1.18+htslib-1.18
-    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Aug 30 01:04:48 2023
-    ## ##bcftools_viewCommand=view -h -; Date=Wed Aug 30 01:04:48 2023
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Wed Sep 13 02:49:50 2023
+    ## ##bcftools_viewCommand=view -h -; Date=Wed Sep 13 02:49:50 2023
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
 
 ## Concatenate VCF files
@@ -1437,8 +1515,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.031654 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.039504 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.026221 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.030724 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
