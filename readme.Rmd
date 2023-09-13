@@ -474,7 +474,37 @@ bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ pri
 
 ### Split an annotation field
 
-The [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html) plugin can be used to split a structured field. However, `split-vep` was written to work with VCF files created by `bcftools csq` or [VEP](https://github.com/Ensembl/ensembl-vep). It is possible to get it working with [SnpEff](https://github.com/pcingola/SnpEff), another popular variant annotation tool. with some modifications to the VCF header.
+The [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html) plugin can be used to split a structured field. `split-vep` was written to work with VCF files created by `bcftools csq` or [VEP](https://github.com/Ensembl/ensembl-vep).
+
+#### BCFtools csq
+
+An [example VCF file](https://github.com/davetang/vcf_example) that was annotated with BCFtools csq is available in `eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz`. The tag added by `csq` is `INFO/BCSQ`, so we need to provide this to split-vep. To list the annotation fields use `-l`.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a BCSQ -l eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz
+```
+
+Use `-f` to print the wanted fields in your own specified format; variants without consequences are excluded.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a BCSQ -f '%CHROM:%POS,%ID,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+The `-d` or `--duplicate` is useful to output annotations per transcript/allele on a new line.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a BCSQ -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+Use `-d` to split.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -a BCSQ -d -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
+```
+
+#### SnpEff
+
+It is possible to use the split-vep plugin with [SnpEff](https://github.com/pcingola/SnpEff), another popular variant annotation tool with some modifications to the VCF header.
 
 SnpEff provides annotations with the `ANN` tag.
 
