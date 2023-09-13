@@ -474,11 +474,36 @@ bcftools view eg/aln.bt.vcf.gz | perl -nle 'BEGIN { srand(1984) } if (/^#/){ pri
 
 ### Split an annotation field
 
-The [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html) plugin can be used to split a structured field. `split-vep` was written to work with VCF files created by `bcftools csq` or [VEP](https://github.com/Ensembl/ensembl-vep).
+The [split-vep](https://samtools.github.io/bcftools/howtos/plugin.split-vep.html) plugin can be used to split a structured field. `split-vep` was written to work with VCF files created by [VEP](https://github.com/Ensembl/ensembl-vep) or `bcftools csq`.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -h || true
+```
+
+#### VEP
+
+An [example VCF file](https://github.com/davetang/vcf_example) that was annotated with VEP is available as `eg/S1.haplotypecaller.filtered_VEP.ann.vcf.gz`. To list the annotation fields use `-l`.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -l eg/S1.haplotypecaller.filtered_VEP.ann.vcf.gz | head
+```
+
+Use `-f` to print the wanted fields in your own specified format; variants without consequences are excluded.
+
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -f '%CHROM:%POS,%ID,%Consequence\n' eg/S1.haplotypecaller.filtered_VEP.ann.vcf.gz | head
+```
+
+Limit output to missense or more severe variants.
+
+```{bash engine.opts='-l'}
+bcftools +split-vep -f '%CHROM:%POS,%ID,%Consequence\n' -s worst:missense+ eg/S1.haplotypecaller.filtered_VEP.ann.vcf.gz | head
+```
 
 #### BCFtools csq
 
-An [example VCF file](https://github.com/davetang/vcf_example) that was annotated with BCFtools csq is available in `eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz`. The tag added by `csq` is `INFO/BCSQ`, so we need to provide this to split-vep. To list the annotation fields use `-l`.
+An [example VCF file](https://github.com/davetang/vcf_example) that was annotated with BCFtools csq is available as `eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz`. The tag added by `csq` is `INFO/BCSQ`, so we need to provide this to split-vep. To list the annotation fields use `-l`.
 
 ```{bash engine.opts='-l'}
 bcftools +split-vep -a BCSQ -l eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz
