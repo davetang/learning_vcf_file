@@ -50,7 +50,7 @@ fi
 
 if [[ ! -e ${install_path}/bin/gh-md-toc ]]; then
    cd ${install_path}
-   toc_ver=0.8.0
+   toc_ver=0.10.0
    url=https://github.com/ekalinin/github-markdown-toc/archive/refs/tags/${toc_ver}.tar.gz
    wget --quiet -O github-markdown-toc-${toc_ver}.tar.gz ${url}
    tar xzf github-markdown-toc-${toc_ver}.tar.gz
