@@ -22,7 +22,7 @@ if [[ ! -d ${install_path} ]]; then
 fi
 
 for tool in htslib bcftools; do
-   ver=1.19
+   ver=1.22
    check=${tool}
    if [[ ${tool} == htslib ]]; then
       check=bgzip
