@@ -45,7 +45,7 @@ Table of Contents
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 
-Mon 25 Mar 2024 11:27:26 PM UTC
+Mon 04 Aug 2025 12:42:47 AM UTC
 
 Learning the VCF format
 ================
@@ -182,7 +182,7 @@ bcftools --help
 
     ## 
     ## Program: bcftools (Tools for variant calling and manipulating VCFs and BCFs)
-    ## Version: 1.19 (using htslib 1.19)
+    ## Version: 1.22 (using htslib 1.22)
     ## 
     ## Usage:   bcftools [--version|--version-only] [--help] <command> <argument>
     ## 
@@ -217,7 +217,7 @@ bcftools --help
     ##     stats        produce VCF/BCF stats
     ## 
     ##  -- Plugins (collection of programs for calling, file manipulation & analysis)
-    ##     39 plugins available, run "bcftools plugin -lv" to see a complete list
+    ##     41 plugins available, run "bcftools plugin -lv" to see a complete list
     ## 
     ##  Most commands accept VCF, bgzipped VCF, and BCF with the file type detected
     ##  automatically even when streaming from a pipe. Indexed VCF and BCF will work
@@ -239,7 +239,7 @@ its parameters.
 man bcftools | grep "LIST OF COMMANDS" -B 1984
 ```
 
-    ## troff: <standard input>:2327: warning [p 24, 2.2i]: can't break line
+    ## troff: <standard input>:2458: warning [p 25, 3.3i]: can't break line
     ## BCFTOOLS(1)                                                        BCFTOOLS(1)
     ## 
     ## NAME
@@ -269,8 +269,8 @@ man bcftools | grep "LIST OF COMMANDS" -B 1984
     ##        (stdout). Several commands can thus be  combined  with  Unix pipes.
     ## 
     ##    VERSION
-    ##        This manual page was last updated 2023-12-12 and refers to bcftools git
-    ##        version 1.19.
+    ##        This manual page was last updated 2025-05-30 and refers to bcftools git
+    ##        version 1.22.
     ## 
     ##    BCF1
     ##        The obsolete BCF1 format output by versions of samtools <= 0.1.19 is
@@ -381,9 +381,9 @@ time bcftools convert --threads 2 -O b -o eg/1kgp.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m12.891s
-    ## user 0m24.601s
-    ## sys  0m1.695s
+    ## real 0m10.929s
+    ## user 0m24.024s
+    ## sys  0m1.721s
 
 VCF to uncompressed BCF.
 
@@ -392,9 +392,9 @@ time bcftools convert --threads 2 -O u -o eg/1kgp.un.bcf eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m10.736s
-    ## user 0m23.899s
-    ## sys  0m1.803s
+    ## real 0m10.509s
+    ## user 0m11.092s
+    ## sys  0m1.475s
 
 VCF to compressed VCF.
 
@@ -403,9 +403,9 @@ time bcftools convert --threads 2 -O z -o eg/1kgp.vcf.gz eg/1kgp.vcf
 ```
 
     ## 
-    ## real 0m15.329s
-    ## user 0m28.735s
-    ## sys  0m2.260s
+    ## real 0m17.983s
+    ## user 0m29.554s
+    ## sys  0m2.109s
 
 File sizes
 
@@ -414,7 +414,7 @@ du -h eg/1kgp.*
 ```
 
     ## 85M  eg/1kgp.bcf
-    ## 85M  eg/1kgp.un.bcf
+    ## 977M eg/1kgp.un.bcf
     ## 1.5G eg/1kgp.vcf
     ## 84M  eg/1kgp.vcf.gz
 
@@ -831,9 +831,9 @@ time bcftools view -H -r 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m0.057s
-    ## user 0m0.063s
-    ## sys  0m0.004s
+    ## real 0m0.053s
+    ## user 0m0.043s
+    ## sys  0m0.012s
 
 `bcftools view` with `-t` streams the entire file, so is much slower.
 
@@ -843,9 +843,9 @@ time bcftools view -H -t 1:55000000-56000000 eg/1kgp.bcf | wc -l
 
     ## 31036
     ## 
-    ## real 0m2.844s
+    ## real 0m2.841s
     ## user 0m2.811s
-    ## sys  0m0.044s
+    ## sys  0m0.032s
 
 Use commas to list more than one loci.
 
@@ -916,11 +916,11 @@ bcftools +split-vep -h || true
 
     ## split-vep: invalid option -- 'h'
     ## 
-    ## About: Query structured annotations such INFO/CSQ created by bcftools/csq or VEP. For more
+    ## About: Query structured annotations such INFO/BCSQ or CSQ created by bcftools/csq or VEP. For more
     ##    more information and pointers see http://samtools.github.io/bcftools/howtos/plugin.split-vep.html
     ## Usage: bcftools +split-vep [Plugin Options]
     ## Plugin options:
-    ##    -a, --annotation STR            INFO annotation to parse [CSQ]
+    ##    -a, --annotation STR            INFO annotation to parse, CSQ by default or BCSQ when not present [CSQ]
     ##    -A, --all-fields DELIM          Output all fields replacing the -a tag ("%CSQ" by default) in the -f
     ##                                      filtering expression using the output field delimiter DELIM. This can be
     ##                                      "tab", "space" or an arbitrary string.
@@ -934,17 +934,33 @@ bcftools +split-vep -h || true
     ##    -f, --format STR                Create non-VCF output; similar to `bcftools query -f` but drops lines w/o consequence
     ##    -g, --gene-list [+]FILE         Consider only features listed in FILE, or prioritize if FILE is prefixed with "+"
     ##        --gene-list-fields LIST     Fields to match against by the -g list, by default gene names [SYMBOL,Gene,gene]
-    ##    -H, --print-header              Print header
+    ##    -H, --print-header              Print header, -HH to omit column indices
     ##    -l, --list                      Parse the VCF header and list the annotation fields
     ##    -p, --annot-prefix STR          Before doing anything else, prepend STR to all CSQ fields to avoid tag name conflicts
-    ##    -s, --select TR:CSQ             Select transcripts to extract by type and/or consequence severity. (See also -S and -x.)
-    ##                                      TR, transcript:   worst,primary(*),all        [all]
-    ##                                      CSQ, consequence: any,missense,missense+,etc  [any]
-    ##                                      (*) Primary transcripts have the field "CANONICAL" set to "YES"
+    ##    -s, --select TR:CSQ[:PRN]       Select transcripts to extract by type and/or consequence severity, see also -S and -x
+    ##                                      TR, filter transcripts:   all,worst,primary,pick,mane,EXPRESSION [all]
+    ##                                      CSQ, filter consequences: any,missense,missense+,etc [any]
+    ##                                      PRN, print consequences:  all,worst [all]
+    ##                                    TR transcript selection
+    ##                                        all       .. list all transcripts
+    ##                                        worst     .. list only one transcript with the worst consequence (see -S)
+    ##                                        primary   .. list transcripts marked as CANONICAL=YES
+    ##                                        pick      .. as PICK=1
+    ##                                        mane      .. as MANE_SELECT!=""
+    ##                                      or an EXPRESSION in the form of "<FIELD><OPERATOR><VALUE>", where
+    ##                                        FIELD     .. field name (e.g. "CANONICAL")
+    ##                                        OPERATOR  .. string comparison (=,!=), regex matching (~,!~)
+    ##                                        VALUE     .. required string value (e.g. "YES")
+    ##                                    CSQ consequence filtering, selects transcripts by CSQ severity (see "-S -")
+    ##                                        missense  .. selects only transcripts with a missense variant
+    ##                                        missense+ .. transcripts with a missense consequence or more severe
+    ##                                    PRN controls what consequences are actually printed
+    ##                                        all   .. print all consequences if multiple per transcript (e.g., start_lost&splice_region)
+    ##                                        worst .. print the worst consequence per transcript (e.g., start_lost above)
     ##    -S, --severity -|FILE           Pass "-" to print the default severity scale or FILE to override
     ##                                      the default scale
     ##    -u, --allow-undef-tags          Print "." for undefined tags
-    ##    -x, --drop-sites                Drop sites without consequences (the default with -f)
+    ##    -x, --drop-sites                Drop sites without consequences after -s is applied (the default with -f)
     ##    -X, --keep-sites                Do not drop sites without consequences (the default without -f)
     ## Common options:
     ##    -e, --exclude EXPR              Exclude sites and samples for which the expression is true
@@ -958,11 +974,15 @@ bcftools +split-vep -h || true
     ##    -t, --targets REG               Similar to -r but streams rather than index-jumps
     ##    -T, --targets-file FILE         Similar to -R but streams rather than index-jumps
     ##        --targets-overlap 0|1|2     Include if POS in the region (0), record overlaps (1), variant overlaps (2) [0]
-    ##        --write-index               Automatically index the output files [off]
+    ##    -v, --verbosity INT             Verbosity level
+    ##    -W, --write-index[=FMT]         Automatically index the output files [off]
     ## 
     ## Examples:
-    ##    # List available fields of the INFO/CSQ annotation
+    ##    # List available fields of the INFO/CSQ or INFO/BCSQ annotation
     ##    bcftools +split-vep -l file.vcf.gz
+    ## 
+    ##    # List available fields of INFO/BCSQ when both INFO/CSQ and INFO/BCSQ are present
+    ##    bcftools +split-vep -l file.vcf.gz -a BCSQ
     ## 
     ##    # List the default severity scale
     ##    bcftools +split-vep -S -
@@ -984,8 +1004,8 @@ bcftools +split-vep -h || true
     ##    bcftools +split-vep -c gnomAD_AF:Float file.vcf.gz -i'gnomAD_AF<0.001'
     ## 
     ##    # Similar to above, but add the annotation only if the consequence severity is missense
-    ##    # or equivalent. In order to drop sites with different consequences completely, we add
-    ##    # the -x switch. See the online documentation referenced above for more examples.
+    ##    # or equivalent. In order to drop sites with different consequences completely, provide
+    ##    # the -x option. See the online documentation referenced above for more examples.
     ##    bcftools +split-vep -c gnomAD_AF:Float -s :missense    file.vcf.gz
     ##    bcftools +split-vep -c gnomAD_AF:Float -s :missense -x file.vcf.gz
     ## 
@@ -1093,6 +1113,7 @@ transcript/allele on a new line.
 bcftools +split-vep -a BCSQ -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
 ```
 
+    ## Warning: fewer BCSQ fields than expected at chr1:13226098, filling with dots. This warning is printed only once.
     ## ENST00000641515,synonymous
     ## ENST00000641515,missense
     ## ENST00000641515,missense
@@ -1110,6 +1131,7 @@ Use `-d` to split.
 bcftools +split-vep -a BCSQ -d -f '%transcript,%Consequence\n' eg/S1.haplotypecaller.filtered.phased.csq.vcf.gz | head
 ```
 
+    ## Warning: fewer BCSQ fields than expected at chr1:13226098, filling with dots. This warning is printed only once.
     ## ENST00000641515,synonymous
     ## ENST00000641515,missense
     ## ENST00000641515,missense
@@ -1363,7 +1385,7 @@ bcftools norm -f eg/test_31.fa -c w eg/incorrect.vcf > /dev/null
 ```
 
     ## REF_MISMATCH 1000000 151 G   T
-    ## Lines   total/split/joined/realigned/skipped:    10022/0/0/851/0
+    ## Lines   total/split/joined/realigned/mismatch_removed/dup_removed/skipped:   10022/0/0/851/0/0/0
 
 ## Sorting
 
@@ -1385,16 +1407,16 @@ bcftools view -H eg/Pfeiffer_shuf.vcf | head
     ## [W::vcf_parse_info] INFO 'MIM' is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format_dict2] FORMAT 'DS' at 10:123256215 is not defined in the header, assuming Type=String
     ## [W::vcf_parse_format_dict2] FORMAT 'GL' at 10:123256215 is not defined in the header, assuming Type=String
-    ## 19   19613381    rs892022    G   A   116.4   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.324;DB;DP=19;Dels=0;FS=0;HRun=0;HaplotypeScore=0.9996;MQ0=0;MQ=60;MQRankSum=-0.787;QD=6.13;ReadPosRankSum=-0.88;set=variant2    GT:AD:DP:GQ:PL  0/1:14,5:19:99:146,0,473
-    ## 1    34189957    rs11346874  AG  A   210.16  PASS    AC=2;AF=1;AN=2;DB;DP=7;FS=0;HRun=4;HaplotypeScore=18.582;MQ0=0;MQ=60;QD=30.02;set=variant   GT:AD:DP:GQ:PL  1/1:0,7:7:21.06:252,21,0
-    ## 5    160044855   rs1363199   G   A   426.96  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.916;DB;DP=34;Dels=0;FS=1.591;HRun=1;HaplotypeScore=0;MQ0=0;MQ=59.45;MQRankSum=-0.776;QD=12.56;ReadPosRankSum=0.293;set=variant2    GT:AD:DP:GQ:PL  0/1:18,16:34:99:457,0,463
-    ## 19   2110019 rs2074958   T   C   140.73  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.336;DB;DP=10;Dels=0;FS=10.792;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.851;QD=14.07;ReadPosRankSum=0.103;set=variant2   GT:AD:DP:GQ:PL  0/1:5,5:10:99:171,0,168
-    ## 5    176721272   rs11740250  G   C   867.88  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.045;DB;DP=60;Dels=0;FS=1.139;HRun=0;HaplotypeScore=2.8535;MQ0=0;MQ=59.23;MQRankSum=1.204;QD=14.46;ReadPosRankSum=1.293;set=variant2 GT:AD:DP:GQ:PL  0/1:27,33:60:99:898,0,720
-    ## 3    191075656   rs13434281  G   A   88.64   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.383;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.365;QD=8.86;ReadPosRankSum=-0.633;set=variant2    GT:AD:DP:GQ:PL  0/1:6,4:10:99:119,0,217
-    ## 6    32188099    rs430916    C   T   854.23  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-4.977;DB;DP=85;Dels=0;FS=3.074;HRun=2;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.634;QD=10.05;ReadPosRankSum=-0.607;set=variant2   GT:AD:DP:GQ:PL  0/1:48,37:85:99:884,0,1432
-    ## 5    173258  rs6893369   A   G   154.95  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.323;DB;DP=14;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.452;QD=11.07;ReadPosRankSum=0.452;set=variant2    GT:AD:DP:GQ:PL  0/1:8,6:14:99:185,0,263
-    ## 16   8953081 rs8097  C   G   150.07  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.741;DB;DP=10;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.741;QD=15.01;ReadPosRankSum=-0.365;set=variant2  GT:AD:DP:GQ:PL  0/1:4,6:10:68.47:180,0,68
-    ## 3    52228150    rs411457    A   T   164.03  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.001;DB;DP=14;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=58.2;MQRankSum=-0.065;QD=11.72;ReadPosRankSum=-0.452;set=variant2 GT:AD:DP:GQ:PL  0/1:8,6:14:99:194,0,206
+    ## 11   102562700   rs2509010   C   T   434.44  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=1.347;DB;DP=26;Dels=0;FS=1.757;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-0.593;QD=16.71;ReadPosRankSum=0.216;set=variant2    GT:AD:DP:GQ:PL  0/1:9,17:26:99:464,0,265
+    ## 4    3117168 rs1936032   C   G   460.62  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.617;DB;DP=41;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=59.54;MQRankSum=-0.46;QD=11.23;ReadPosRankSum=1.09;set=variant2   GT:AD:DP:GQ:PL  0/1:23,18:41:99:491,0,640
+    ## 8    48962552    rs118090687 G   A   427.7   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=0.032;DB;DP=23;Dels=0;FS=7.402;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.194;QD=18.6;ReadPosRankSum=2.098;set=variant2 GT:AD:DP:GQ:PL  0/1:8,15:23:99:458,0,162
+    ## 7    6963564 .   T   C   67.81   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.054;DP=9;Dels=0;FS=0;HRun=3;HaplotypeScore=0.9997;MQ0=0;MQ=60;MQRankSum=0.248;QD=7.53;ReadPosRankSum=1.203;set=variant2 GT:AD:DP:GQ:PL  0/1:6,3:9:97.81:98,0,161
+    ## 5    33649807    rs4504387   C   A   442.09  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-2.398;DB;DP=43;Dels=0;FS=1.259;HRun=1;HaplotypeScore=0;MQ0=0;MQ=58.58;MQRankSum=-0.158;QD=10.28;ReadPosRankSum=-0.816;set=variant2   GT:AD:DP:GQ:PL  0/1:23,20:43:99:472,0,649
+    ## 4    10117728    rs35782983  G   A   132.12  PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-1.954;DB;DP=13;Dels=0;FS=5.434;HRun=0;HaplotypeScore=0;MQ0=0;MQ=55.03;MQRankSum=0.66;QD=10.16;ReadPosRankSum=0.312;set=variant2  GT:AD:DP:GQ:PL  0/1:6,7:13:99:162,0,172
+    ## 19   46032735    .   CAG C   1722.19 PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=3.711;DP=53;FS=7.534;HRun=0;HaplotypeScore=176.423;MQ0=0;MQ=60.38;MQRankSum=0.755;QD=32.49;ReadPosRankSum=0.238;set=variant   GT:AD:DP:GQ:PL  0/1:13,40:53:99:1761,0,633
+    ## 7    18767343    rs1178127   A   G   94.06   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.876;DB;DP=9;Dels=0;FS=0;HRun=1;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=-1.159;QD=10.45;ReadPosRankSum=-1.159;set=variant2   GT:AD:DP:GQ:PL  0/1:4,5:9:99:124,0,102
+    ## 16   28913787    rs7189927   T   C   53.72   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.684;DB;DP=8;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=1.221;QD=6.72;ReadPosRankSum=0.956;set=variant2  GT:AD:DP:GQ:PL  0/1:5,3:8:83.72:84,0,164
+    ## 22   30220925    rs112626077 C   T   68.88   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=-0.727;DB;DP=4;Dels=0;FS=0;HRun=0;HaplotypeScore=0;MQ0=0;MQ=60;MQRankSum=0.727;QD=17.22;ReadPosRankSum=-0.727;set=variant2    GT:AD:DP:GQ:PL  0/1:1,3:4:26.54:99,0,27
 
 Sort.
 
@@ -1402,10 +1424,10 @@ Sort.
 bcftools sort eg/Pfeiffer_shuf.vcf > eg/Pfeiffer_sorted.vcf
 ```
 
-    ## Writing to /tmp/bcftools.FlkYqD
+    ## Writing to /tmp/bcftools.F4WlSD
     ## Merging 1 temporary files
-    ## Cleaning
     ## Done
+    ## Cleaning
 
 Check first 10 lines.
 
@@ -1625,9 +1647,9 @@ bcftools reheader -h eg/new_header.txt eg/aln.hc.vcf.gz | bcftools view -h -
     ## ##INFO=<ID=SOR,Number=1,Type=Float,Description="Symmetric Odds Ratio of 2x2 contingency table to detect strand bias">
     ## ##contig=<ID=1000000,length=1000000>
     ## ##source=HaplotypeCaller
-    ## ##bcftools_viewVersion=1.19+htslib-1.19
-    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Mon Mar 25 23:27:24 2024
-    ## ##bcftools_viewCommand=view -h -; Date=Mon Mar 25 23:27:24 2024
+    ## ##bcftools_viewVersion=1.22+htslib-1.22
+    ## ##bcftools_viewCommand=view -h eg/aln.hc.vcf.gz; Date=Mon Aug  4 00:42:43 2025
+    ## ##bcftools_viewCommand=view -h -; Date=Mon Aug  4 00:42:43 2025
     ## #CHROM   POS ID  REF ALT QUAL    FILTER  INFO    FORMAT  test
 
 ## Concatenate VCF files
@@ -1654,8 +1676,8 @@ bcftools concat eg/aln.bt.vcf.gz eg/aln.hc.vcf.gz  | bcftools view -H - | wc -l
 
     ## Checking the headers and starting positions of 2 files
     ## [W::bcf_hdr_merge] Trying to combine "MQ" tag definitions of different types
-    ## Concatenating eg/aln.bt.vcf.gz   0.017026 seconds
-    ## Concatenating eg/aln.hc.vcf.gz   0.023805 seconds
+    ## Concatenating eg/aln.bt.vcf.gz   0.015467 seconds
+    ## Concatenating eg/aln.hc.vcf.gz   0.017434 seconds
     ## 19997
 
 Removing duplicates requires indexed VCF files; the `-f` parameter is
@@ -1724,7 +1746,7 @@ Convert MNV into SNVs.
 bcftools norm -a eg/ex.vcf | tail -2
 ```
 
-    ## Lines   total/split/joined/realigned/skipped:    6/0/0/0/0
+    ## Lines   total/split/joined/realigned/mismatch_removed/dup_removed/skipped:   5/0/0/0/0/0/0
     ## 1    25563113    .   C   G   .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
     ## 1    25563114    .   C   G   .   PASS    AC=1;AF=0.5;AN=2;BaseQRankSum=2.621;DB;DP=20;FS=0;HRun=0;HaplotypeScore=101.749;MQ0=0;MQ=55.8;MQRankSum=-1.91;QD=11.05;ReadPosRankSum=0.4;set=variant   GT:AD:DP:GQ:PL  0/1:14,6:20:99:260,0,486    0/0:14,6:20:99:260,0,486    1/1:14,6:20:99:260,0,486
 
